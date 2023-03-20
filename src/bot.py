@@ -43,7 +43,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     VALUES
       ('{user_id}', '{username}');
     """
-    con = create_connection('database.db')
+    con = create_connection('../db/database.db') # perhaps здесь переебет, не уверен что так можно... (ненавижу питон)
     create_users_table = """
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,7 +77,10 @@ async def fight(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 if __name__ == '__main__':
-    application = ApplicationBuilder().token('6047725873:AAEPpyd0GdG02ERQ-VluXSv2JzlxYsOO14w').build()
+    token_file = open("../tokens/tg_app_token.txt", "r")
+    application = ApplicationBuilder().token(token_file.read()).build() # надеюсь тут тоже не переебет
+    token_file.close()
+
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('help', help))
     application.add_handler(CommandHandler('custom', custom))
