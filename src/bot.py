@@ -1,8 +1,19 @@
 import logging
-from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram.ext import (
+    ApplicationBuilder,
+    Application,
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
+
 import sqlite3
 from sqlite3 import Error
+
+CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 
 def create_connection(path):
     connection = None
@@ -44,6 +55,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
       ('{user_id}', '{username}');
     """
     con = create_connection('../db/database.db') # perhaps здесь переебет, не уверен что так можно... (ненавижу питон)
+    # ну кстати, не переебало
     create_users_table = """
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,9 +77,45 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
      await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
      
 async def custom(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = "Чтобы настроить своего игрового персонажа, отправьте мне прямое сообщение с желаемым ником."
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-    
+    reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Назад"]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text(
+        "Что бы Вы хотели изменить?",
+        reply_markup=markup,
+    )
+    return CHOOSING
+
+async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    context.user_data["choice"] = text
+    if text == "Изменить имя":
+        await update.message.reply_text("Введите новое имя:")
+        return TYPING_REPLY
+    elif text == "Назад":
+        return custom_cancel
+    else:
+        await update.message.reply_text("Я не понимаю, что вы хотите. Пожалуйста, выберите из меню.")
+        return CHOOSING
+
+async def received_information(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    context.user_data["name"] = text
+    user_id = update.message.from_user.id
+    con = create_connection('../db/database.db')
+    update_name = f"""
+        UPDATE users
+        SET personal_username = '{text}'
+        WHERE id = '{user_id}';
+        """
+    execute_query(con, update_name)
+    con.close()
+    await update.message.reply_text(f"Имя изменено на {text}.")
+    return ConversationHandler.END
+
+async def custom_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Действие отменено.", reply_markup=ReplyKeyboardRemove())
+    return ConversationHandler.END
+
 async def upgrade(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "Чтобы улучшить своего персонажа, участвуйте в реальных событиях или выполняйте внутриигровые задания. Более подробная информация скоро появится!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
@@ -78,12 +126,35 @@ async def fight(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == '__main__':
     token_file = open("../tokens/tg_app_token.txt", "r")
-    application = ApplicationBuilder().token(token_file.read()).build() # надеюсь тут тоже не переебет
+    application = ApplicationBuilder().token(token_file.read()).build()
     token_file.close()
-
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('help', help))
-    application.add_handler(CommandHandler('custom', custom))
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("custom", custom)],
+        states={
+            CHOOSING: [
+                MessageHandler(
+                    filters.Regex("^(Изменить имя|Изменить Аватара)$"), regular_choice
+                ),
+            ],
+            TYPING_CHOICE: [
+                MessageHandler(
+                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), regular_choice # нихуя не работает
+                )
+            ],
+            TYPING_REPLY: [
+                MessageHandler(
+                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), # как и это
+                    received_information,
+                )
+            ],
+        },
+        fallbacks=[MessageHandler(filters.Regex("^Назад$"), custom_cancel)], # и это
+    )
+
+    application.add_handler(conv_handler) # зато в общем работает
+
     application.add_handler(CommandHandler('upgrade', upgrade))
     application.add_handler(CommandHandler('fight', fight))
     
