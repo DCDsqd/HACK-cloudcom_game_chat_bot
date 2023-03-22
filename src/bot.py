@@ -1,4 +1,4 @@
-import logging
+from datebase import *
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -9,38 +9,8 @@ from telegram.ext import (
     filters,
 )
 
-import sqlite3
-from sqlite3 import Error
-
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY = range(4)
-
-
-def create_connection(path):
-    connection = None
-    try:
-        connection = sqlite3.connect(path)
-        print("Connection to SQLite DB successful")
-    except Error as e:
-        print(f"The error '{e}' occurred")
-
-    return connection
-
-
-def execute_query(connection, query):
-    cursor = connection.cursor()
-    try:
-        cursor.execute(query)
-        connection.commit()
-        print("Query executed successfully")
-    except Error as e:
-        print(f"The error '{e}' occurred")
-
-
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -59,8 +29,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     VALUES
       ('{user_id}', '{username}');
     """
-    con = create_connection('../db/database.db')  # perhaps здесь переебет, не уверен что так можно... (ненавижу питон)
-    # ну кстати, не переебало
+    con = create_connection('../db/database.db')
     create_users_table = """
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -146,7 +115,8 @@ async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     execute_query(con, update_name)
     con.close()
     await update.message.reply_text(f"Имя изменено на {text}.")
-    return ConversationHandler.END
+    logging.info(f"User with ID {user_id} changed personal name on {text}")
+    return CHOOSING
 
 
 async def custom_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -170,11 +140,23 @@ if __name__ == '__main__':
     token_file.close()
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('help', help_me))
-    conv_handler = ConversationHandler(
+    custom_name_handler = ConversationHandler(
         entry_points=[CommandHandler("custom", custom)],
         states={
             CHOOSING: [
                 MessageHandler(filters.Regex("^Изменить имя$"), custom_name_choice),
+            ],
+            TYPING_REPLY: [
+                MessageHandler(
+                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), received_name, )
+            ],
+        },
+        fallbacks=[MessageHandler(filters.Regex("^Отмена$"), custom_cancel)],
+    )
+    avatar_handler = ConversationHandler(
+        entry_points=[CommandHandler("custom", custom)],
+        states={
+            CHOOSING: [
                 MessageHandler(filters.Regex('^Изменить аватара$'), custom_avatar),
             ],
             TYPING_CHOICE: [MessageHandler(filters=filters.Regex('^Изменить волосы$'),  # Пока что не работает
@@ -183,18 +165,11 @@ if __name__ == '__main__':
                                            callback=custom_avatar_choice),
                             MessageHandler(filters=filters.Regex('^Изменить тело$'),
                                            callback=custom_avatar_choice)],
-            TYPING_REPLY: [
-                MessageHandler(
-                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), received_name, )
-            ],
         },
-        fallbacks=[MessageHandler(filters.Regex("^Отмена$"), custom_cancel)],
+        fallbacks=[MessageHandler(filters.Regex("^Назад$"), custom)],
     )
-    back_to_custom_handler = MessageHandler(filters=filters.Regex("Назад"), callback=custom)
-    application.add_handler(back_to_custom_handler, group=1)
-    application.add_handler(conv_handler)
-
+    application.add_handler(custom_name_handler)
+    application.add_handler(avatar_handler)
     application.add_handler(CommandHandler('upgrade', upgrade))
     application.add_handler(CommandHandler('fight', fight))
-
     application.run_polling()
