@@ -42,6 +42,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     con.close()
 
 
+async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [['/custom', '/upgrade'], ['/fight', '/help']]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="Выберите команду:",
+                                   reply_markup=reply_markup)
+
+
+async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    con = create_connection('../db/database.db')
+    message = update.message
+    user = message.from_user
+    user_id = message.from_user.id
+    username = user.username
+    request = f"SELECT * FROM users WHERE id={user_id}"
+    personal_username = execute_query(con, request)
+    message = "Ваш профиль:\n\n" \
+              f"Игровое имя: {personal_username}\n" \
+              f"ID: {user_id}\n" \
+              f"Имя Telegram: {username}"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    con.close()
+
+
 async def help_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "Вот доступные команды:\n\n" \
               "/start - Начало использования бота\n" \
@@ -68,6 +92,28 @@ async def custom_name_choice(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if text == "Изменить имя":
         await update.message.reply_text("Введите новое имя:")
         return TYPING_REPLY
+
+
+async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    context.user_data["name"] = text
+    user_id = update.message.from_user.id
+    con = create_connection('../db/database.db')
+    update_name = f"""
+        UPDATE users
+        SET personal_username = '{text}'
+        WHERE id = '{user_id}';
+        """
+    execute_query(con, update_name)
+    con.close()
+    await update.message.reply_text(f"Имя изменено на {text}.")
+    logging.info(f"User with ID {user_id} changed personal name on {text}")
+    return CHOOSING
+
+
+async def custom_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Действие отменено.", reply_markup=ReplyKeyboardRemove())
+    return ConversationHandler.END
 
 
 async def custom_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -102,28 +148,6 @@ async def custom_avatar_choice(update: Update, context: ContextTypes.DEFAULT_TYP
         return TYPING_CHOICE
 
 
-async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
-    context.user_data["name"] = text
-    user_id = update.message.from_user.id
-    con = create_connection('../db/database.db')
-    update_name = f"""
-        UPDATE users
-        SET personal_username = '{text}'
-        WHERE id = '{user_id}';
-        """
-    execute_query(con, update_name)
-    con.close()
-    await update.message.reply_text(f"Имя изменено на {text}.")
-    logging.info(f"User with ID {user_id} changed personal name on {text}")
-    return CHOOSING
-
-
-async def custom_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Действие отменено.", reply_markup=ReplyKeyboardRemove())
-    return ConversationHandler.END
-
-
 async def upgrade(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "Чтобы улучшить своего персонажа, участвуйте в реальных событиях или выполняйте внутриигровые задания. Более подробная информация скоро появится!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
@@ -151,7 +175,7 @@ if __name__ == '__main__':
                     filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), received_name, )
             ],
         },
-        fallbacks=[MessageHandler(filters.Regex("^Отмена$"), custom_cancel)],
+        fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
     )
     avatar_handler = ConversationHandler(
         entry_points=[CommandHandler("custom", custom)],
@@ -171,5 +195,7 @@ if __name__ == '__main__':
     application.add_handler(custom_name_handler)
     application.add_handler(avatar_handler)
     application.add_handler(CommandHandler('upgrade', upgrade))
+    application.add_handler(CommandHandler('menu', main_menu))
     application.add_handler(CommandHandler('fight', fight))
+    application.add_handler(CommandHandler('profile', profile))
     application.run_polling()

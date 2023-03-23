@@ -7,6 +7,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+
 def create_connection(path):
     connection = None
     try:
