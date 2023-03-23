@@ -50,18 +50,32 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    reply_markup=reply_markup)
 
 
+def add_exp(user_id, exp):
+    con = create_connection('../db/database.db')
+    request = f"SELECT exp FROM users WHERE id={user_id}"
+    user_exp = execute_read_query(con, request)[0][0]
+    new_exp = user_exp + exp
+    update_exp = f"""
+            UPDATE users
+            SET exp = '{new_exp}'
+            WHERE id = '{user_id}';
+            """
+    execute_query(con, update_exp)
+    con.close()
+
+
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     con = create_connection('../db/database.db')
     message = update.message
-    user = message.from_user
     user_id = message.from_user.id
-    username = user.username
-    request = f"SELECT * FROM users WHERE id={user_id}"
-    personal_username = execute_query(con, request)
+    username = message.from_user.username
+    request = f"SELECT personal_username, exp FROM users WHERE id={user_id}"
+    db_data = execute_read_query(con, request)
     message = "Ваш профиль:\n\n" \
-              f"Игровое имя: {personal_username}\n" \
+              f"Игровое имя: {db_data[0][0]}\n" \
               f"ID: {user_id}\n" \
-              f"Имя Telegram: {username}"
+              f"Имя Telegram: {username}\n" \
+              f"Опыт: {db_data[0][1]}"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     con.close()
 
