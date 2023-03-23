@@ -9,85 +9,10 @@ from telegram.ext import (
     filters,
 )
 
+from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda
+
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY = range(4)
-
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Добро пожаловать в Team Builder Bot! Введите /help, чтобы просмотреть доступные команды.")
-    message = update.message
-    user = message.from_user
-    user_id = message.from_user.id
-    if user.username:
-        username = user.username
-    else:
-        username = None
-    create_users = f"""
-    INSERT INTO
-      users (id, username)
-    VALUES
-      ('{user_id}', '{username}');
-    """
-    con = create_connection('../db/database.db')
-    create_users_table = """
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL, 
-      personal_username TEXT
-    );
-    """
-    execute_query(con, create_users_table)
-    execute_query(con, create_users)
-    con.close()
-
-
-async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [['/custom', '/upgrade'], ['/fight', '/help']]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Выберите команду:",
-                                   reply_markup=reply_markup)
-
-
-def add_exp(user_id, exp):
-    con = create_connection('../db/database.db')
-    request = f"SELECT exp FROM users WHERE id={user_id}"
-    user_exp = execute_read_query(con, request)[0][0]
-    new_exp = user_exp + exp
-    update_exp = f"""
-            UPDATE users
-            SET exp = '{new_exp}'
-            WHERE id = '{user_id}';
-            """
-    execute_query(con, update_exp)
-    con.close()
-
-
-async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    con = create_connection('../db/database.db')
-    message = update.message
-    user_id = message.from_user.id
-    username = message.from_user.username
-    request = f"SELECT personal_username, exp FROM users WHERE id={user_id}"
-    db_data = execute_read_query(con, request)
-    message = "Ваш профиль:\n\n" \
-              f"Игровое имя: {db_data[0][0]}\n" \
-              f"ID: {user_id}\n" \
-              f"Имя Telegram: {username}\n" \
-              f"Опыт: {db_data[0][1]}"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-    con.close()
-
-
-async def help_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = "Вот доступные команды:\n\n" \
-              "/start - Начало использования бота\n" \
-              "/help - Просмотр доступных команд\n" \
-              "/custom - Настройка вашего игрового персонажа\n" \
-              "/upgrade - Улучшайте своего персонажа с помощью реальных событий или внутриигровыми способами\n" \
-              "/fight - Сражайтесь с другими игроками в чате"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 async def custom(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -125,11 +50,6 @@ async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return CHOOSING
 
 
-async def custom_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Действие отменено.", reply_markup=ReplyKeyboardRemove())
-    return ConversationHandler.END
-
-
 async def custom_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = [["Изменить волосы", "Изменить лицо", "Изменить тело"], ["Назад"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -157,19 +77,6 @@ async def custom_avatar_choice(update: Update, context: ContextTypes.DEFAULT_TYP
         return TYPING_BODY
     elif text == "Назад":
         return CHOOSING
-    else:
-        await update.message.reply_text("Я не понимаю, что вы хотите. Пожалуйста, выберите из меню.")
-        return TYPING_CHOICE
-
-
-async def upgrade(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = "Чтобы улучшить своего персонажа, участвуйте в реальных событиях или выполняйте внутриигровые задания. Более подробная информация скоро появится!"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-
-
-async def fight(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = "Чтобы сразиться с другими игроками, отправьте мне прямое сообщение с именем пользователя вашего противника и начинайте битву! Более подробная информация скоро появится."
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 if __name__ == '__main__':
@@ -197,18 +104,14 @@ if __name__ == '__main__':
             CHOOSING: [
                 MessageHandler(filters.Regex('^Изменить аватара$'), custom_avatar),
             ],
-            TYPING_CHOICE: [MessageHandler(filters=filters.Regex('^Изменить волосы$'),  # Пока что не работает
-                                           callback=custom_avatar_choice),
-                            MessageHandler(filters=filters.Regex('^Изменить лицо$'),
-                                           callback=custom_avatar_choice),
-                            MessageHandler(filters=filters.Regex('^Изменить тело$'),
-                                           callback=custom_avatar_choice)],
         },
         fallbacks=[MessageHandler(filters.Regex("^Назад$"), custom)],
     )
     application.add_handler(custom_name_handler)
     application.add_handler(avatar_handler)
     application.add_handler(CommandHandler('upgrade', upgrade))
+    application.add_handler(MessageHandler(filters.Regex("^Да$|^да$"), danet))
+    application.add_handler(MessageHandler(filters.Regex("^Нет$|^нет$"), netda))
     application.add_handler(CommandHandler('menu', main_menu))
     application.add_handler(CommandHandler('fight', fight))
     application.add_handler(CommandHandler('profile', profile))
