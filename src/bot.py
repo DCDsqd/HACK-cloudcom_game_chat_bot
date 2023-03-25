@@ -13,7 +13,7 @@ from telegram.ext import (
 from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
-CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY = range(4)
+CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = range(5)
 
 
 async def custom(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -62,7 +62,7 @@ async def custom_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Назад"]]
+    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
     hair_list = [
         InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 1.png'), 'rb')),
         InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 2.png'), 'rb')),
@@ -80,7 +80,7 @@ async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Назад"]]
+    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
     face_list = [
         InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 1.png'), 'rb')),
         InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 2.png'), 'rb')),
@@ -98,7 +98,7 @@ async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Назад"]]
+    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
     body_list = [
         InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 1.png'), 'rb')),
         InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 2.png'), 'rb')),
@@ -132,7 +132,7 @@ async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     con.close()
     await update.message.reply_text(f"Волосы изменены на {text}.")
     logging.info(f"User with ID {user_id} changed hair to {text}")
-    return CHOOSING_AVATAR
+    return TYPING_HAIR
 
 
 async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -145,14 +145,14 @@ async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     con = create_connection('../db/database.db')
     update_hair = f"""
         UPDATE users
-        SET hair_choice = '{text}'
+        SET face_choice = '{text}'
         WHERE id = '{user_id}';
         """
     # execute_query(con, update_hair) # Пока что не кидаем в бд
     con.close()
-    await update.message.reply_text(f"Волосы изменены на {text}.")
+    await update.message.reply_text(f"Лицо изменено на {text}.")
     logging.info(f"User with ID {user_id} changed face to {text}")
-    return CHOOSING_AVATAR
+    return TYPING_FACE
 
 
 async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -165,14 +165,14 @@ async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     con = create_connection('../db/database.db')
     update_hair = f"""
         UPDATE users
-        SET hair_choice = '{text}'
+        SET body_choice = '{text}'
         WHERE id = '{user_id}';
         """
     # execute_query(con, update_hair) # Пока что не кидаем в бд
     con.close()
-    await update.message.reply_text(f"Волосы изменены на {text}.")
+    await update.message.reply_text(f"Тело изменено на {text}.")
     logging.info(f"User with ID {user_id} changed body to {text}")
-    return CHOOSING_AVATAR
+    return TYPING_BODY
 
 
 if __name__ == '__main__':
@@ -217,7 +217,7 @@ if __name__ == '__main__':
                 received_body_choice, ),
             ],
         },
-        fallbacks=[MessageHandler(filters.Regex("^Назад$"), custom)],
+        fallbacks=[MessageHandler(filters.Regex("^Назад$"), custom), MessageHandler(filters.Regex("^Подтвердить$"), custom_avatar)],
     )
     application.add_handler(custom_name_handler)
     application.add_handler(avatar_handler)
