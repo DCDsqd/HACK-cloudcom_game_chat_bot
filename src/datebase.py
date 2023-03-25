@@ -38,3 +38,13 @@ def execute_read_query(connection, query):
         return result
     except Error as e:
         print(f"The error '{e}' occurred")
+
+def inserter(col_name, text, user_id):
+    con = create_connection('../db/database.db')
+    updater = f"""
+            UPDATE users
+            SET '{col_name}' = '{text}'
+            WHERE id = '{user_id}';
+            """
+    execute_query(con, updater)
+    con.close()

@@ -10,7 +10,7 @@ from telegram.ext import (
     filters,
 )
 
-from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda
+from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda, unknown_command, meme
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = range(5)
@@ -29,24 +29,19 @@ async def custom(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def custom_name_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     context.user_data["choice"] = text
-    if text == "Изменить имя":
-        await update.message.reply_text("Введите новое имя:")
-        return TYPING_REPLY
+    await update.message.reply_text("Введите новое имя:")
+    return TYPING_REPLY
 
 
 async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
     text = update.message.text
     context.user_data["name"] = text
     user_id = update.message.from_user.id
-    con = create_connection('../db/database.db')
-    update_name = f"""
-        UPDATE users
-        SET personal_username = '{text}'
-        WHERE id = '{user_id}';
-        """
-    execute_query(con, update_name)
-    con.close()
-    await update.message.reply_text(f"Имя изменено на {text}.")
+    inserter('personal_username', text, user_id)
+    await update.message.reply_text(f"Имя изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed personal name on {text}")
     return CHOOSING
 
@@ -116,61 +111,69 @@ async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_keyboard = [["Изменить волосы", "Изменить лицо", "Изменить тело"], ["Назад"]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
     text = update.message.text
     # Save the selected hair option to the user data
     context.user_data["hair_choice"] = text
     print(text)
     user_id = update.message.from_user.id
+
     # Update the user's hair choice in the database
-    con = create_connection('../db/database.db')
-    update_hair = f"""
-        UPDATE users
-        SET hair_choice = '{text}'
-        WHERE id = '{user_id}';
-        """
-    # execute_query(con, update_hair) # Пока что не кидаем в бд
-    con.close()
-    await update.message.reply_text(f"Волосы изменены на {text}.")
+    inserter('hair_choice', text, user_id)
+
+    await update.message.reply_text(f"Волосы изменены на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed hair to {text}")
-    return TYPING_HAIR
+    return CHOOSING_AVATAR
 
 
 async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_keyboard = [["Изменить волосы", "Изменить лицо", "Изменить тело"], ["Назад"]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
     text = update.message.text
     # Save the selected hair option to the user data
-    context.user_data["hair_choice"] = text
+    context.user_data["face_choice"] = text
     print(text)
     user_id = update.message.from_user.id
+
     # Update the user's hair choice in the database
-    con = create_connection('../db/database.db')
-    update_hair = f"""
-        UPDATE users
-        SET face_choice = '{text}'
-        WHERE id = '{user_id}';
-        """
-    # execute_query(con, update_hair) # Пока что не кидаем в бд
-    con.close()
-    await update.message.reply_text(f"Лицо изменено на {text}.")
+    inserter('face_choice', text, user_id)
+
+    await update.message.reply_text(f"Лицо изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed face to {text}")
-    return TYPING_FACE
+    return CHOOSING_AVATAR
 
 
 async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_keyboard = [["Изменить волосы", "Изменить лицо", "Изменить тело"], ["Назад"]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
     text = update.message.text
     # Save the selected hair option to the user data
-    context.user_data["hair_choice"] = text
+    context.user_data["body_choice"] = text
     print(text)
     user_id = update.message.from_user.id
+
     # Update the user's hair choice in the database
-    con = create_connection('../db/database.db')
-    update_hair = f"""
-        UPDATE users
-        SET body_choice = '{text}'
-        WHERE id = '{user_id}';
-        """
-    # execute_query(con, update_hair) # Пока что не кидаем в бд
-    con.close()
-    await update.message.reply_text(f"Тело изменено на {text}.")
+    inserter('body_choice', text, user_id)
+
+    await update.message.reply_text(f"Тело изменено на {text}.", reply_markup=markup)
+    logging.info(f"User with ID {user_id} changed body to {text}")
+    return CHOOSING_AVATAR
+
+
+async def enter_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_keyboard = [["Изменить волосы", "Изменить лицо", "Изменить тело"], ["Назад"]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
+    text = update.message.text
+    context.user_data["body_choice"] = text
+    print(text)
+    user_id = update.message.from_user.id
+
+    await update.message.reply_text(f"Тело изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed body to {text}")
     return TYPING_BODY
 
@@ -194,6 +197,7 @@ if __name__ == '__main__':
         },
         fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
     )
+
     avatar_handler = ConversationHandler(
         entry_points=[MessageHandler(filters.Regex('^Изменить аватара$'), custom_avatar)],
         states={
@@ -205,25 +209,43 @@ if __name__ == '__main__':
             TYPING_HAIR: [
                 MessageHandler(
                     filters.Regex("^Вариант 1$|^Вариант 2$|^Вариант 3$|^Вариант 4$|^Вариант 5$") & ~filters.COMMAND,
+                    custom_avatar_hair,
+                ),
+                MessageHandler(
+                    filters.Regex("^Подтвердить$") & ~filters.COMMAND,
                     received_hair_choice,
                 ),
             ],
-            TYPING_FACE: [MessageHandler(
-                filters.Regex("^Вариант 1$|^Вариант 2$|^Вариант 3$|^Вариант 4$|^Вариант 5$") & ~filters.COMMAND,
-                received_face_choice, ),
+            TYPING_FACE: [
+                MessageHandler(
+                    filters.Regex("^Вариант 1$|^Вариант 2$|^Вариант 3$|^Вариант 4$|^Вариант 5$") & ~filters.COMMAND,
+                    custom_avatar_face,
+                ),
+                MessageHandler(
+                    filters.Regex("^Подтвердить$") & ~filters.COMMAND,
+                    received_face_choice,
+                ),
             ],
-            TYPING_BODY: [MessageHandler(
-                filters.Regex("^Вариант 1$|^Вариант 2$|^Вариант 3$|^Вариант 4$|^Вариант 5$") & ~filters.COMMAND,
-                received_body_choice, ),
+            TYPING_BODY: [
+                MessageHandler(
+                    filters.Regex("^Вариант 1$|^Вариант 2$|^Вариант 3$|^Вариант 4$|^Вариант 5$") & ~filters.COMMAND,
+                    custom_avatar_body,
+                ),
+                MessageHandler(
+                    filters.Regex("^Подтвердить$") & ~filters.COMMAND,
+                    received_body_choice,
+                ),
             ],
         },
         fallbacks=[MessageHandler(filters.Regex("^Назад$"), custom), MessageHandler(filters.Regex("^Подтвердить$"), custom_avatar)],
     )
+
     application.add_handler(custom_name_handler)
     application.add_handler(avatar_handler)
     application.add_handler(CommandHandler('upgrade', upgrade))
     application.add_handler(MessageHandler(filters.Regex("^Да$|^да$"), danet))
     application.add_handler(MessageHandler(filters.Regex("^Нет$|^нет$"), netda))
+    application.add_handler(CommandHandler('meme', meme))
     application.add_handler(CommandHandler('menu', main_menu))
     application.add_handler(CommandHandler('fight', fight))
     application.add_handler(CommandHandler('profile', profile))

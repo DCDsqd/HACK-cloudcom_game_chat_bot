@@ -1,5 +1,7 @@
 from datebase import *
-from telegram import ReplyKeyboardMarkup, Update
+import os
+import random
+from telegram import ReplyKeyboardMarkup, Update, InputMediaPhoto
 from telegram.ext import ContextTypes
 from telegram.ext import (
     ApplicationBuilder,
@@ -93,3 +95,12 @@ async def danet(update: Update, context: ContextTypes.DEFAULT_TYPE):  # не з�
 async def netda(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "пидора ответ"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+
+async def meme(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    rand = random.randint(1, 9)
+    photo = [InputMediaPhoto(open(os.path.abspath('../res/meme/meme_'+str(rand)+'.jpg'), 'rb'))]
+    await context.bot.send_media_group(chat_id=update.effective_chat.id, media=photo)
+
+async def unknown_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = "Не понял нихуя"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Хуйня")
