@@ -165,21 +165,13 @@ async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def enter_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Да", "Нет"]]
+    reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-
-    text = update.message.text
-    context.user_data["body_choice"] = text
-    print(text)
-    user_id = update.message.from_user.id
-
-    await update.message.reply_text(f"Изменения приняты {text}.")
     await update.message.reply_text(
-        "Что бы Вы хотели изменить в аватаре?",
+        "Что бы Вы хотели изменить?",
         reply_markup=markup,
     )
-
-    return TYPING_BODY
+    return ConversationHandler.END
 
 
 if __name__ == '__main__':
@@ -241,7 +233,8 @@ if __name__ == '__main__':
                 ),
             ],
         },
-        fallbacks=[MessageHandler(filters.Regex("^Назад$"), enter_change), MessageHandler(filters.Regex("^Подтвердить$"), custom_avatar)],
+        fallbacks=[MessageHandler(filters.Regex("^Назад$"), enter_change),
+                   MessageHandler(filters.Regex("^Подтвердить$"), custom_avatar)],
     )
 
     application.add_handler(custom_name_handler)

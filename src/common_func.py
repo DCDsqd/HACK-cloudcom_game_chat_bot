@@ -25,16 +25,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         username = None
     create_users = f"""
     INSERT INTO
-      users (id, username)
+      users (id, username, game_class)
     VALUES
-      ('{user_id}', '{username}');
+      ('{user_id}', '{username}', 'NULL');
     """
     con = create_connection('../db/database.db')
     create_users_table = """
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT NOT NULL, 
-      personal_username TEXT
+      personal_username TEXT,
+      game_class TEXT,
+      exp INTEGER
     );
     """
     execute_query(con, create_users_table)
