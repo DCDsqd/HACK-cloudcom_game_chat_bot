@@ -1,6 +1,14 @@
 from datebase import *
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import ContextTypes
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -38,6 +46,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text="Выберите команду:",
                                    reply_markup=reply_markup)
+    return ConversationHandler.END
 
 
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
