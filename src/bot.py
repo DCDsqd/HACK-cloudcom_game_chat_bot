@@ -111,7 +111,7 @@ async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Изменить волосы", "Изменить лицо", "Изменить тело"], ["Назад"]]
+    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
     text = update.message.text
@@ -125,11 +125,11 @@ async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
     await update.message.reply_text(f"Волосы изменены на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed hair to {text}")
-    return CHOOSING_AVATAR
+    return TYPING_HAIR
 
 
 async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Изменить волосы", "Изменить лицо", "Изменить тело"], ["Назад"]]
+    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
     text = update.message.text
@@ -143,11 +143,11 @@ async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
     await update.message.reply_text(f"Лицо изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed face to {text}")
-    return CHOOSING_AVATAR
+    return TYPING_FACE
 
 
 async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Изменить волосы", "Изменить лицо", "Изменить тело"], ["Назад"]]
+    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
     text = update.message.text
@@ -161,11 +161,11 @@ async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
     await update.message.reply_text(f"Тело изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed body to {text}")
-    return CHOOSING_AVATAR
+    return TYPING_BODY
 
 
-async def enter_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Изменить волосы", "Изменить лицо", "Изменить тело"], ["Назад"]]
+async def enter_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_keyboard = [["Да", "Нет"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
     text = update.message.text
@@ -173,8 +173,12 @@ async def enter_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(text)
     user_id = update.message.from_user.id
 
-    await update.message.reply_text(f"Тело изменено на {text}.", reply_markup=markup)
-    logging.info(f"User with ID {user_id} changed body to {text}")
+    await update.message.reply_text(f"Изменения приняты {text}.")
+    await update.message.reply_text(
+        "Что бы Вы хотели изменить в аватаре?",
+        reply_markup=markup,
+    )
+
     return TYPING_BODY
 
 
@@ -209,35 +213,35 @@ if __name__ == '__main__':
             TYPING_HAIR: [
                 MessageHandler(
                     filters.Regex("^Вариант 1$|^Вариант 2$|^Вариант 3$|^Вариант 4$|^Вариант 5$") & ~filters.COMMAND,
-                    custom_avatar_hair,
+                    received_hair_choice,
                 ),
                 MessageHandler(
                     filters.Regex("^Подтвердить$") & ~filters.COMMAND,
-                    received_hair_choice,
+                    custom_avatar,
                 ),
             ],
             TYPING_FACE: [
                 MessageHandler(
                     filters.Regex("^Вариант 1$|^Вариант 2$|^Вариант 3$|^Вариант 4$|^Вариант 5$") & ~filters.COMMAND,
-                    custom_avatar_face,
+                    received_face_choice,
                 ),
                 MessageHandler(
                     filters.Regex("^Подтвердить$") & ~filters.COMMAND,
-                    received_face_choice,
+                    custom_avatar,
                 ),
             ],
             TYPING_BODY: [
                 MessageHandler(
                     filters.Regex("^Вариант 1$|^Вариант 2$|^Вариант 3$|^Вариант 4$|^Вариант 5$") & ~filters.COMMAND,
-                    custom_avatar_body,
+                    received_body_choice,
                 ),
                 MessageHandler(
                     filters.Regex("^Подтвердить$") & ~filters.COMMAND,
-                    received_body_choice,
+                    custom_avatar,
                 ),
             ],
         },
-        fallbacks=[MessageHandler(filters.Regex("^Назад$"), custom), MessageHandler(filters.Regex("^Подтвердить$"), custom_avatar)],
+        fallbacks=[MessageHandler(filters.Regex("^Назад$"), enter_change), MessageHandler(filters.Regex("^Подтвердить$"), custom_avatar)],
     )
 
     application.add_handler(custom_name_handler)
