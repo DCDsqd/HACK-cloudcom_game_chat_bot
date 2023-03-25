@@ -24,9 +24,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         username = None
     create_users = f"""
     INSERT INTO
-      users (id, username, game_class)
+      users (id, username)
     VALUES
-      ('{user_id}', '{username}', 'NULL');
+      ('{user_id}', '{username}');
     """
     con = create_connection('../db/database.db')
     create_users_table = """
@@ -44,7 +44,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [['/custom', '/upgrade'], ['/fight', '/help']]
+    keyboard = [['/custom', '/game'], ['/fight', '/help']]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text="Выберите команду:",
@@ -57,13 +57,14 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
     user_id = message.from_user.id
     username = message.from_user.username
-    request = f"SELECT personal_username, exp FROM users WHERE id={user_id}"
+    request = f"SELECT personal_username, game_class, exp FROM users WHERE id={user_id}"
     db_data = execute_read_query(con, request)
     message = "Ваш профиль:\n\n" \
               f"Игровое имя: {db_data[0][0]}\n" \
               f"ID: {user_id}\n" \
               f"Имя Telegram: {username}\n" \
-              f"Опыт: {db_data[0][1]}"
+              f"Ваш класс: {db_data[0][1]}\n" \
+              f"Опыт: {db_data[0][2]}"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     con.close()
 
