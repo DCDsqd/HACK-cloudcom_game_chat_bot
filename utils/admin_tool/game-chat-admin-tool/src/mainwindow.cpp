@@ -29,10 +29,10 @@ void MainWindow::on_addEventButton_clicked()
 
 void MainWindow::addEventToLayout()
 {
-    addEventToLayout("Event name", "Event description", QDate::currentDate().addDays(1), 1);
+    addEventToLayout("Event name", "Event description", QDateTime::currentDateTime().addDays(1), 1);
 }
 
-void MainWindow::addEventToLayout(const QString &name, const QString &descr, const QDate &date, const size_t duration)
+void MainWindow::addEventToLayout(const QString &name, const QString &descr, const QDateTime &date, const size_t duration)
 {
     // Event name
     QLineEdit* event_name = new QLineEdit(name);
@@ -78,5 +78,33 @@ void MainWindow::loadEventsFromDb()
     for(const auto& event : events) {
         addEventToLayout(event);
     }
+}
+
+QVector<Event> MainWindow::getCurrentEventsList() const
+{
+    QVector<Event> event_list;
+
+    for(size_t i = 0; i < (size_t)ui->eventsLayout->rowCount(); ++i){
+        Event cur_event;
+
+        QWidget* name_widget = ui->eventsLayout->itemAtPosition(i, 0)->widget();
+        QWidget* descr_widget = ui->eventsLayout->itemAtPosition(i, 1)->widget();
+        QWidget* date_widget = ui->eventsLayout->itemAtPosition(i, 2)->widget();
+        QWidget* duration_widget = ui->eventsLayout->itemAtPosition(i, 3)->widget();
+
+        QLineEdit* casted_name = static_cast<QLineEdit*>(name_widget);
+        QTextEdit* casted_descr = static_cast<QTextEdit*>(descr_widget);
+        QDateTimeEdit* casted_start_date = static_cast<QDateTimeEdit*>(date_widget);
+        QLineEdit* casted_duration = static_cast<QLineEdit*>(duration_widget);
+
+        cur_event.name = casted_name->text();
+        cur_event.description = casted_descr->toPlainText();
+        cur_event.start_date = casted_start_date->dateTime();
+        cur_event.duration = casted_duration->text().toUInt();
+
+        event_list.push_back(cur_event);
+    }
+
+    return event_list;
 }
 

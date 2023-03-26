@@ -35,9 +35,10 @@ private slots:
 
 private: //functions
     void addEventToLayout();
-    void addEventToLayout(const QString& name, const QString& descr, const QDate& date, const size_t duration);
+    void addEventToLayout(const QString& name, const QString& descr, const QDateTime &date, const size_t duration);
     void addEventToLayout(const Event& event);
     void loadEventsFromDb();
+    QVector<Event> getCurrentEventsList() const;
 
 private: //fields
     Ui::MainWindow *ui;

@@ -36,10 +36,11 @@ QVector<Event> Database::SelectEvents(const QString &table_name) const
     Database::PrintSqlExecInfoIfErr(query);
     while(query.next()){
         Event cur_event;
-        cur_event.name = query.value(0).toString();
-        cur_event.description = query.value(1).toString();
-        cur_event.start_date = QDate::fromString(query.value(2).toString());
-        cur_event.duration = query.value(3).toUInt();
+        cur_event.name = query.value(1).toString();
+        cur_event.description = query.value(2).toString();
+        auto raw = query.value(3).toString();
+        cur_event.start_date = QDateTime::fromString(raw, "yyyy-MM-dd hh:mm:ss");
+        cur_event.duration = query.value(4).toUInt();
         event_list.push_back(cur_event);
     }
 
@@ -62,7 +63,33 @@ void Database::DeleteEventsInfo(const QString& table_name) const
 {
     QSqlQuery query(*db);
     QString queryStatement = "DELETE FROM " + table_name;
-    if(!query.exec(queryStatement)){
-        qDebug() << "Table was not deleted. Error: " + query.lastError().text();
+    query.exec(queryStatement);
+    PrintSqlExecInfoIfErr(query);
+}
+
+void Database::OverwriteEventsInfo(const QString &table_name, const QVector<Event> &events) const
+{
+    DeleteEventsInfo(table_name);
+    SaveEventsInfo(table_name, events);
+}
+
+void Database::InsertEventIntoDb(const QString& table_name, const Event &event) const
+{
+    QSqlQuery query(*db);
+    QString queryStatement = "INSERT INTO " + table_name +
+            " (name, descr, start_time, duration) " +
+            " VALUES('" +
+            event.name + "', '" +
+            event.description + "', '" +
+            event.start_date.toString() + "', '" +
+            QString::number(event.duration) + "');";
+    query.exec(queryStatement);
+    PrintSqlExecInfoIfErr(query);
+}
+
+void Database::SaveEventsInfo(const QString &table_name, const QVector<Event>& events) const
+{
+    for(const auto& event : events){
+        InsertEventIntoDb(table_name, event);
     }
 }
