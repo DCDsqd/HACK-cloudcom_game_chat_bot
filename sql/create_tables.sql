@@ -15,7 +15,7 @@ CREATE TABLE "global_events" (
 	"duration"	INTEGER NOT NULL DEFAULT 5,
 	"participants"	TEXT NOT NULL,
 	PRIMARY KEY("id" AUTOINCREMENT)
-)
+);
 
 CREATE TABLE "local_events" (
 	"id"	INTEGER UNIQUE,
@@ -24,4 +24,4 @@ CREATE TABLE "local_events" (
 	"participants"	TEXT NOT NULL,
 	"result"	TEXT NOT NULL DEFAULT "in progress",
 	PRIMARY KEY("id" AUTOINCREMENT)
-)
+);
