@@ -86,7 +86,7 @@ async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
         message = 'Добро пожаловать в Храм Хроноса. Здесь вы сможете получить новые навыки для своего персонажа, ' \
-                  'а также, по достижению определённого ранга, изменить подкласс.'
+                  'а также, по достижении определённого ранга, изменить подкласс.'
         if not is_available(update.message.from_user.id, 1000):  # Если опыт больше 1000, даём доступ к смене подкласса
             chronos_keyboard = [["Улучшить персонажа"], ["Назад"]]
         else:
