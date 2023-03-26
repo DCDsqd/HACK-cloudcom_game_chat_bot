@@ -86,8 +86,8 @@ QVector<Event> MainWindow::getCurrentEventsList() const
 
     for(size_t i = 1; i < (size_t)ui->eventsLayout->rowCount(); ++i){
         Event cur_event;
-        auto w = ui->eventsLayout->itemAtPosition(i, 0);
-        QWidget* name_widget = w->widget();
+
+        QWidget* name_widget = ui->eventsLayout->itemAtPosition(i, 0)->widget();
         QWidget* descr_widget = ui->eventsLayout->itemAtPosition(i, 1)->widget();
         QWidget* date_widget = ui->eventsLayout->itemAtPosition(i, 2)->widget();
         QWidget* duration_widget = ui->eventsLayout->itemAtPosition(i, 3)->widget();
