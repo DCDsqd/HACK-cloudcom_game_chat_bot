@@ -81,7 +81,7 @@ void Database::InsertEventIntoDb(const QString& table_name, const Event &event) 
             " VALUES('" +
             event.name + "', '" +
             event.description + "', '" +
-            event.start_date.toString() + "', '" +
+            event.start_date.toString("yyyy-MM-dd hh:mm:ss") + "', '" +
             QString::number(event.duration) + "');";
     query.exec(queryStatement);
     PrintSqlExecInfoIfErr(query);

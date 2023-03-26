@@ -45,7 +45,7 @@ void MainWindow::addEventToLayout(const QString &name, const QString &descr, con
     // Event start time
     QDateTimeEdit *event_start_date = new QDateTimeEdit(date);
     //event_start_date->setFixedSize(480, 30);
-    event_start_date->setDisplayFormat("HH:mm dd-MM");
+    event_start_date->setDisplayFormat("HH:mm dd-MM-yy");
 
     // Event duration
     QLineEdit* event_dur = new QLineEdit(QString::number(duration));
@@ -84,10 +84,10 @@ QVector<Event> MainWindow::getCurrentEventsList() const
 {
     QVector<Event> event_list;
 
-    for(size_t i = 0; i < (size_t)ui->eventsLayout->rowCount(); ++i){
+    for(size_t i = 1; i < (size_t)ui->eventsLayout->rowCount(); ++i){
         Event cur_event;
-
-        QWidget* name_widget = ui->eventsLayout->itemAtPosition(i, 0)->widget();
+        auto w = ui->eventsLayout->itemAtPosition(i, 0);
+        QWidget* name_widget = w->widget();
         QWidget* descr_widget = ui->eventsLayout->itemAtPosition(i, 1)->widget();
         QWidget* date_widget = ui->eventsLayout->itemAtPosition(i, 2)->widget();
         QWidget* duration_widget = ui->eventsLayout->itemAtPosition(i, 3)->widget();
@@ -106,5 +106,12 @@ QVector<Event> MainWindow::getCurrentEventsList() const
     }
 
     return event_list;
+}
+
+
+void MainWindow::on_saveAllButton_clicked()
+{
+    // @TODO: Perhaps make a popup dialog asking for confirmation of this action
+    db->OverwriteEventsInfo(default_events_table_name, getCurrentEventsList());
 }
 

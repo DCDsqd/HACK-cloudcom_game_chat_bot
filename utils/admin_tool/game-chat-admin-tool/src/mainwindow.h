@@ -33,6 +33,8 @@ public:
 private slots:
     void on_addEventButton_clicked();
 
+    void on_saveAllButton_clicked();
+
 private: //functions
     void addEventToLayout();
     void addEventToLayout(const QString& name, const QString& descr, const QDateTime &date, const size_t duration);
