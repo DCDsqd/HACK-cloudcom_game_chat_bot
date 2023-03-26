@@ -34,6 +34,8 @@ void MainWindow::addEventToLayout()
 
 void MainWindow::addEventToLayout(const QString &name, const QString &descr, const QDateTime &date, const size_t duration)
 {
+    int cur_next_row = ui->eventsLayout->rowCount();
+
     // Event name
     QLineEdit* event_name = new QLineEdit(name);
     event_name->setFixedSize(QSize(100, 50));
@@ -52,12 +54,19 @@ void MainWindow::addEventToLayout(const QString &name, const QString &descr, con
     event_dur->setFixedSize(QSize(100, 30));
     event_dur->setValidator(new QIntValidator(1, mins_in_year, this));
 
-    // Adding events to grud layout
-    int cur_next_row = ui->eventsLayout->rowCount();
+    // Delete event button
+    QPushButton* event_delete = new QPushButton("Delete!");
+    event_delete->setFixedSize(100, 50);
+    QObject::connect(event_delete, &QPushButton::clicked, this, [this, cur_next_row]{
+        deleteRowFromLayout(cur_next_row);
+    });
+
+    // Adding events to grid layout
     ui->eventsLayout->addWidget(event_name, cur_next_row, 0, Qt::AlignCenter);
     ui->eventsLayout->addWidget(event_descr, cur_next_row, 1, Qt::AlignCenter);
     ui->eventsLayout->addWidget(event_start_date, cur_next_row, 2, Qt::AlignCenter);
     ui->eventsLayout->addWidget(event_dur, cur_next_row, 3, Qt::AlignCenter);
+    ui->eventsLayout->addWidget(event_delete, cur_next_row, 4, Qt::AlignCenter);
 
     //Scroll down to be able to see a newly added widget
     ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->maximumHeight());
@@ -74,7 +83,7 @@ void MainWindow::addEventToLayout(const Event &event)
 
 void MainWindow::deleteRowFromLayout(size_t row)
 {
-    for(int c = 1; c < ui->eventsLayout->columnCount(); ++c)
+    for(int c = 0; c < ui->eventsLayout->columnCount(); ++c)
     {
         QLayoutItem* item = ui->eventsLayout->itemAtPosition( row, c );
         QWidget* itemWidget = item->widget();
@@ -84,7 +93,7 @@ void MainWindow::deleteRowFromLayout(size_t row)
             delete itemWidget;
         }
     }
-    //ui->eventsLayout->update();
+    ui->eventsLayout->update();
 }
 
 void MainWindow::clearLayout()
