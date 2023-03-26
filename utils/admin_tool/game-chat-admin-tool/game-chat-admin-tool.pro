@@ -7,13 +7,17 @@ CONFIG += lrelease
 CONFIG += embed_translations
 
 SOURCES += \
+    src/database.cpp \
+    src/event.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
-    src/translatorwrapper.cpp
+    src/translator_wrapper.cpp
 
 HEADERS += \
+    src/database.h \
+    src/event.h \
     src/mainwindow.h \
-    src/translatorwrapper.h
+    src/translator_wrapper.h
 
 FORMS += \
     ui/mainwindow.ui

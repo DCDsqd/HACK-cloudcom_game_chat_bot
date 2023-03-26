@@ -1,4 +1,4 @@
-#include "translatorwrapper.h"
+#include "translator_wrapper.h"
 
 TranslatorWrapper::TranslatorWrapper(QApplication &app_) : app(app_)
 {

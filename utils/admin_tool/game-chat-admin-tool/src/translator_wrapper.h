@@ -1,5 +1,5 @@
-#ifndef TRANSLATORWRAPPER_H
-#define TRANSLATORWRAPPER_H
+#ifndef TRANSLATOR_WRAPPER_H
+#define TRANSLATOR_WRAPPER_H
 
 #include <QString>
 #include <QTranslator>
@@ -18,4 +18,4 @@ private:
     QApplication& app;
 };
 
-#endif // TRANSLATORWRAPPER_H
+#endif // TRANSLATOR_WRAPPER_H
