@@ -1,6 +1,6 @@
 from datebase import *
 import os
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InputMediaPhoto
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -15,7 +15,7 @@ from common_func import start, main_menu, profile, help_me, upgrade, fight, dane
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = range(5)
 
-CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING = range(3)
+CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING = range(4)
 
 
 async def del_keyboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -85,7 +85,28 @@ async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = 'Вы подходите к огромному храму, но какая-то неведомая сила не даёт Вам пройти внутрь.\nВозможно, Вам пока что не хватает опыта.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
-        pass  # Здесь будет прокачка героя
+        message = 'Добро пожаловать в Храм Хроноса. Здесь вы сможете получить новые навыки для своего персонажа, ' \
+                  'а также, по достижению определённого ранга, изменить подкласс.'
+        if not is_available(update.message.from_user.id, 1000):  # Если опыт больше 1000, даём доступ к смене подкласса
+            chronos_keyboard = [["Улучшить персонажа"], ["Назад"]]
+        else:
+            chronos_keyboard = [["Улучшить персонажа", "Изменить подкласс"], ["Назад"]]
+        markup = ReplyKeyboardMarkup(chronos_keyboard, one_time_keyboard=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+        return CHRONOS_CHOOSING
+
+
+async def upgrade_champ(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    pass  # Здесь будет улучшение персонажа
+
+
+async def change_subclass(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if is_available(update.message.from_user.id, 1000):
+        pass  # Здесь задаём смену подкласса
+    else:
+        message = 'У вас пока что нет доступа к смене подкласса!'
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+        # Вот хуй знает что тут возвращать
 
 
 async def lab(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -134,6 +155,11 @@ if __name__ == '__main__':
                 MessageHandler(filters.Regex("^Лаборатория$"), lab),
                 MessageHandler(filters.Regex("^Дом гильдий$"), guild_house),
                 #  Сюда добавим все остальные локации
+            ],
+            CHRONOS_CHOOSING: [
+                MessageHandler(filters.Regex("^Улучшить персонажа$"), upgrade_champ),
+                MessageHandler(filters.Regex("^Изменить подкласс$"), change_subclass),
+                MessageHandler(filters.Regex("^Назад$"), class_choosing),
             ],
         },
         fallbacks=[MessageHandler(filters.Regex("^Отмена$"), game_cancel)],
