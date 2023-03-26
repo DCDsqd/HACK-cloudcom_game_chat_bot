@@ -30,15 +30,20 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    static void ClearLay(QGridLayout *lay);
 private slots:
     void on_addEventButton_clicked();
 
     void on_saveAllButton_clicked();
 
+    void on_reloadDataButton_clicked();
+
 private: //functions
     void addEventToLayout();
     void addEventToLayout(const QString& name, const QString& descr, const QDateTime &date, const size_t duration);
     void addEventToLayout(const Event& event);
+    void deleteRowFromLayout(size_t row);
+    void clearLayout();
     void loadEventsFromDb();
     QVector<Event> getCurrentEventsList() const;
 

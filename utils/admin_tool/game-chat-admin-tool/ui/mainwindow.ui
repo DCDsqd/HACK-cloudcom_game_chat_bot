@@ -96,6 +96,19 @@
        <string>Save All</string>
       </property>
      </widget>
+     <widget class="QPushButton" name="reloadDataButton">
+      <property name="geometry">
+       <rect>
+        <x>620</x>
+        <y>10</y>
+        <width>161</width>
+        <height>61</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Reload Data</string>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>

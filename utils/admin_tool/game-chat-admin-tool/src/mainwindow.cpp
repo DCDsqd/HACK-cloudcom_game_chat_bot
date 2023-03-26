@@ -72,6 +72,26 @@ void MainWindow::addEventToLayout(const Event &event)
                      event.duration);
 }
 
+void MainWindow::deleteRowFromLayout(size_t row)
+{
+    for(int c = 1; c < ui->eventsLayout->columnCount(); ++c)
+    {
+        QLayoutItem* item = ui->eventsLayout->itemAtPosition( row, c );
+        QWidget* itemWidget = item->widget();
+        if(itemWidget)
+        {
+            ui->eventsLayout->removeWidget(itemWidget);
+            delete itemWidget;
+        }
+    }
+    //ui->eventsLayout->update();
+}
+
+void MainWindow::clearLayout()
+{
+    ClearLay(ui->eventsLayout);
+}
+
 void MainWindow::loadEventsFromDb()
 {
     const QVector<Event> events = db->SelectEvents(default_events_table_name);
@@ -113,5 +133,49 @@ void MainWindow::on_saveAllButton_clicked()
 {
     // @TODO: Perhaps make a popup dialog asking for confirmation of this action
     db->OverwriteEventsInfo(default_events_table_name, getCurrentEventsList());
+    // @TODO: Perhaps make a popup dialog informing that action has ended + its status (?)
 }
 
+
+void MainWindow::on_reloadDataButton_clicked()
+{
+    // Delete widgets from prev layout
+    // delete ui->eventsLayout;
+    //ui->eventsLayout = new QGridLayout();
+    clearLayout();
+    loadEventsFromDb();
+}
+
+void MainWindow::ClearLay(QGridLayout *lay)
+{
+    if(lay == nullptr){
+        return;
+    }
+    QLayoutItem* curItem;
+    //qDebug() << "Entered ClearLay() with lay consist of " << lay->count() << " items";
+    while(lay->count()){
+        curItem = lay->takeAt(0);
+        if(curItem == nullptr){
+            continue;
+        }
+        //qDebug() << "Entered while, i = " << i;
+        if(curItem->layout() != nullptr){
+            ClearLay(dynamic_cast<QGridLayout*>(curItem->layout()));
+            //qDebug() << "Deleted lay: " << curItem->layout();
+            //TO DO: Figure out if following line leads to memory leak or is it supposed to work like that
+            //delete curItem->layout();
+        }
+        else if(curItem->widget() != nullptr){
+            //qDebug() << "Deleted widget: " << curItem->widget() << " i = " << i;
+            curItem->widget()->hide();
+            //curItem->widget()->deleteLater();
+            delete curItem->widget();
+        }
+        //qDebug() << "Trying to delete item: " << curItem;
+        //else {
+        // @TODO: Figure out if following line leads to memory leak or is it supposed to work like that
+        //delete curItem;
+        //}
+    }
+    //qDebug() << "ClearLay() finished working";
+}
