@@ -71,16 +71,34 @@ def regen_avatar(user_id):
     ids = get_avatar_ids(user_id)
     merge_image(ids[0], ids[1], ids[2], user_id)
 
+def get_reply_keyboard(list_of_all):
+    reply_keyboard = []
+    for index in range(1, len(list_of_all)):
+        if index % 2 == 1:
+            reply_keyboard.append([list_of_all[index - 1][1], list_of_all[index][1]])
+
+    if len(list_of_all) % 2 == 1:
+        reply_keyboard.append([list_of_all[len(list_of_all) - 1][1]])
+
+    reply_keyboard.append([["Подтвердить"]])
+    return reply_keyboard
+
 
 async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
-    hair_list = [
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 1.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 2.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 3.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 4.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 5.png'), 'rb')),
-    ]
+    all_hair = select_all_hair()
+    reply_keyboard = get_reply_keyboard(all_hair)
+
+    # reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    hair_list = []
+    for i in range(all_hair):
+        hair_list.append(open(os.path.abspath(f'../res/avatars/hair/{all_hair[i][2]}.png'), 'rb'))
+    #hair_list = [
+    #    InputMediaPhoto(),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 2.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 3.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 4.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 5.png'), 'rb')),
+    #]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(
         "Выберите один из вариантов волос:",
@@ -91,14 +109,22 @@ async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
-    face_list = [
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 1.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 2.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 3.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 4.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 5.png'), 'rb')),
-    ]
+    all_face = select_all_face()
+    reply_keyboard = get_reply_keyboard(all_face)
+
+    # reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    face_list = []
+    for i in range(all_face):
+        face_list.append(open(os.path.abspath(f'../res/avatars/hair/{all_face[i][2]}.png'), 'rb'))
+    
+    #reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    #face_list = [
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 1.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 2.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 3.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 4.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/face/Вариант 5.png'), 'rb')),
+    #]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(
         "Выберите один из вариантов лица:",
@@ -109,47 +135,45 @@ async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    all_hair = select_all_hair()
-    reply_keyboard = []
-    for index in range(len(all_hair)):
-        if index % 2 == 0:
-            reply_keyboard.append([all_hair[index - 1][1], all_hair[index][1]])
+    all_shoulders = select_all_shoulders()
+    reply_keyboard = get_reply_keyboard(all_shoulders)
 
-    if len(all_hair) % 2 == 1:
-        reply_keyboard.append([all_hair[len(all_hair) - 1][1]])
+    # reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    shoulders_list = []
+    for i in range(all_shoulders):
+        shoulders_list.append(open(os.path.abspath(f'../res/avatars/hair/{all_shoulders[i][2]}.png'), 'rb'))
+    
 
-    print(reply_keyboard)
-    """
-    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
-    body_list = [
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 1.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 2.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 3.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 4.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 5.png'), 'rb')),
-    ]
+    #reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    #body_list = [
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 1.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 2.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 3.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 4.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 5.png'), 'rb')),
+    #]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(
         "Выберите один из вариантов тела:",
         reply_markup=markup,
     )
-    await context.bot.send_media_group(chat_id=update.effective_chat.id, media=body_list)
+    await context.bot.send_media_group(chat_id=update.effective_chat.id, media=shoulders_list)
     return TYPING_BODY
 
 
 async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    #reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    reply_keyboard = get_reply_keyboard(select_all_hair())
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
     text = update.message.text
     # Save the selected hair option to the user data
-    context.user_data["hair_choice"] = text
+    context.user_data["hair_id"] = text
     print(text)
     user_id = update.message.from_user.id
 
     # Update the user's hair choice in the database
-    inserter('hair_choice', text, user_id)
+    inserter('hair_id', text, user_id)
 
     await update.message.reply_text(f"Волосы изменены на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed hair to {text}")
@@ -157,17 +181,18 @@ async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    #reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    reply_keyboard = get_reply_keyboard(select_all_face())
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
     text = update.message.text
     # Save the selected hair option to the user data
-    context.user_data["face_choice"] = text
+    context.user_data["face_id"] = text
     print(text)
     user_id = update.message.from_user.id
 
     # Update the user's hair choice in the database
-    inserter('face_choice', text, user_id)
+    inserter('face_id', text, user_id)
 
     await update.message.reply_text(f"Лицо изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed face to {text}")
@@ -175,17 +200,18 @@ async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    #reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    reply_keyboard = get_reply_keyboard(select_all_shoulders())
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
     text = update.message.text
     # Save the selected hair option to the user data
-    context.user_data["body_choice"] = text
+    context.user_data["shoulders_id"] = text
     print(text)
     user_id = update.message.from_user.id
 
     # Update the user's hair choice in the database
-    inserter('body_choice', text, user_id)
+    inserter('shoulders_id', text, user_id)
 
     await update.message.reply_text(f"Тело изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed body to {text}")

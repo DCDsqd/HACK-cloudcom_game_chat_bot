@@ -59,6 +59,12 @@ void Database::PrintSqlExecInfo(QSqlQuery &query)
     qDebug() << query.executedQuery() << " . Error: " << query.lastError().text();
 }
 
+void Database::PrintSqlDrivers()
+{
+    QStringList driversList = QSqlDatabase::drivers();
+    qDebug() << "drivers list= " << driversList;
+}
+
 void Database::DeleteEventsInfo(const QString& table_name) const
 {
     QSqlQuery query(*db);
