@@ -73,14 +73,28 @@ def regen_avatar(user_id):
 
 
 async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
-    hair_list = [
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 1.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 2.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 3.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 4.png'), 'rb')),
-        InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 5.png'), 'rb')),
-    ]
+    all_hair = select_all_hair()
+    reply_keyboard = []
+    for index in range(1, len(all_hair)):
+        if index % 2 == 1:
+            reply_keyboard.append([all_hair[index - 1][1], all_hair[index][1]])
+
+    if len(all_hair) % 2 == 1:
+        reply_keyboard.append([all_hair[len(all_hair) - 1][1]])
+
+    reply_keyboard.append([["Подтвердить"]])
+
+    # reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
+    hair_list = []
+    for i in range(all_hair):
+        hair_list.append(open(os.path.abspath(f'../res/avatars/hair/{all_hair[i][2]}.png'), 'rb'))
+    #hair_list = [
+    #    InputMediaPhoto(),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 2.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 3.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 4.png'), 'rb')),
+    #    InputMediaPhoto(open(os.path.abspath('../res/avatars/hair/Вариант 5.png'), 'rb')),
+    #]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(
         "Выберите один из вариантов волос:",
@@ -109,18 +123,6 @@ async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    all_hair = select_all_hair()
-    reply_keyboard = []
-    for index in range(len(all_hair)):
-        if index % 2 == 0:
-            reply_keyboard.append([all_hair[index - 1][1], all_hair[index][1]])
-
-    if len(all_hair) % 2 == 1:
-        reply_keyboard.append([all_hair[len(all_hair) - 1][1]])
-
-    print(reply_keyboard)
-    """
     reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
     body_list = [
         InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 1.png'), 'rb')),
