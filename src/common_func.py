@@ -65,7 +65,7 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
               f"Имя Telegram: {username}\n" \
               f"Ваш класс: {db_data[0][1]}\n" \
               f"Опыт: {db_data[0][2]}"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    await context.bot.send_photo(chat_id=update.effective_chat.id, caption=message, photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'), 'rb'))
     con.close()
 
 
