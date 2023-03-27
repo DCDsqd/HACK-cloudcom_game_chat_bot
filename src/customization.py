@@ -148,6 +148,7 @@ async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
     await update.message.reply_text(f"Волосы изменены на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed hair to {text}")
+    regen_avatar(user_id)
 
     return TYPING_HAIR
 
@@ -167,6 +168,8 @@ async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
     await update.message.reply_text(f"Лицо изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed face to {text}")
+    regen_avatar(user_id)
+
     return TYPING_FACE
 
 
@@ -185,6 +188,8 @@ async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
     await update.message.reply_text(f"Тело изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed body to {text}")
+    regen_avatar(user_id)
+    
     return TYPING_BODY
 
 
