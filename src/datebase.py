@@ -97,3 +97,13 @@ def body_type_name_to_id(table, name):
             """
     res = execute_read_query(con, query)
     return res[0][0]
+
+def check_if_user_exists(id) -> bool:
+    con = create_connection('../db/database.db')
+    query = f"""
+            SELECT username FROM users WHERE id='{id}';
+            """
+    res = execute_read_query(con, query)
+    if(len(res) == 0):
+        return False
+    return True

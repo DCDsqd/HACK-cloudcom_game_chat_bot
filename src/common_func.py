@@ -1,4 +1,5 @@
 from datebase import *
+from customization import regen_avatar
 import os
 import random
 from telegram import ReplyKeyboardMarkup, Update, InputMediaPhoto
@@ -22,24 +23,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         username = user.username
     else:
         username = None
-    create_users = f"""
-    INSERT INTO
-      users (id, username)
-    VALUES
-      ('{user_id}', '{username}');
-    """
-    con = create_connection('../db/database.db')
-    create_users_table = """
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL, 
-      personal_username TEXT,
-      game_class TEXT,
-      exp INTEGER
-    );
-    """
-    execute_query(con, create_users_table)
-    execute_query(con, create_users)
+
+    if not check_if_user_exists(user_id):
+        con = create_connection('../db/database.db')
+        create_users = f"""
+        INSERT INTO
+        users (id, username)
+        VALUES
+        ('{user_id}', '{username}');
+        """
+        execute_query(con, create_users)
+        regen_avatar(user_id)
+    
+    
+    #create_users_table = """
+    #CREATE TABLE IF NOT EXISTS users (
+    #  id INTEGER PRIMARY KEY AUTOINCREMENT,
+    #  username TEXT NOT NULL, 
+    #  personal_username TEXT,
+    #  game_class TEXT,
+    #  exp INTEGER
+    #);
+    #"""
+    #execute_query(con, create_users_table)
+
     con.close()
 
 
