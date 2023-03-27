@@ -173,10 +173,11 @@ async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     user_id = update.message.from_user.id
 
     # Update the user's hair choice in the database
-    inserter('hair_id', text, user_id)
+    inserter('hair_id', body_type_name_to_id('hair', text), user_id)
 
     await update.message.reply_text(f"Волосы изменены на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed hair to {text}")
+
     return TYPING_HAIR
 
 
@@ -192,7 +193,7 @@ async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     user_id = update.message.from_user.id
 
     # Update the user's hair choice in the database
-    inserter('face_id', text, user_id)
+    inserter('face_id', body_type_name_to_id('face', text), user_id)
 
     await update.message.reply_text(f"Лицо изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed face to {text}")
@@ -211,7 +212,7 @@ async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     user_id = update.message.from_user.id
 
     # Update the user's hair choice in the database
-    inserter('shoulders_id', text, user_id)
+    inserter('shoulders_id', body_type_name_to_id('shoulders', text), user_id)
 
     await update.message.reply_text(f"Тело изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed body to {text}")
