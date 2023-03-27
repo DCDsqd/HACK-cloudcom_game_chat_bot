@@ -109,6 +109,18 @@ async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    all_hair = select_all_hair()
+    reply_keyboard = []
+    for index in range(len(all_hair)):
+        if index % 2 == 0:
+            reply_keyboard.append([all_hair[index - 1][1], all_hair[index][1]])
+
+    if len(all_hair) % 2 == 1:
+        reply_keyboard.append([all_hair[len(all_hair) - 1][1]])
+
+    print(reply_keyboard)
+    """
     reply_keyboard = [["Вариант 1", "Вариант 2"], ["Вариант 3", "Вариант 4"], ["Вариант 5"], ["Подтвердить"]]
     body_list = [
         InputMediaPhoto(open(os.path.abspath('../res/avatars/body/Вариант 1.png'), 'rb')),

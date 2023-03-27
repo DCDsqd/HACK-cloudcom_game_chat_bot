@@ -131,7 +131,7 @@ def is_available(user_id, required_exp):
     request = f"SELECT exp FROM users WHERE id={user_id}"
     user_exp = execute_read_query(con, request)
     con.close()
-    return user_exp[0][0] >= required_exp
+    return int(user_exp[0][0]) >= required_exp
 
 
 async def game_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -160,7 +160,7 @@ if __name__ == '__main__':
             CHRONOS_CHOOSING: [
                 MessageHandler(filters.Regex("^Улучшить персонажа$"), upgrade_champ),
                 MessageHandler(filters.Regex("^Изменить подкласс$"), change_subclass),
-                MessageHandler(filters.Regex("^Назад$"), class_choosing),
+                MessageHandler(filters.Regex("^Назад$"), game),
             ],
         },
         fallbacks=[MessageHandler(filters.Regex("^Отмена$"), game_cancel)],

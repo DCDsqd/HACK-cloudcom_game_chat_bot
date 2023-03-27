@@ -61,3 +61,12 @@ def get_avatar_ids(user_id):
     res = execute_read_query(con, query)
     con.close()
     return res[0][0], res[0][1], res[0][2]
+
+
+def select_all_hair():
+    con = create_connection('../db/gamedata.db')
+    query = f"""
+            SELECT * FROM hair
+            """
+    res = execute_read_query(con, query)
+    return res
