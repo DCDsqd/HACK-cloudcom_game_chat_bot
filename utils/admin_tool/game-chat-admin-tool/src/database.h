@@ -26,6 +26,7 @@ public:
 
     static void PrintSqlExecInfoIfErr(QSqlQuery &query);
     static void PrintSqlExecInfo(QSqlQuery &query);
+    static void PrintSqlDrivers();
 
 private: // functions
     void SaveEventsInfo(const QString &table_name, const QVector<Event> &events) const;
