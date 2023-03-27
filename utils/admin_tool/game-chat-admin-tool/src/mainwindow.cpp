@@ -55,7 +55,7 @@ void MainWindow::addEventToLayout(const QString &name, const QString &descr, con
     event_dur->setValidator(new QIntValidator(1, mins_in_year, this));
 
     // Delete event button
-    QPushButton* event_delete = new QPushButton("Delete!");
+    QPushButton* event_delete = new QPushButton(tr("Delete!"));
     event_delete->setFixedSize(100, 50);
     QObject::connect(event_delete, &QPushButton::clicked, this, [this, cur_next_row]{
         deleteRowFromLayout(cur_next_row);

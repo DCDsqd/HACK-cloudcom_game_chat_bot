@@ -15,6 +15,7 @@
 #include <QValidator>
 #include <QDate>
 #include <QTime>
+#include <QTranslator>
 
 #include <memory>
 
