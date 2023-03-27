@@ -39,6 +39,7 @@ def execute_read_query(connection, query):
     except Error as e:
         print(f"The error '{e}' occurred")
 
+
 def inserter(col_name, text, user_id):
     con = create_connection('../db/database.db')
     updater = f"""
@@ -48,3 +49,15 @@ def inserter(col_name, text, user_id):
             """
     execute_query(con, updater)
     con.close()
+
+
+def get_avatar_ids(user_id):
+    con = create_connection('../db/database.db')
+    query = f"""
+            SELECT hair_id, face_id, shoulders_id 
+            FROM users 
+            WHERE id = '{user_id}';
+            """
+    res = execute_read_query(con, query)
+    con.close()
+    return res[0][0], res[0][1], res[0][2]

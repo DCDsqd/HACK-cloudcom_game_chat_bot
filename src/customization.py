@@ -10,7 +10,9 @@ from telegram.ext import (
     filters,
 )
 
-from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda, unknown_command, meme
+from PIL import Image
+
+from common_func import main_menu
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = range(5)
@@ -54,6 +56,20 @@ async def custom_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=markup,
     )
     return CHOOSING_AVATAR
+
+
+def merge_image(img1, img2, img3, user_id):
+    background = Image.open(os.path.abspath(f'../res/avatars/hair/Вариант {img1}.png')).convert("RGBA")
+    foreground = Image.open(os.path.abspath(f'../res/avatars/hair/Вариант {img2}.png')).convert("RGBA")
+    mid = Image.open(os.path.abspath(f'../res/avatars/hair/Вариант {img3}.png')).convert("RGBA")
+    mid.paste(foreground, (0, 0), foreground)
+    mid.paste(background, (0, 0), background)
+    mid.save(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'))
+
+
+def regen_avatar(user_id):
+    ids = get_avatar_ids(user_id)
+    merge_image(ids[0], ids[1], ids[2], user_id)
 
 
 async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE):

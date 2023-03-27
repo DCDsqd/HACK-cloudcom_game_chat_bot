@@ -9,7 +9,8 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
-from customization import custom_name_handler, avatar_handler
+
+from customization import custom_name_handler, avatar_handler, merge_image, regen_avatar
 from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda, meme
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
