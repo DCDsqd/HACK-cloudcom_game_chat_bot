@@ -70,3 +70,19 @@ def select_all_hair():
             """
     res = execute_read_query(con, query)
     return res
+
+def select_all_face():
+    con = create_connection('../db/gamedata.db')
+    query = f"""
+            SELECT * FROM face
+            """
+    res = execute_read_query(con, query)
+    return res
+
+def select_all_shoulders():
+    con = create_connection('../db/gamedata.db')
+    query = f"""
+            SELECT * FROM shoulders
+            """
+    res = execute_read_query(con, query)
+    return res
