@@ -12,7 +12,13 @@ from telegram.ext import (
 
 from PIL import Image
 
-from common_func import main_menu
+async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [['/custom', '/game'], ['/fight', '/help']]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="Выберите команду:",
+                                   reply_markup=reply_markup)
+    return ConversationHandler.END
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = range(5)

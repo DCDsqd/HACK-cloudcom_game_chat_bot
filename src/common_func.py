@@ -34,20 +34,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         execute_query(con, create_users)
         regen_avatar(user_id)
-    
-    
-    #create_users_table = """
-    #CREATE TABLE IF NOT EXISTS users (
-    #  id INTEGER PRIMARY KEY AUTOINCREMENT,
-    #  username TEXT NOT NULL, 
-    #  personal_username TEXT,
-    #  game_class TEXT,
-    #  exp INTEGER
-    #);
-    #"""
-    #execute_query(con, create_users_table)
 
-    con.close()
+        con.close()
 
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
