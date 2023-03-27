@@ -25,7 +25,6 @@ FORMS += \
 TRANSLATIONS += \
     ts/game-chat-admin-tool_ru_RU.ts
 
-# Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
