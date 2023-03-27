@@ -71,6 +71,7 @@ def select_all_hair():
     res = execute_read_query(con, query)
     return res
 
+
 def select_all_face():
     con = create_connection('../db/gamedata.db')
     query = f"""
@@ -78,6 +79,7 @@ def select_all_face():
             """
     res = execute_read_query(con, query)
     return res
+
 
 def select_all_shoulders():
     con = create_connection('../db/gamedata.db')
@@ -87,10 +89,11 @@ def select_all_shoulders():
     res = execute_read_query(con, query)
     return res
 
+
 def body_type_name_to_id(table, name):
     con = create_connection('../db/gamedata.db')
     query = f"""
-            SELECT is FROM {table} WHERE name='{name}';
+            SELECT id FROM {table} WHERE name='{name}';
             """
     res = execute_read_query(con, query)
     return res[0][0]
