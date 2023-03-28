@@ -66,8 +66,8 @@ async def custom_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def merge_image(img1, img2, img3, user_id):
     background = Image.open(os.path.abspath(f'../res/avatars/hair/Вариант {img1}.png')).convert("RGBA")
-    foreground = Image.open(os.path.abspath(f'../res/avatars/hair/Вариант {img2}.png')).convert("RGBA")
-    mid = Image.open(os.path.abspath(f'../res/avatars/hair/Вариант {img3}.png')).convert("RGBA")
+    foreground = Image.open(os.path.abspath(f'../res/avatars/face/Вариант {img2}.png')).convert("RGBA")
+    mid = Image.open(os.path.abspath(f'../res/avatars/body/Вариант {img3}.png')).convert("RGBA")
     mid.paste(foreground, (0, 0), foreground)
     mid.paste(background, (0, 0), background)
     mid.save(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'))
