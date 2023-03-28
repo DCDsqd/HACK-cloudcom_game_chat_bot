@@ -4,16 +4,19 @@ CREATE TABLE "users" (
 	"personal_username"	TEXT UNIQUE,
 	"game_class"	TEXT,
 	"exp"	INTEGER NOT NULL DEFAULT 0,
+	"hair_id"	INTEGER NOT NULL DEFAULT 1,
+	"face_id"	INTEGER NOT NULL DEFAULT 1,
+	"shoulders_id"	INTEGER NOT NULL DEFAULT 1,
 	PRIMARY KEY("id" AUTOINCREMENT)
-);
+)
 
 CREATE TABLE "global_events" (
 	"id"	INTEGER UNIQUE,
 	"name"	TEXT NOT NULL UNIQUE,
 	"descr"	TEXT NOT NULL CHECK(length("descr") < 1000),
-	"start_time"	TEXT NOT NULL CHECK("start_time" > datetime()),
+	"start_time"	TEXT NOT NULL,
 	"duration"	INTEGER NOT NULL DEFAULT 5,
-	"participants"	TEXT NOT NULL,
+	"participants"	TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
