@@ -12,6 +12,7 @@ from telegram.ext import (
 
 from PIL import Image
 
+
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [['/custom', '/game'], ['/fight', '/help']]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
@@ -19,6 +20,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    text="Выберите команду:",
                                    reply_markup=reply_markup)
     return ConversationHandler.END
+
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = range(5)
@@ -109,7 +111,6 @@ async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE):
     all_face = select_all_face()
     reply_keyboard = get_reply_keyboard(all_face)
-
     face_list = []
     for i in range(len(all_face)):
         face_list.append(InputMediaPhoto(open(os.path.abspath(f'../res/avatars/face/{all_face[i][1]}.png'), 'rb')))
@@ -125,7 +126,6 @@ async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE):
     all_shoulders = select_all_shoulders()
     reply_keyboard = get_reply_keyboard(all_shoulders)
-
     shoulders_list = []
     for i in range(len(all_shoulders)):
         shoulders_list.append(
@@ -142,66 +142,48 @@ async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = get_reply_keyboard(select_all_hair())
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-
     text = update.message.text
-    # Save the selected hair option to the user data
     context.user_data["hair_id"] = text
-    print(text)
     user_id = update.message.from_user.id
-
-    # Update the user's hair choice in the database
     inserter('hair_id', body_type_name_to_id('hair', text), user_id)
-
     await update.message.reply_text(f"Волосы изменены на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed hair to {text}")
     regen_avatar(user_id)
     await context.bot.send_photo(chat_id=update.effective_chat.id,
-                                     photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'), 'rb'))
-
+                                 photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'),
+                                            'rb'))
     return TYPING_HAIR
 
 
 async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = get_reply_keyboard(select_all_face())
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-
     text = update.message.text
-    # Save the selected hair option to the user data
     context.user_data["face_id"] = text
-    print(text)
     user_id = update.message.from_user.id
-
-    # Update the user's hair choice in the database
     inserter('face_id', body_type_name_to_id('face', text), user_id)
-
     await update.message.reply_text(f"Лицо изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed face to {text}")
     regen_avatar(user_id)
     await context.bot.send_photo(chat_id=update.effective_chat.id,
-                                     photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'), 'rb'))
-
+                                 photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'),
+                                            'rb'))
     return TYPING_FACE
 
 
 async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = get_reply_keyboard(select_all_shoulders())
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-
     text = update.message.text
-    # Save the selected hair option to the user data
     context.user_data["shoulders_id"] = text
-    print(text)
     user_id = update.message.from_user.id
-
-    # Update the user's hair choice in the database
     inserter('shoulders_id', body_type_name_to_id('shoulders', text), user_id)
-
     await update.message.reply_text(f"Тело изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed body to {text}")
     regen_avatar(user_id)
     await context.bot.send_photo(chat_id=update.effective_chat.id,
-                                     photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'), 'rb'))
-
+                                 photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'),
+                                            'rb'))
     return TYPING_BODY
 
 
