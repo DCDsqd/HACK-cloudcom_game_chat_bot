@@ -11,17 +11,11 @@ from telegram.ext import (
 )
 
 from customization import custom_name_handler, avatar_handler, merge_image, regen_avatar
-from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda, meme, add_exp
+from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda, meme, add_exp, del_keyboard, is_level_up
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = range(5)
-
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING = range(5)
-
-
-async def del_keyboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text='Клавиатура удалена!',
-                                   reply_markup=ReplyKeyboardRemove())
 
 
 async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -34,7 +28,8 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_photo(chat_id=update.effective_chat.id,
                                      photo=open(os.path.abspath('../res/locations/gate.png'), 'rb'),
                                      caption="Добро пожаловать в Великую Империю. Ее выбрали вы, или ее выбрали за вас" \
-                                             " — это лучшее государство из оставшихся.\n\n Сейчас Вам нужно получить лицензию на роль класса.")
+                                             "— это лучшее государство из оставшихся.\n\n Сейчас Вам нужно получить "
+                                             "лицензию на роль класса.")
         classes_description = "Доступные классы:\n\n" \
                               "🛡 Рыцарь — высокая защита и средняя атака. Носит небольшой щит и меч.\n" \
                               "🧙 Маг — высокая поддержка, атака ниже среднего, низкая защита. Носит посох.\n" \
@@ -82,7 +77,8 @@ async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_available(update.message.from_user.id, 500):
-        message = 'Вы подходите к огромному храму, но какая-то неведомая сила не даёт Вам пройти внутрь.\nВозможно, Вам пока что не хватает опыта.'
+        message = 'Вы подходите к огромному храму, но какая-то неведомая сила не даёт Вам пройти внутрь.\nВозможно, ' \
+                  'Вам пока что не хватает опыта.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
         message = 'Добро пожаловать в Храм Хроноса. Здесь вы сможете получить новые навыки для своего персонажа, ' \
@@ -131,7 +127,7 @@ async def change_subclass(update: Update, context: ContextTypes.DEFAULT_TYPE):
                       "⚔ Убийца - упор в атаку, носит кинжалы\n" \
                       "🗡 Шиноби - упор в атаку и контроль, носит клинок"
         else:
-            return "NO SUBCLASSES FOR THIS CLASS"
+            return logging.error(f"SUBCLASSES DO NOT EXIT FOR CLASS {class_data[0][0]}")
         markup = ReplyKeyboardMarkup(subclass_keyboard, one_time_keyboard=True)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
         return SUBCLASS_CHOOSING
@@ -159,7 +155,8 @@ async def lab(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def guild_house(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_available(update.message.from_user.id, 1000):
-        message = 'Вы приходите к дому гильдий. По крайней мере так сказал стражник...\nОн не пропускает Вас под предлогом, что Вы недостаточно опытны.'
+        message = 'Вы приходите к дому гильдий. По крайней мере так сказал стражник...\nОн не пропускает Вас под ' \
+                  'предлогом, что Вы недостаточно опытны.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
         pass  # Здесь можно будет запрашивать ресурсы
@@ -206,7 +203,7 @@ if __name__ == '__main__':
                     "^Латник$|^Паладин$|^Чернокнижник$|^Элементаль$|^Ангел$|^Арбалетчик$|^Шаман$|^Инженер$|^Убийца$"
                     "|^Шиноби$"),
                     subclass_choosing),
-                MessageHandler(filters.Regex("^Назад$"), game),
+                MessageHandler(filters.Regex("^Назад$"), chronos),
             ],
         },
         fallbacks=[MessageHandler(filters.Regex("^Отмена$"), game_cancel)],
