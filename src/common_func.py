@@ -52,15 +52,18 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
     user_id = message.from_user.id
     username = message.from_user.username
-    request = f"SELECT personal_username, game_class, exp FROM users WHERE id={user_id}"
+    request = f"SELECT personal_username, game_class, exp, game_subclass FROM users WHERE id={user_id}"
     db_data = execute_read_query(con, request)
     message = "Ваш профиль:\n\n" \
               f"Игровое имя: {db_data[0][0]}\n" \
               f"ID: {user_id}\n" \
               f"Имя Telegram: {username}\n" \
+              f"Подкласс: {db_data[0][3]}\n" \
               f"Ваш класс: {db_data[0][1]}\n" \
               f"Опыт: {db_data[0][2]}"
-    await context.bot.send_photo(chat_id=update.effective_chat.id, caption=message, photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'), 'rb'))
+    await context.bot.send_photo(chat_id=update.effective_chat.id, caption=message,
+                                 photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'),
+                                            'rb'))
     con.close()
 
 
@@ -100,6 +103,9 @@ async def meme(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_media_group(chat_id=update.effective_chat.id, media=photo)
 
 
-async def unknown_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = "Не понял нихуя"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Хуйня")
+async def add_exp(user_id, exp):
+    con = create_connection('../db/database.db')
+    request = f"SELECT exp FROM users WHERE id={user_id}"
+    db_data = execute_read_query(con, request)
+    con.close()
+    inserter('exp', int(db_data[0][0]) + exp, user_id)

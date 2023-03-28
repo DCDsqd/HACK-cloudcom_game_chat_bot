@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"username"	TEXT NOT NULL UNIQUE,
 	"personal_username"	TEXT UNIQUE,
 	"game_class"	TEXT,
+	"game_subclass" TEXT,
 	"exp"	INTEGER NOT NULL DEFAULT 0,
 	"hair_id"	INTEGER NOT NULL DEFAULT 1,
 	"face_id"	INTEGER NOT NULL DEFAULT 1,

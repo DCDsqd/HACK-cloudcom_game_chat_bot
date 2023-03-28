@@ -11,16 +11,16 @@ from telegram.ext import (
 )
 
 from customization import custom_name_handler, avatar_handler, merge_image, regen_avatar
-from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda, meme
+from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda, meme, add_exp
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = range(5)
 
-CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING = range(4)
+CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING = range(5)
 
 
 async def del_keyboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text='Клавиатура удалена! (Юра пидор)',
+    await context.bot.send_message(chat_id=update.effective_chat.id, text='Клавиатура удалена!',
                                    reply_markup=ReplyKeyboardRemove())
 
 
@@ -58,7 +58,6 @@ async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = update.message.from_user.id
     context.user_data["choice"] = text
-    print(text)
     inserter('game_class', text, user_id)
     message = f'Вы успешно получили лицензию на роль "{text}".\n\n' \
               "На данный момент вам недоступны все преимущества служителя империи, " \
@@ -103,11 +102,51 @@ async def upgrade_champ(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def change_subclass(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if is_available(update.message.from_user.id, 1000):
-        pass  # Здесь задаём смену подкласса
+        con = create_connection('../db/database.db')
+        user_id = update.message.from_user.id
+        request = f"SELECT game_class FROM users WHERE id={user_id}"
+        class_data = execute_read_query(con, request)
+        con.close()
+        if class_data[0][0] == 'Рыцарь':
+            subclass_keyboard = [["Латник", "Паладин"], ["Назад"]]
+            message = "Описание подклассов:\n\n" \
+                      "⚜️ Латник - упор в защиту, носит массивный щит и меч\n" \
+                      "⚔️ Паладин - упор в атаку, носит тяжелые доспехи и молот"
+
+        elif class_data[0][0] == 'Маг':
+            subclass_keyboard = [["Чернокнижник", "Элементаль", "Ангел"], ["Назад"]]
+            message = "Описание подклассов:\n\n" \
+                      "📓 Чернокнижник - упор в атаку, носит книгу\n" \
+                      "🔥 Элементаль - упор в контроль, носит посох\n" \
+                      "💫 Ангел - упор в поддержку, носит перчатки"
+        elif class_data[0][0] == 'Лучник':
+            subclass_keyboard = [["Арбалетчик", "Шаман", "Инженер"], ["Назад"]]
+            message = "Описание подклассов:\n\n" \
+                      "↣ Арбалетчик - упор в атаку, носит автомат, наебал, арбалет\n" \
+                      "🏹 Шаман - упор в контроль, носит лук и колчан\n" \
+                      "💥 Инженер - упор в поддержку, носит"  # Сюда добавить что носит
+        elif class_data[0][0] == 'Охотник':
+            subclass_keyboard = [["Убийца", "Шиноби"], ["Назад"]]
+            message = "Описание подклассов:\n\n" \
+                      "⚔ Убийца - упор в атаку, носит кинжалы\n" \
+                      "🗡 Шиноби - упор в атаку и контроль, носит клинок"
+        else:
+            return "NO SUBCLASSES FOR THIS CLASS"
+        markup = ReplyKeyboardMarkup(subclass_keyboard, one_time_keyboard=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+        return SUBCLASS_CHOOSING
     else:
         message = 'У вас пока что нет доступа к смене подкласса!'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-        # Вот хуй знает что тут возвращать
+
+
+async def subclass_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    user_id = update.message.from_user.id
+    context.user_data["choice"] = text
+    inserter('game_subclass', text, user_id)
+    message = f'Вы успешно изменили подкласс на "{text}!"'
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 async def lab(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -160,6 +199,13 @@ if __name__ == '__main__':
             CHRONOS_CHOOSING: [
                 MessageHandler(filters.Regex("^Улучшить персонажа$"), upgrade_champ),
                 MessageHandler(filters.Regex("^Изменить подкласс$"), change_subclass),
+                MessageHandler(filters.Regex("^Назад$"), game),
+            ],
+            SUBCLASS_CHOOSING: [
+                MessageHandler(filters.Regex(
+                    "^Латник$|^Паладин$|^Чернокнижник$|^Элементаль$|^Ангел$|^Арбалетчик$|^Шаман$|^Инженер$|^Убийца$"
+                    "|^Шиноби$"),
+                    subclass_choosing),
                 MessageHandler(filters.Regex("^Назад$"), game),
             ],
         },
