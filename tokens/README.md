@@ -1,6 +1,7 @@
 ### Token format
 
 Token example: 7231115870:AUUUpyd0KALSPD9K-VluXSv2JKjdlyt5F4w
+It should be inserted insted of the first line in ```*token*.txt``` file(s)
 
 ### Note:
 
