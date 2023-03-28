@@ -1,3 +1,7 @@
+### Token format
+
+Token example: 7231115870:AUUUpyd0KALSPD9K-VluXSv2JKjdlyt5F4w
+
 ### Note:
 
 If you have changed the token(s) and don't want to commit them in repo, the easy way to "untrack" them (not really but it works) is to just run:
