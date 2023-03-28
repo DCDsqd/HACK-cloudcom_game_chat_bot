@@ -1,4 +1,4 @@
-from datebase import *
+from database import *
 import os
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InputMediaPhoto
 from telegram.ext import (

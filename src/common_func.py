@@ -1,4 +1,4 @@
-from datebase import *
+from database import *
 from customization import regen_avatar
 import os
 import random
