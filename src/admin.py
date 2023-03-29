@@ -1,4 +1,4 @@
-# use this file to create functions used to help admins manage global events
+# use this file to create functions used to help admins manage global events & other admin-related stuff
 from database import *
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
@@ -83,3 +83,41 @@ admin_handler = ConversationHandler(
     },
     fallbacks=[MessageHandler(filters.Regex("^Отмена$"), admin_cancel)],
 )
+
+def parse_new_event_info_string(text):
+    mins_in_year = 525600
+    fields = text.split('\n')
+
+    if len(fields) != 5:
+        return {False, 'Вы указали недостаточно информации о новом событии. ' \
+                        'Возможно вы забыли разделить информацию с помощью Shift+Enter, либо пропустили какое-то из полей.'}
+    
+    name = fields[0]
+    if len(name) > 50:
+        return {False, 'Вы указали слишком длинное имя для события. Оно не должно превышать 50 символов.'}
+    
+    descr = fields[1]
+    if len(descr) > 500:
+        return {False, 'Вы указали слишком длинное описание для события. Оно не должно превышать 500 символов.'}
+    
+    start_time = fields[2]
+    if not ensure_time_format(start_time):
+        return {False, 'Указанное вами время события не прошло проверку на правильность формата.' \
+                        'Не забывайте, что формат должен СТРОГО соответствовать следующему формату: yyyy-MM-dd hh:mm:ss'}
+    
+    duration = fields[3]
+    if not duration.isdigit():
+        return {False, 'Указанная вами продолжительность события не является числом.'}
+    if int(duration) < 1:
+        return {False, 'Продолжительность события не может быть меньше 1 минуты.'}
+    if int(duration) > mins_in_year:
+        return {False, f"""Продолжительность события не может быть больше года ('{mins_in_year}' минут)."""}
+    
+    exp_reward = fields[4]
+    if not exp_reward.isdigit():
+        return {False, 'Указанная вами награда в опыте за событие не является числом.'}
+    if int(exp_reward) < 0:
+        return {False, 'Награда в опыте за событие не может быть отрицательной.'}
+    
+    return {True, 'Все поля валидны.'}
+
