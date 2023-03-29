@@ -41,7 +41,11 @@ private slots:
 
 private: //functions
     void addEventToLayout();
-    void addEventToLayout(const QString& name, const QString& descr, const QDateTime &date, const size_t duration);
+    void addEventToLayout(const QString& name,
+                          const QString& descr,
+                          const QDateTime &date,
+                          const size_t duration,
+                          const size_t exp_reward);
     void addEventToLayout(const Event& event);
     void deleteRowFromLayout(size_t row);
     void clearLayout();
@@ -52,6 +56,7 @@ private: //fields
     Ui::MainWindow *ui;
     std::unique_ptr<Database> db = nullptr;
     static constexpr int mins_in_year = 525600;
+    static constexpr int event_exp_reward_upper_limit = 200000;
     const QString default_events_table_name = "global_events";
 };
 #endif // MAINWINDOW_H

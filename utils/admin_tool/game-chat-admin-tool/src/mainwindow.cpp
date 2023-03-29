@@ -29,10 +29,14 @@ void MainWindow::on_addEventButton_clicked()
 
 void MainWindow::addEventToLayout()
 {
-    addEventToLayout("Event name", "Event description", QDateTime::currentDateTime().addDays(1), 1);
+    addEventToLayout("Event name", "Event description", QDateTime::currentDateTime().addDays(1), 1, 0);
 }
 
-void MainWindow::addEventToLayout(const QString &name, const QString &descr, const QDateTime &date, const size_t duration)
+void MainWindow::addEventToLayout(const QString &name,
+                                  const QString &descr,
+                                  const QDateTime &date,
+                                  const size_t duration,
+                                  const size_t exp_reward)
 {
     int cur_next_row = ui->eventsLayout->rowCount();
 
@@ -54,6 +58,11 @@ void MainWindow::addEventToLayout(const QString &name, const QString &descr, con
     event_dur->setFixedSize(QSize(100, 30));
     event_dur->setValidator(new QIntValidator(1, mins_in_year, this));
 
+    // Event experience reward
+    QLineEdit* event_exp_reward = new QLineEdit(QString::number(exp_reward));
+    event_exp_reward->setFixedSize(QSize(100, 30));
+    event_exp_reward->setValidator(new QIntValidator(0, event_exp_reward_upper_limit, this));
+
     // Delete event button
     QPushButton* event_delete = new QPushButton(tr("Delete!"));
     event_delete->setFixedSize(100, 50);
@@ -66,7 +75,8 @@ void MainWindow::addEventToLayout(const QString &name, const QString &descr, con
     ui->eventsLayout->addWidget(event_descr, cur_next_row, 1, Qt::AlignCenter);
     ui->eventsLayout->addWidget(event_start_date, cur_next_row, 2, Qt::AlignCenter);
     ui->eventsLayout->addWidget(event_dur, cur_next_row, 3, Qt::AlignCenter);
-    ui->eventsLayout->addWidget(event_delete, cur_next_row, 4, Qt::AlignCenter);
+    ui->eventsLayout->addWidget(event_exp_reward, cur_next_row, 4, Qt::AlignCenter);
+    ui->eventsLayout->addWidget(event_delete, cur_next_row, 5, Qt::AlignCenter);
 
     //Scroll down to be able to see a newly added widget
     ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->maximumHeight());
@@ -78,7 +88,8 @@ void MainWindow::addEventToLayout(const Event &event)
     addEventToLayout(event.name,
                      event.description,
                      event.start_date,
-                     event.duration);
+                     event.duration,
+                     event.exp_reward);
 }
 
 void MainWindow::deleteRowFromLayout(size_t row)
@@ -124,16 +135,19 @@ QVector<Event> MainWindow::getCurrentEventsList() const
         QWidget* descr_widget = ui->eventsLayout->itemAtPosition(i, 1)->widget();
         QWidget* date_widget = ui->eventsLayout->itemAtPosition(i, 2)->widget();
         QWidget* duration_widget = ui->eventsLayout->itemAtPosition(i, 3)->widget();
+        QWidget* exp_widget = ui->eventsLayout->itemAtPosition(i, 4)->widget();
 
         QLineEdit* casted_name = static_cast<QLineEdit*>(name_widget);
         QTextEdit* casted_descr = static_cast<QTextEdit*>(descr_widget);
         QDateTimeEdit* casted_start_date = static_cast<QDateTimeEdit*>(date_widget);
         QLineEdit* casted_duration = static_cast<QLineEdit*>(duration_widget);
+        QLineEdit* casted_exp = static_cast<QLineEdit*>(exp_widget);
 
         cur_event.name = casted_name->text();
         cur_event.description = casted_descr->toPlainText();
         cur_event.start_date = casted_start_date->dateTime();
         cur_event.duration = casted_duration->text().toUInt();
+        cur_event.exp_reward = casted_exp->text().toUInt();
 
         event_list.push_back(cur_event);
     }
