@@ -79,7 +79,7 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
     user_id = message.from_user.id
     username = message.from_user.username
-    request = f"SELECT personal_username, game_class, exp, game_subclass, rank FROM users WHERE id={user_id}"
+    request = f"SELECT personal_username, game_class, exp, game_subclass FROM users WHERE id={user_id}"
     db_data = execute_read_query(con, request)
     message = "Ваш профиль:\n\n" \
               f"Игровое имя: {db_data[0][0]}\n" \
