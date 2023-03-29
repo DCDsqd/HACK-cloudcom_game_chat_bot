@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS "users" (
+CREATE TABLE "users" (
 	"id"	INTEGER UNIQUE,
 	"username"	TEXT NOT NULL UNIQUE,
 	"personal_username"	TEXT UNIQUE,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
-CREATE TABLE IF NOT EXISTS "global_events" (
+CREATE TABLE "global_events" (
 	"id"	INTEGER UNIQUE,
 	"name"	TEXT NOT NULL UNIQUE,
 	"descr"	TEXT NOT NULL CHECK(length("descr") < 1000),

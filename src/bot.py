@@ -182,7 +182,7 @@ if __name__ == '__main__':
     token_file = open("../tokens/tg_app_token.txt", "r")
     application = ApplicationBuilder().token(token_file.read()).build()
     token_file.close()
-    game_handler = ConversationHandler(
+    class_handler = ConversationHandler(
         entry_points=[CommandHandler("game", game)],
         states={
             CLASS_CHOOSING: [
@@ -210,7 +210,7 @@ if __name__ == '__main__':
         },
         fallbacks=[MessageHandler(filters.Regex("^Отмена$"), game_cancel)],
     )
-    application.add_handler(game_handler)
+    application.add_handler(class_handler)
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('help', help_me))
     application.add_handler(CommandHandler('game', game))
