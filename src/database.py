@@ -198,4 +198,22 @@ def update_participants_in_global_event(global_event_id, new_participant_id):
     query = f"""
             UPDATE global_events SET participants='{participants_text}' WHERE id='{global_event_id}';
             """ # probably should test this...
-    
+    execute_query(conn, query)
+    conn.close()
+
+
+# This function relies on fact that @text is valid, a.k.a parse_new_event_info_string(@text) == {True, 'Some message'}
+def save_new_event_info_string_to_db(text):
+    fields = text.split('\n')
+    name = fields[0]
+    descr = fields[1]
+    start_time = fields[2]
+    duration = fields[3]
+    exp_reward = fields[4]
+    conn = sqlite3.connect('../db/database.db')
+    query = f"""
+            INSERT INTO global_events (name,descr,start_time,duration,exp_reward) VALUES 
+            ('{name}','{descr}','{start_time}','{duration}','{exp_reward}');
+            """ # probably should test this as well...
+    execute_query(conn, query)
+    conn.close()
