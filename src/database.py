@@ -2,6 +2,7 @@ import sqlite3
 from sqlite3 import Error
 import logging
 import time
+import datetime
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -139,6 +140,15 @@ def ensure_time_format(time_str: str) -> bool:
 
     minute = time_str[14:15]
     if not minute.isdigit():
+        return False
+    
+    second = time_str[16:17]
+    if not second.isdigit():
+        return False
+    
+    try:
+        datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
+    except ValueError:
         return False
 
     return True
