@@ -10,7 +10,7 @@ from telegram.ext import (
     filters,
 )
 
-ADMIN_CHOOSING, OP = range(2)
+ADMIN_CHOOSING, OP, EVENT_INPUT = range(3)
 
 
 async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -37,14 +37,24 @@ async def admin_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    pass  # Здесь будет добавление событий
+    await update.message.reply_text("Введите событие:")
+    return EVENT_INPUT
+
+
+async def event_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin_keyboard = [["Добавить событие", "Добавить администратора"], ["Отмена"]]
+    markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
+    text = update.message.text
+    is_ok, msg = parse_new_event_info_string(text)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=msg, reply_markup=markup)
+    if is_ok:
+        save_new_event_info_string_to_db(text)
+    return ADMIN_CHOOSING
 
 
 async def op(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "Для безопасности, требуется ввести ID игрока.\nЕго можно узнать с помощью команды /profile"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-    text = update.message.text
-    context.user_data["choice"] = text
     await update.message.reply_text("Введите ID игрока:")
     return OP
 
@@ -81,6 +91,10 @@ admin_handler = ConversationHandler(
             MessageHandler(
                 filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), received_op)
         ],
+        EVENT_INPUT: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), event_input)
+        ]
     },
     fallbacks=[MessageHandler(filters.Regex("^Отмена$"), admin_cancel)],
 )
@@ -91,35 +105,35 @@ def parse_new_event_info_string(text):
     fields = text.split('\n')
 
     if len(fields) != 5:
-        return {False, 'Вы указали недостаточно информации о новом событии. '
-                       'Возможно, вы забыли разделить информацию с помощью Shift+Enter, либо пропустили какое-то из '
-                       'полей.'}
+        return False, 'Вы указали недостаточно информации о новом событии. ' \
+                       'Возможно, вы забыли разделить информацию с помощью Shift+Enter, либо пропустили какое-то из '\
+                       'полей.'
 
     name = fields[0]
     if len(name) > 50:
-        return {False, 'Вы указали слишком длинное имя для события. Оно не должно превышать 50 символов.'}
+        return False, 'Вы указали слишком длинное имя для события. Оно не должно превышать 50 символов.'
 
     descr = fields[1]
     if len(descr) > 500:
-        return {False, 'Вы указали слишком длинное описание для события. Оно не должно превышать 500 символов.'}
+        return False, 'Вы указали слишком длинное описание для события. Оно не должно превышать 500 символов.'
 
     start_time = fields[2]
     if not ensure_time_format(start_time):
-        return {False, 'Указанное вами время события не прошло проверку на правильность формата.'
-                       'Не забывайте, что формат должен СТРОГО соответствовать следующему формату: yyyy-MM-dd hh:mm:ss'}
+        return False, 'Указанное вами время события не прошло проверку на правильность формата.' \
+                       'Не забывайте, что формат должен СТРОГО соответствовать следующему формату: yyyy-MM-dd hh:mm:ss'
 
     duration = fields[3]
     if not duration.isdigit():
-        return {False, 'Указанная вами продолжительность события не является числом.'}
+        return False, 'Указанная вами продолжительность события не является числом.'
     if int(duration) < 1:
-        return {False, 'Продолжительность события не может быть меньше 1 минуты.'}
+        return False, 'Продолжительность события не может быть меньше 1 минуты.'
     if int(duration) > mins_in_year:
-        return {False, f"""Продолжительность события не может быть больше года ('{mins_in_year}' минут)."""}
+        return False, f"""Продолжительность события не может быть больше года ('{mins_in_year}' минут)."""
 
     exp_reward = fields[4]
     if not exp_reward.isdigit():
-        return {False, 'Указанная вами награда в опыте за событие не является числом.'}
+        return False, 'Указанная вами награда в опыте за событие не является числом.'
     if int(exp_reward) < 0:
-        return {False, 'Награда в опыте за событие не может быть отрицательной.'}
+        return False, 'Награда в опыте за событие не может быть отрицательной.'
 
-    return {True, 'Все поля валидны.'}
+    return True, 'Все поля валидны.'
