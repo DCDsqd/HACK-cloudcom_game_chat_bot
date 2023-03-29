@@ -46,9 +46,13 @@ async def event_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
     text = update.message.text
     is_ok, msg = parse_new_event_info_string(text)
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=msg, reply_markup=markup)
+    responce = "Создание нового события " + "прошло успешно.\n" if is_ok else "провалилось.\n" \
+                + "Комментарий: " + msg
     if is_ok:
         save_new_event_info_string_to_db(text)
+    
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=responce, reply_markup=markup)
+
     return ADMIN_CHOOSING
 
 
