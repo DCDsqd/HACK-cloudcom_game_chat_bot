@@ -213,7 +213,7 @@ if __name__ == '__main__':
     application.add_handler(class_handler)
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('help', help_me))
-    application.add_handler(CommandHandler('game', game))
+    #application.add_handler(CommandHandler('game', game))
     application.add_handler(custom_name_handler)
     application.add_handler(avatar_handler)
     application.add_handler(admin_handler)
