@@ -112,8 +112,46 @@ void MainWindow::clearLayout()
     ClearLay(ui->eventsLayout);
 }
 
+void MainWindow::insertHeadersIntoLayout()
+{
+    int cur_next_row = ui->eventsLayout->rowCount();
+
+    // Event name
+    QLabel* event_name = new QLabel("Name");
+    event_name->setFixedSize(QSize(100, 50));
+
+    // Event description
+    QLabel* event_descr = new QLabel("Description");
+    event_descr->setFixedSize(QSize(100, 100));
+
+    // Event start time
+    QLabel *event_start_date = new QLabel("Start time");
+    //event_start_date->setFixedSize(480, 30);
+
+    // Event duration
+    QLabel* event_dur = new QLabel("Duration (in mins)");
+    event_dur->setFixedSize(QSize(100, 30));
+
+    // Event experience reward
+    QLabel* event_exp_reward = new QLabel("Exp reward");
+    event_exp_reward->setFixedSize(QSize(100, 30));
+
+    // Delete event button
+    QLabel* event_delete = new QLabel(tr("Delete buttons"));
+    event_delete->setFixedSize(100, 50);
+
+    // Adding events to grid layout
+    ui->eventsLayout->addWidget(event_name, cur_next_row, 0, Qt::AlignCenter);
+    ui->eventsLayout->addWidget(event_descr, cur_next_row, 1, Qt::AlignCenter);
+    ui->eventsLayout->addWidget(event_start_date, cur_next_row, 2, Qt::AlignCenter);
+    ui->eventsLayout->addWidget(event_dur, cur_next_row, 3, Qt::AlignCenter);
+    ui->eventsLayout->addWidget(event_exp_reward, cur_next_row, 4, Qt::AlignCenter);
+    ui->eventsLayout->addWidget(event_delete, cur_next_row, 5, Qt::AlignCenter);
+}
+
 void MainWindow::loadEventsFromDb()
 {
+    insertHeadersIntoLayout();
     const QVector<Event> events = db->SelectEvents(default_events_table_name);
     for(const auto& event : events) {
         addEventToLayout(event);

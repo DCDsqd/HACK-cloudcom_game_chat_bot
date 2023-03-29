@@ -49,6 +49,7 @@ private: //functions
     void addEventToLayout(const Event& event);
     void deleteRowFromLayout(size_t row);
     void clearLayout();
+    void insertHeadersIntoLayout();
     void loadEventsFromDb();
     QVector<Event> getCurrentEventsList() const;
 
