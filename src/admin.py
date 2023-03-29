@@ -91,8 +91,9 @@ def parse_new_event_info_string(text):
     fields = text.split('\n')
 
     if len(fields) != 5:
-        return {False, 'Вы указали недостаточно информации о новом событии. ' \
-                       'Возможно, вы забыли разделить информацию с помощью Shift+Enter, либо пропустили какое-то из полей.'}
+        return {False, 'Вы указали недостаточно информации о новом событии. '
+                       'Возможно, вы забыли разделить информацию с помощью Shift+Enter, либо пропустили какое-то из '
+                       'полей.'}
 
     name = fields[0]
     if len(name) > 50:
@@ -104,7 +105,7 @@ def parse_new_event_info_string(text):
 
     start_time = fields[2]
     if not ensure_time_format(start_time):
-        return {False, 'Указанное вами время события не прошло проверку на правильность формата.' \
+        return {False, 'Указанное вами время события не прошло проверку на правильность формата.'
                        'Не забывайте, что формат должен СТРОГО соответствовать следующему формату: yyyy-MM-dd hh:mm:ss'}
 
     duration = fields[3]
