@@ -72,6 +72,8 @@ def merge_image(img1, img2, img3, user_id):
     mid = Image.open(os.path.abspath(f'../res/avatars/body/Вариант {img3}.png')).convert("RGBA")
     mid.paste(foreground, (0, 0), foreground)
     mid.paste(background, (0, 0), background)
+    nsize = (mid.size[0]*5, mid.size[1]*5)
+    mid = mid.resize(nsize, Image.NEAREST)
     mid.save(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'))
 
 
