@@ -11,12 +11,14 @@ SOURCES += \
     src/event.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
+    src/qss_helper.cpp \
     src/translator_wrapper.cpp
 
 HEADERS += \
     src/database.h \
     src/event.h \
     src/mainwindow.h \
+    src/qss_helper.h \
     src/translator_wrapper.h
 
 FORMS += \

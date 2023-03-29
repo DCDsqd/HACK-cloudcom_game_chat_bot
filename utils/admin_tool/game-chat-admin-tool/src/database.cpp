@@ -32,15 +32,16 @@ QVector<Event> Database::SelectEvents(const QString &table_name) const
     QVector<Event> event_list;
 
     QSqlQuery query(*db);
-    query.exec("SELECT * FROM " + table_name + ";");
+    query.exec("SELECT name, descr, start_time, duration, exp_reward FROM " + table_name + ";");
     Database::PrintSqlExecInfoIfErr(query);
     while(query.next()){
         Event cur_event;
-        cur_event.name = query.value(1).toString();
-        cur_event.description = query.value(2).toString();
-        auto raw = query.value(3).toString();
+        cur_event.name = query.value(0).toString();
+        cur_event.description = query.value(1).toString();
+        auto raw = query.value(2).toString();
         cur_event.start_date = QDateTime::fromString(raw, "yyyy-MM-dd hh:mm:ss");
-        cur_event.duration = query.value(4).toUInt();
+        cur_event.duration = query.value(3).toUInt();
+        cur_event.exp_reward = query.value(4).toUInt();
         event_list.push_back(cur_event);
     }
 
@@ -83,12 +84,13 @@ void Database::InsertEventIntoDb(const QString& table_name, const Event &event) 
 {
     QSqlQuery query(*db);
     QString queryStatement = "INSERT INTO " + table_name +
-            " (name, descr, start_time, duration) " +
+            " (name, descr, start_time, duration, exp_reward) " +
             " VALUES('" +
             event.name + "', '" +
             event.description + "', '" +
             event.start_date.toString("yyyy-MM-dd hh:mm:ss") + "', '" +
-            QString::number(event.duration) + "');";
+            QString::number(event.duration) + "', '" +
+            QString::number(event.exp_reward) + "');";
     query.exec(queryStatement);
     PrintSqlExecInfoIfErr(query);
 }
