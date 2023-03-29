@@ -19,6 +19,8 @@
 
 #include <memory>
 
+#define EPI event_placement_info // for shorter name usage
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -52,6 +54,7 @@ private: //functions
     void insertHeadersIntoLayout();
     void loadEventsFromDb();
     QVector<Event> getCurrentEventsList() const;
+    static QVector<EventPlacementData> constructEventPlacementData();
 
 private: //fields
     Ui::MainWindow *ui;
@@ -59,5 +62,6 @@ private: //fields
     static constexpr int mins_in_year = 525600;
     static constexpr int event_exp_reward_upper_limit = 200000;
     const QString default_events_table_name = "global_events";
+    const QVector<EventPlacementData> event_placement_info = constructEventPlacementData();
 };
 #endif // MAINWINDOW_H
