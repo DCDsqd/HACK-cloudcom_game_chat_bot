@@ -155,6 +155,7 @@ def create_all_tables_from_sql_scripts():
         conn.executescript(sql_file.read())
     conn.close()
 
+
 def create_all_tables_from_sql_scripts_test():
     conn = sqlite3.connect('../db/test/database.db')
     with open('../sql/database_create_tables.sql', 'r') as sql_file:
@@ -166,6 +167,7 @@ def create_all_tables_from_sql_scripts_test():
         conn.executescript(sql_file.read())
     conn.close()
 
+
 def select_ranks_table():
     conn = sqlite3.connect('../db/gamedata.db')
     query = f"""
@@ -173,7 +175,8 @@ def select_ranks_table():
             """
     res = execute_read_query(conn, query)
     conn.close()
-    return res # [{name, exp_to_earn}...]
+    return res  # [{name, exp_to_earn}...]
+
 
 def get_user_exp(user_id):
     conn = sqlite3.connect('../db/database.db')
@@ -183,6 +186,7 @@ def get_user_exp(user_id):
     res = execute_read_query(conn, query)
     conn.close()
     return res[0][0]
+
 
 def update_participants_in_global_event(global_event_id, new_participant_id):
     conn = sqlite3.connect('../db/database.db')
@@ -197,5 +201,4 @@ def update_participants_in_global_event(global_event_id, new_participant_id):
         participants_text += ',' + str(new_participant_id)
     query = f"""
             UPDATE global_events SET participants='{participants_text}' WHERE id='{global_event_id}';
-            """ # probably should test this...
-    
+            """  # probably should test this...
