@@ -184,3 +184,18 @@ def get_user_exp(user_id):
     conn.close()
     return res[0][0]
 
+def update_participants_in_global_event(global_event_id, new_participant_id):
+    conn = sqlite3.connect('../db/database.db')
+    query = f"""
+            SELECT participants FROM global_events WHERE id='{global_event_id}';
+            """
+    res = execute_read_query(conn, query)
+    participants_text = res[0][0]
+    if len(participants_text) == 0:
+        participants_text = str(new_participant_id)
+    else:
+        participants_text += ',' + str(new_participant_id)
+    query = f"""
+            UPDATE global_events SET participants='{participants_text}' WHERE id='{global_event_id}';
+            """ # probably should test this...
+    
