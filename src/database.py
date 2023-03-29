@@ -155,3 +155,21 @@ def create_all_tables_from_sql_scripts():
         conn.executescript(sql_file.read())
     conn.close()
 
+def select_ranks_table():
+    conn = sqlite3.connect('../db/gamedata.db')
+    query = f"""
+            SELECT name, exp_to_earn FROM ranks ORDER BY exp_to_earn;
+            """
+    res = execute_read_query(conn, query)
+    conn.close()
+    return res # [{name, exp_to_earn}...]
+
+def get_user_exp(user_id):
+    conn = sqlite3.connect('../db/database.db')
+    query = f"""
+            SELECT exp FROM users WHERE id='{user_id}';
+            """
+    res = execute_read_query(conn, query)
+    conn.close()
+    return res[0][0]
+

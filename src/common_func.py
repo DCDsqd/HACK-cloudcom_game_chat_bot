@@ -12,7 +12,17 @@ from telegram.ext import (
     filters,
 )
 
+# returns name of the users rank
+def get_rank(user_id):
+    user_exp = get_user_exp(user_id)
+    ranks = select_ranks_table()
+    # relies on the fact that ranks variable is ordered by exp_to_earn column
+    for i in range(1, len(ranks)):
+        if ranks[i][1] > user_exp:
+            return ranks[i - 1][0]
+    return ranks[len(ranks) - 1][0]
 
+# depreciated
 def is_level_up(user_id):
     exp_for_ranks = [0, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000]
     ranks = ['Новичок', 'Стажёр', 'Слабый воин', 'Посредственный войн', 'Узнаваемый солдат', 'Почти легионер',
@@ -76,7 +86,7 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
               f"ID: {user_id}\n" \
               f"Имя Telegram: {username}\n" \
               f"Подкласс: {db_data[0][3]}\n" \
-              f"Ранг: {db_data[0][4]}\n" \
+              f"Ранг: {get_rank(user_id)}\n" \
               f"Ваш класс: {db_data[0][1]}\n" \
               f"Опыт: {db_data[0][2]}"
     await context.bot.send_photo(chat_id=update.effective_chat.id, caption=message,
