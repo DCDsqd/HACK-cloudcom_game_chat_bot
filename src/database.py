@@ -155,6 +155,17 @@ def create_all_tables_from_sql_scripts():
         conn.executescript(sql_file.read())
     conn.close()
 
+def create_all_tables_from_sql_scripts_test():
+    conn = sqlite3.connect('../db/test/database.db')
+    with open('../sql/database_create_tables.sql', 'r') as sql_file:
+        conn.executescript(sql_file.read())
+    conn.close()
+
+    conn = sqlite3.connect('../db/test/gamedata.db')
+    with open('../sql/gamedata_create_tables.sql', 'r') as sql_file:
+        conn.executescript(sql_file.read())
+    conn.close()
+
 def select_ranks_table():
     conn = sqlite3.connect('../db/gamedata.db')
     query = f"""
