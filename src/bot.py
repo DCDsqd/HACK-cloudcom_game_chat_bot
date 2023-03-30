@@ -89,6 +89,22 @@ async def multiplayer_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     pass  # Сюда добавим мультиплеер задания
 
 
+def get_last_events():
+    con = create_connection('../db/database.db')
+    query = f"""
+                    SELECT * FROM global_events
+                    """
+    res = execute_read_query(con, query)
+    ans = "\n".join([" ".join(map(str, row)) for row in res])
+    con.close()
+    return ans
+
+
+async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    events = get_last_events()
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=events)
+
+
 async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_available(update.message.from_user.id, 500):
         message = 'Вы подходите к огромному храму, но какая-то неведомая сила не даёт Вам пройти внутрь.\nВозможно, ' \
@@ -221,6 +237,7 @@ if __name__ == '__main__':
     )
     application.add_handler(class_handler)
     application.add_handler(CommandHandler('start', start))
+    application.add_handler(CommandHandler('events', get_events))
     application.add_handler(CommandHandler('help', help_me))
     # application.add_handler(CommandHandler('game', game))
     application.add_handler(custom_name_handler)
