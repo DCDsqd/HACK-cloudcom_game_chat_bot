@@ -10,6 +10,8 @@ logging.basicConfig(
 )
 
 
+# This function creates a connection to a SQLite database at a given path and returns it. It also logs any errors
+# that may occur during the connection process.
 def create_connection(path):
     connection = None
     try:
@@ -21,6 +23,7 @@ def create_connection(path):
     return connection
 
 
+# This function executes a SQL query on a database connection and logs if any error occurs during execution.
 def execute_query(connection, query):
     cursor = connection.cursor()
     try:
@@ -31,6 +34,8 @@ def execute_query(connection, query):
         logging.warning(f"The error '{e}' occurred")
 
 
+# This is a function to execute a read query on a SQLite database using the given connection and SQL query. It
+# returns the result obtained from executing the query.
 def execute_read_query(connection, query):
     cursor = connection.cursor()
     result = None
@@ -42,6 +47,10 @@ def execute_read_query(connection, query):
         print(f"The error '{e}' occurred")
 
 
+# This function updates a specific column with a value for a given user in the SQLite database. It takes three
+# parameters: col_name is the name of the column to update, text is the new value to set, and user_id is the ID of
+# the user whose record to update. It uses the create_connection function to establish a connection to the database,
+# executes an update query using execute_query, and closes the connection.
 def inserter(col_name, text, user_id):
     con = create_connection('../db/database.db')
     updater = f"""
@@ -53,6 +62,8 @@ def inserter(col_name, text, user_id):
     con.close()
 
 
+# This function retrieves the hair_id, face_id, and shoulders_id of a user from the database given their user_id. It
+# returns a tuple containing these three values.
 def get_avatar_ids(user_id):
     con = create_connection('../db/database.db')
     query = f"""
@@ -65,33 +76,21 @@ def get_avatar_ids(user_id):
     return res[0][0], res[0][1], res[0][2]
 
 
-def select_all_hair():
+# This function returns all the data from the given part of the gamedata database (hair, face, or shoulders). It
+# creates a connection to the database, executes a SELECT query, fetches all the data, and then closes the
+# connection. The result is returned.
+def select_all(part):
     con = create_connection('../db/gamedata.db')
     query = f"""
-            SELECT * FROM hair
+            SELECT * FROM {part};
             """
     res = execute_read_query(con, query)
+    con.close()
     return res
 
 
-def select_all_face():
-    con = create_connection('../db/gamedata.db')
-    query = f"""
-            SELECT * FROM face;
-            """
-    res = execute_read_query(con, query)
-    return res
-
-
-def select_all_shoulders():
-    con = create_connection('../db/gamedata.db')
-    query = f"""
-            SELECT * FROM shoulders;
-            """
-    res = execute_read_query(con, query)
-    return res
-
-
+# This function takes a table name and name of a body part and returns the corresponding id of that body part from
+# the gamedata database.
 def body_type_name_to_id(table, name):
     con = create_connection('../db/gamedata.db')
     query = f"""
@@ -101,6 +100,8 @@ def body_type_name_to_id(table, name):
     return res[0][0]
 
 
+# This function takes a user ID as an argument and returns a boolean indicating whether the user exists in the
+# database or not.
 def check_if_user_exists(user_id) -> bool:
     con = create_connection('../db/database.db')
     query = f"""
@@ -141,19 +142,21 @@ def ensure_time_format(time_str: str) -> bool:
     minute = time_str[14:15]
     if not minute.isdigit():
         return False
-    
+
     second = time_str[16:17]
     if not second.isdigit():
         return False
-    
+
     try:
-        datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
+        datetime.datetime(int(year), int(month), int(day), int(hour), int(minute), int(second))
     except ValueError:
         return False
 
     return True
 
 
+# This function creates all tables in the database.db and gamedata.db databases using the SQL scripts stored in the
+# sql directory.
 def create_all_tables_from_sql_scripts():
     conn = sqlite3.connect('../db/database.db')
     with open('../sql/database_create_tables.sql', 'r') as sql_file:
@@ -166,6 +169,7 @@ def create_all_tables_from_sql_scripts():
     conn.close()
 
 
+# TEST FUNCTION -> DELETE IN RELEASE
 def create_all_tables_from_sql_scripts_test():
     conn = sqlite3.connect('../db/test/database.db')
     with open('../sql/database_create_tables.sql', 'r') as sql_file:
@@ -178,6 +182,9 @@ def create_all_tables_from_sql_scripts_test():
     conn.close()
 
 
+# This function selects all the rows from the ranks table in the gamedata.db database and returns a list of
+# dictionaries, where each dictionary represents a rank with its corresponding name and the amount of experience
+# points needed to reach it.
 def select_ranks_table():
     conn = sqlite3.connect('../db/gamedata.db')
     query = f"""
@@ -188,6 +195,8 @@ def select_ranks_table():
     return res  # [{name, exp_to_earn}...]
 
 
+# This function takes a user ID as input, retrieves the user's experience (exp) from the database, and returns it as
+# output.
 def get_user_exp(user_id):
     conn = sqlite3.connect('../db/database.db')
     query = f"""
@@ -198,6 +207,11 @@ def get_user_exp(user_id):
     return res[0][0]
 
 
+# This function updates the list of participants in a global event by adding a new participant's ID to the existing
+# list of participants. It takes two arguments - global_event_id (the ID of the global event) and new_participant_id
+# (the ID of the new participant). The function connects to the database.db database, retrieves the current list of
+# participants for the given global_event_id, appends the new_participant_id to the list (if it's not already
+# present), and updates the participants field in the global_events table. The function does not return anything.
 def update_participants_in_global_event(global_event_id, new_participant_id):
     conn = sqlite3.connect('../db/database.db')
     query = f"""

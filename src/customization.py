@@ -12,20 +12,13 @@ from telegram.ext import (
 
 from PIL import Image
 
-
-async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [['/custom', '/game'], ['/fight', '/help']]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Выберите команду:",
-                                   reply_markup=reply_markup)
-    return ConversationHandler.END
-
-
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = range(5)
 
 
+# This is a function that sends a message with a keyboard to let users choose what they want to modify in their
+# account. The available options are "Изменить имя" (change name), "Изменить аватар" (change avatar), and "Отмена" (
+# cancel). After sending the message, the function returns the next state of the conversation (CHOOSING).
 async def custom(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -36,6 +29,9 @@ async def custom(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return CHOOSING
 
 
+# This function handles the user's choice of changing their name and prompts them to enter a new name by replying
+# with a message. The function returns the TYPING_REPLY state to indicate that the bot is waiting for the user to
+# enter a new name.
 async def custom_name_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     context.user_data["choice"] = text
@@ -43,6 +39,8 @@ async def custom_name_choice(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return TYPING_REPLY
 
 
+# This function handles the user input for their new custom name, and updates it in the database. It then sends a
+# message confirming the change and prompts the user to choose what to change next.
 async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -56,6 +54,8 @@ async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return CHOOSING
 
 
+# This function displays a keyboard to allow the user to choose which aspect of their avatar they want to change (
+# hair, face, or body). The function is called when the "Изменить аватара" button is pressed.
 async def custom_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = [["Изменить волосы", "Изменить лицо", "Изменить тело"], ["Назад"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -66,22 +66,31 @@ async def custom_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return CHOOSING_AVATAR
 
 
+# This function merges three images (hair, face, and body) together to create an avatar image for a user with the
+# specified user ID. The images are located in three separate folders, and the function uses the Pillow library to
+# open and manipulate the images. The resulting image is saved to a file in a specific directory.
 def merge_image(img1, img2, img3, user_id):
-    background = Image.open(os.path.abspath(f'../res/avatars/hair/Вариант {img1}.png')).convert("RGBA")
-    foreground = Image.open(os.path.abspath(f'../res/avatars/face/Вариант {img2}.png')).convert("RGBA")
-    mid = Image.open(os.path.abspath(f'../res/avatars/body/Вариант {img3}.png')).convert("RGBA")
-    mid.paste(foreground, (0, 0), foreground)
-    mid.paste(background, (0, 0), background)
-    nsize = (mid.size[0]*5, mid.size[1]*5)
-    mid = mid.resize(nsize, Image.NEAREST)
-    mid.save(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'))
+    hair = Image.open(os.path.abspath(f'../res/avatars/hair/Вариант {img1}.png')).convert("RGBA")
+    face = Image.open(os.path.abspath(f'../res/avatars/face/Вариант {img2}.png')).convert("RGBA")
+    body = Image.open(os.path.abspath(f'../res/avatars/body/Вариант {img3}.png')).convert("RGBA")
+    body.paste(face, (0, 0), face)
+    body.paste(hair, (0, 0), hair)
+    nsize = (body.size[0] * 5, body.size[1] * 5)
+    body = body.resize(nsize, Image.NEAREST)
+    body.save(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'))
 
 
+# This function is used to regenerate the user's avatar by calling the merge_image function with the avatar_id values
+# obtained from get_avatar_ids function for the given user_id. The resulting image is saved to the corresponding file
+# in the user's avatar folder.
 def regen_avatar(user_id):
     ids = get_avatar_ids(user_id)
     merge_image(ids[0], ids[1], ids[2], user_id)
 
 
+# This function generates a reply keyboard for displaying options to the user based on the given list of all
+# available options. It arranges the options in pairs and returns a list of lists, with each inner list representing
+# a row of options, and the last row containing a confirmation button.
 def get_reply_keyboard(list_of_all):
     reply_keyboard = []
     for index in range(1, len(list_of_all)):
@@ -95,8 +104,12 @@ def get_reply_keyboard(list_of_all):
     return reply_keyboard
 
 
+# This is function that allows users to customize their avatar's hair by selecting from a list of available options.
+# It first retrieves all available hair options using the select_all_hair() function and generates a media group of
+# images for each hair option. It then sends a message to the user with the available hair options and the generated
+# reply keyboard, and sends the media group of hair images.
 async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    all_hair = select_all_hair()
+    all_hair = select_all('hair')
     reply_keyboard = get_reply_keyboard(all_hair)
     hair_list = []
     for i in range(len(all_hair)):
@@ -110,8 +123,9 @@ async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return TYPING_HAIR
 
 
+# The same with face
 async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    all_face = select_all_face()
+    all_face = select_all('face')
     reply_keyboard = get_reply_keyboard(all_face)
     face_list = []
     for i in range(len(all_face)):
@@ -125,8 +139,9 @@ async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return TYPING_FACE
 
 
+# The same with body
 async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    all_shoulders = select_all_shoulders()
+    all_shoulders = select_all('shoulders')
     reply_keyboard = get_reply_keyboard(all_shoulders)
     shoulders_list = []
     for i in range(len(all_shoulders)):
@@ -141,8 +156,10 @@ async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return TYPING_BODY
 
 
+# This function handles the user's choice of hair for their custom avatar, updates the database and generates a new
+# avatar image. It then sends a message to the user with the new avatar image and returns to the "TYPING HAIR" state.
 async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = get_reply_keyboard(select_all_hair())
+    reply_keyboard = get_reply_keyboard(select_all('hair'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
     context.user_data["hair_id"] = text
@@ -157,8 +174,9 @@ async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     return TYPING_HAIR
 
 
+# The same with face
 async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = get_reply_keyboard(select_all_face())
+    reply_keyboard = get_reply_keyboard(select_all('face'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
     context.user_data["face_id"] = text
@@ -173,8 +191,9 @@ async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     return TYPING_FACE
 
 
+# The same with body
 async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply_keyboard = get_reply_keyboard(select_all_shoulders())
+    reply_keyboard = get_reply_keyboard(select_all('shoulders'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
     context.user_data["shoulders_id"] = text
@@ -189,6 +208,8 @@ async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     return TYPING_BODY
 
 
+# This function displays a reply keyboard with the options "Изменить имя", "Изменить аватара", and "Отмена". It is
+# part of a larger conversation handler for managing user profile settings.
 async def enter_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -196,6 +217,16 @@ async def enter_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Что бы Вы хотели изменить?",
         reply_markup=markup,
     )
+    return ConversationHandler.END
+
+
+# This is a temporary solution. It will have to be deleted!
+async def cancel_custom(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [['/custom', '/game'], ['/fight', '/help']]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="Выберите команду:",
+                                   reply_markup=reply_markup)
     return ConversationHandler.END
 
 
@@ -210,7 +241,7 @@ custom_name_handler = ConversationHandler(
                 filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), received_name, )
         ],
     },
-    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
+    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), cancel_custom)],
 )
 
 avatar_handler = ConversationHandler(
