@@ -10,7 +10,7 @@ from telegram.ext import (
     filters,
 )
 
-ADMIN_CHOOSING, OP, EVENT_INPUT = range(3)
+ADMIN_CHOOSING, OP, DEOP, EVENT_INPUT = range(4)
 
 
 async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -20,7 +20,7 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     is_admin = int(execute_read_query(con, request)[0][0])
     con.close()
     if is_admin:
-        admin_keyboard = [["Добавить событие", "Добавить администратора"], ["Отмена"]]
+        admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие"], ["Отмена"]]
         markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
         message = "Доступ получен. Меню администратора:"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
@@ -58,7 +58,7 @@ async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def event_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    admin_keyboard = [["Добавить событие", "Добавить администратора"], ["Отмена"]]
+    admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие"], ["Отмена"]]
     cancel_keyboard = [["Назад"]]
     text = update.message.text
     is_ok, msg = parse_new_event_info_string(text)
@@ -82,6 +82,35 @@ async def op(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return OP
 
 
+async def deop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = "Для безопасности, требуется ввести ID игрока.\nЕго можно узнать с помощью команды /profile"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    await update.message.reply_text("Введите ID игрока:")
+    return DEOP
+
+
+async def received_deop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    con = create_connection('../db/database.db')
+    query = f"""
+                SELECT id FROM users
+                """
+    res = execute_read_query(con, query)
+    all_ids = []
+    for i in range(len(res)):
+        all_ids.append(res[i][0])
+    admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие"], ["Отмена"]]
+    markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
+    new_admin_id = int(update.message.text)
+    if new_admin_id in all_ids:
+        context.user_data["admin"] = new_admin_id
+        inserter('admin', 0, new_admin_id)
+        await update.message.reply_text(f"Пользователь с ID: {new_admin_id} больше не администратор.",
+                                        reply_markup=markup)
+    else:
+        await update.message.reply_text(f"Пользователя с ID: {new_admin_id} не существует!", reply_markup=markup)
+    return ADMIN_CHOOSING
+
+
 async def received_op(update: Update, context: ContextTypes.DEFAULT_TYPE):
     con = create_connection('../db/database.db')
     query = f"""
@@ -91,7 +120,7 @@ async def received_op(update: Update, context: ContextTypes.DEFAULT_TYPE):
     all_ids = []
     for i in range(len(res)):
         all_ids.append(res[i][0])
-    admin_keyboard = [["Добавить событие", "Добавить администратора"], ["Отмена"]]
+    admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
     new_admin_id = int(update.message.text)
     if new_admin_id in all_ids:
@@ -109,10 +138,15 @@ admin_handler = ConversationHandler(
         ADMIN_CHOOSING: [
             MessageHandler(filters.Regex("^Добавить событие$"), add_event),
             MessageHandler(filters.Regex("^Добавить администратора$"), op),
+            MessageHandler(filters.Regex("^Удалить администратора$"), deop),
         ],
         OP: [
             MessageHandler(
                 filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), received_op)
+        ],
+        DEOP: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), received_deop)
         ],
         EVENT_INPUT: [
             MessageHandler(
