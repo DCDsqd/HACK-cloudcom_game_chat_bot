@@ -37,8 +37,9 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=update.effective_chat.id, text=classes_description, reply_markup=markup)
         return CLASS_CHOOSING
     else:
-        where_keyboard = [["Дом поручений", "Храм Хроноса", "Лаборатория", "Дом гильдий"],
-                          ['Кузница', 'Рынок', 'Арена', 'Великая библиотека'], ["Отмена"]]
+        where_keyboard = [["Дом поручений", "Храм Хроноса", "Лаборатория"],
+                          ["Дом гильдий", 'Кузница', 'Рынок'],
+                          ['Арена', 'Великая библиотека', 'Зал легионеров'], ["Отмена"]]
         markup = ReplyKeyboardMarkup(where_keyboard, one_time_keyboard=True)
         message = 'С возвращением! Куда отправимся?'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
@@ -56,8 +57,9 @@ async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE):
               "Вам предстоит пройти много испытаний и битв, но мы уверены, что вы сможете преодолеть все трудности" \
               " и стать одним из лучших в нашей империи. Желаем Вам удачи!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())
-    where_keyboard = [["Дом поручений", "Храм Хроноса", "Лаборатория", "Дом гильдий"],
-                      ['Кузница', 'Рынок', 'Арена', 'Великая библиотека'], ["Отмена"]]
+    where_keyboard = [["Дом поручений", "Храм Хроноса", "Лаборатория"],
+                      ["Дом гильдий", 'Кузница', 'Рынок'],
+                      ['Арена', 'Великая библиотека', 'Зал легионеров'], ["Отмена"]]
     markup = ReplyKeyboardMarkup(where_keyboard, one_time_keyboard=True)
     message = 'Куда отправимся?'
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
@@ -92,7 +94,7 @@ async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         message = 'Добро пожаловать в Храм Хроноса. Здесь вы сможете получить новые навыки для своего персонажа, ' \
                   'а также, по достижении определённого ранга, изменить подкласс.'
-        if not is_available(update.message.from_user.id, 1000):  # Если опыт больше 1000, даём доступ к смене подкласса
+        if not is_available(update.message.from_user.id, 2000):  # Если опыт больше 2000, даём доступ к смене подкласса
             chronos_keyboard = [["Улучшить персонажа"], ["Назад"]]
         else:
             chronos_keyboard = [["Улучшить персонажа", "Изменить подкласс"], ["Назад"]]
@@ -171,6 +173,59 @@ async def guild_house(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass  # Здесь можно будет запрашивать ресурсы
 
 
+async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_available(update.message.from_user.id, 4000):
+        message = 'Вы подходите к кузнице, но мастер-кузнец категорически отказывается принимать Ваш заказ. \n' \
+                  'Он объясняет, что его работа требует большого опыта и мастерства, и он не хочет рисковать' \
+                  ' испортить изделие.'
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    else:
+        pass  # Здесь можно будет крафтить броню и оружие
+
+
+async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_available(update.message.from_user.id, 4000):
+        message = 'Вы приходите на рынок, но продавцы не проявляют к Вам интереса.\n' \
+                  'Возможно, Ваш опыт в покупке товаров на рынке еще недостаточен, и Вы не знаете, ' \
+                  'как правильно торговаться или выбирать качественные товары.\n' \
+                  'Вам стоит набраться опыта и знаний, чтобы стать более уверенным и компетентным покупателем.'
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    else:
+        pass  # Здесь можно будет покупать товары
+
+
+async def arena(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_available(update.message.from_user.id, 8000):
+        message = 'Вы приходите на арену для сражений, но охранник не пускает Вас внутрь.\nОн объясняет, что на арене ' \
+                  'сражаются только опытные и знающие свое дело бойцы, и он не хочет допустить риска для Вашей жизни.\n' \
+                  'Возможно, Вам еще не хватает опыта и навыков в бою, и Вам стоит потренироваться и набраться опыта, ' \
+                  'чтобы доказать свою готовность к сражениям на арене.'
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    else:
+        pass  # Здесь можно будет устроить состязание
+
+
+async def library(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_available(update.message.from_user.id, 8000):
+        message = 'Вы подходите к великой библиотеке, но библиотекарь отказывается выдать Вам книгу, на которую Вы ' \
+                  'хотели бы посмотреть.\nОн объясняет, что для того чтобы обращаться с такими ценностями, как книги, ' \
+                  'необходимо обладать определенным уровнем знаний и образования.\nВозможно, Вам еще нужно изучить ' \
+                  'некоторые основы науки, чтобы получить доступ к определенным книгам в библиотеке.'
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    else:
+        pass  # Здесь можно будет за деньги покупать абилки
+
+
+async def hall_of_legionnaires(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_available(update.message.from_user.id, 16000):
+        message = 'Вы приходите в зал легионеров, но стражник не позволяет Вам войти внутрь.\nОн объясняет, что в зале ' \
+                  'собираются только настоящие воины, которые прошли определенные испытания и доказали свою боевую ' \
+                  'готовность.\nВозможно, Вам еще не хватает опыта и навыков в бою, чтобы присоединиться к легионерам.'
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    else:
+        pass  # Здесь можно будет брать задания легиона (Возможно стоит перенести это в дом поручений)
+
+
 async def game_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = " До встречи! Мы будем ждать Вас в Империи!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())
@@ -188,7 +243,11 @@ game_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Храм Хроноса$"), chronos),
             MessageHandler(filters.Regex("^Лаборатория$"), lab),
             MessageHandler(filters.Regex("^Дом гильдий$"), guild_house),
-            #  Сюда добавим все остальные локации
+            MessageHandler(filters.Regex("^Кузница$"), forge),
+            MessageHandler(filters.Regex("^Рынок$"), market),
+            MessageHandler(filters.Regex("^Арена$"), arena),
+            MessageHandler(filters.Regex("^Великая библиотека$"), library),
+            MessageHandler(filters.Regex("^Зал легионеров$"), hall_of_legionnaires),
         ],
         CHRONOS_CHOOSING: [
             MessageHandler(filters.Regex("^Улучшить персонажа$"), upgrade_champ),
