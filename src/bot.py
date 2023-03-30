@@ -10,14 +10,13 @@ from telegram.ext import (
     filters,
 )
 
-from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda, meme, del_keyboard
+from common_func import start, main_menu, profile, help_me, upgrade, fight, danet, netda, meme, del_keyboard, \
+    is_available
 from customization import custom_name_handler, avatar_handler
 from admin import admin_handler
 from database import *
 
-CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
-CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = range(5)
-CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING = range(5)
+CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS = range(6)
 
 
 async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -73,8 +72,21 @@ async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = 'Вы подходите к небольшому зданию с вывеской "Дом поручений". ' \
               'При входе Вы замечаете, что на стенах висят доски объявлений с различными заданиями.\n' \
-              'Может и получится найти, что-то Вам по душе...'
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)  # Здесь будут задания
+              'Может и получится найти, что-то, что Вам по душе...\n\n' \
+              'В одиночку или с друзьями?'
+    count_keyboard = [["В одиночку", "С друзьями"], ["Назад"]]
+    markup = ReplyKeyboardMarkup(count_keyboard, one_time_keyboard=True)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message,
+                                   reply_markup=markup)  # Здесь будут задания
+    return TASKS
+
+
+async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    pass  # Сюда добавим одиночные задания
+
+
+async def multiplayer_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    pass  # Сюда добавим мультиплеер задания
 
 
 async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -164,14 +176,6 @@ async def guild_house(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass  # Здесь можно будет запрашивать ресурсы
 
 
-def is_available(user_id, required_exp):
-    con = create_connection('../db/database.db')
-    request = f"SELECT exp FROM users WHERE id={user_id}"
-    user_exp = execute_read_query(con, request)
-    con.close()
-    return int(user_exp[0][0]) >= required_exp
-
-
 async def game_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = " До встречи! Мы будем ждать Вас в Империи!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())
@@ -207,13 +211,18 @@ if __name__ == '__main__':
                     subclass_choosing),
                 MessageHandler(filters.Regex("^Назад$"), chronos),
             ],
+            TASKS: [
+                MessageHandler(filters.Regex("^В одиночку$"), alone_tasks),
+                MessageHandler(filters.Regex("^С друзьями$"), multiplayer_tasks),
+                MessageHandler(filters.Regex("^Назад$"), game),
+            ],
         },
         fallbacks=[MessageHandler(filters.Regex("^Отмена$"), game_cancel)],
     )
     application.add_handler(class_handler)
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('help', help_me))
-    #application.add_handler(CommandHandler('game', game))
+    # application.add_handler(CommandHandler('game', game))
     application.add_handler(custom_name_handler)
     application.add_handler(avatar_handler)
     application.add_handler(admin_handler)

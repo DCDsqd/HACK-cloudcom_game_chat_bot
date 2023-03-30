@@ -41,6 +41,14 @@ def is_level_up(user_id):
     return level_upped
 
 
+def is_available(user_id, required_exp):
+    con = create_connection('../db/database.db')
+    request = f"SELECT exp FROM users WHERE id={user_id}"
+    user_exp = execute_read_query(con, request)
+    con.close()
+    return int(user_exp[0][0]) >= required_exp
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text="Добро пожаловать в Team Builder Bot! Введите /help, чтобы просмотреть "
