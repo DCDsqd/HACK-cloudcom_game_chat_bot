@@ -143,7 +143,7 @@ def ensure_time_format(time_str: str) -> bool:
     if not minute.isdigit():
         return False
 
-    second = time_str[16:17]
+    second = time_str[17:19]
     if not second.isdigit():
         return False
 

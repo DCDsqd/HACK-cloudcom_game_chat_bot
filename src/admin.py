@@ -150,7 +150,11 @@ async def received_op(update: Update, context: ContextTypes.DEFAULT_TYPE):
         all_ids.append(res[i][0])
     admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
-    new_admin_id = int(update.message.text)
+    try:
+        new_admin_id = int(update.message.text)
+    except ValueError:
+        await update.message.reply_text(f"Требуется ввести ID пользователя. Полученный текст не является ID!", reply_markup=markup)
+        return ADMIN_CHOOSING
     if new_admin_id in all_ids:
         context.user_data["admin"] = new_admin_id
         inserter('admin', 1, new_admin_id)
@@ -183,14 +187,18 @@ async def received_deop(update: Update, context: ContextTypes.DEFAULT_TYPE):
         all_ids.append(res[i][0])
     admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
-    new_admin_id = int(update.message.text)
-    if new_admin_id in all_ids:
-        context.user_data["admin"] = new_admin_id
-        inserter('admin', 0, new_admin_id)
-        await update.message.reply_text(f"Пользователь с ID: {new_admin_id} больше не администратор.",
+    try:
+        del_admin_id = int(update.message.text)
+    except ValueError:
+        await update.message.reply_text(f"Требуется ввести ID пользователя. Полученный текст не является ID!", reply_markup=markup)
+        return ADMIN_CHOOSING
+    if del_admin_id in all_ids:
+        context.user_data["admin"] = del_admin_id
+        inserter('admin', 0, del_admin_id)
+        await update.message.reply_text(f"Пользователь с ID: {del_admin_id} больше не администратор.",
                                         reply_markup=markup)
     else:
-        await update.message.reply_text(f"Пользователя с ID: {new_admin_id} не существует!", reply_markup=markup)
+        await update.message.reply_text(f"Пользователя с ID: {del_admin_id} не существует!", reply_markup=markup)
     return ADMIN_CHOOSING
 
 

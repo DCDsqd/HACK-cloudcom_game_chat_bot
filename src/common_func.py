@@ -141,8 +141,7 @@ async def help_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "Вот доступные команды:\n\n" \
               "/start - Начало использования бота\n" \
               "/help - Просмотр доступных команд\n" \
-              "/custom - Настройка вашего игрового персонажа\n" \
-              "/fight - Сражайтесь с другими игроками в чате"
+              "/custom - Настройка вашего игрового персонажа"
     await context.bot.send_message(chat_id=update.message.from_user.id, text=message)
     await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
 
