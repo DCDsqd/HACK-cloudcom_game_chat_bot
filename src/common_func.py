@@ -49,12 +49,13 @@ def add_exp(user_id, exp):
 # user does not exist, the function creates a connection to a database, executes an SQL query to insert the user's ID
 # and username (if available) into a users table, generates an avatar for the user, and then closes the connection.
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id,
+    user_id = update.message.from_user.id
+    await context.bot.send_message(chat_id=user_id,
                                    text="Добро пожаловать в Team Builder Bot! Введите /help, чтобы просмотреть "
                                         "доступные команды.")
+    await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
     message = update.message
     user = message.from_user
-    user_id = message.from_user.id
     if user.username:
         username = user.username
     else:
@@ -78,9 +79,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [['/custom', '/game'], ['/fight', '/help']]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    await context.bot.send_message(chat_id=update.effective_chat.id,
+    await context.bot.send_message(chat_id=update.message.from_user.id,
                                    text="Выберите команду:",
                                    reply_markup=reply_markup)
+    await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
     return ConversationHandler.END
 
 
@@ -141,7 +143,8 @@ async def help_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
               "/help - Просмотр доступных команд\n" \
               "/custom - Настройка вашего игрового персонажа\n" \
               "/fight - Сражайтесь с другими игроками в чате"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    await context.bot.send_message(chat_id=update.message.from_user.id, text=message)
+    await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
 
 
 async def danet(update: Update, context: ContextTypes.DEFAULT_TYPE):  # не забыть бы удалить
