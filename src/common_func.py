@@ -111,7 +111,7 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
             print("Голосование окончено. Мероприятие НЕ принято!")  # DEBUG
         else:
             request = "INSERT INTO global_events (name, descr, start_time, duration, exp_reward) SELECT name, descr, " \
-                      "start_time, duration, exp_reward FROM polls"
+                      f"start_time, duration, exp_reward FROM polls WHERE poll_id = {poll_id}"
             execute_query(con, request)
         con.close()
 
@@ -158,7 +158,7 @@ poll_handler = ConversationHandler(
     states={
         EVENT_INPUT: [
             MessageHandler(
-                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$|^Назад$")), poll),
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), poll),
         ]
     },
     fallbacks=[MessageHandler(filters.Regex("^Отмена$"), cancel)],
