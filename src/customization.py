@@ -44,7 +44,6 @@ async def custom_name_choice(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-
     text = update.message.text
     context.user_data["name"] = text
     user_id = update.message.from_user.id
@@ -96,10 +95,8 @@ def get_reply_keyboard(list_of_all):
     for index in range(1, len(list_of_all)):
         if index % 2 == 1:
             reply_keyboard.append([str(list_of_all[index - 1][1]), str(list_of_all[index][1])])
-
     if len(list_of_all) % 2 == 1:
         reply_keyboard.append([str(list_of_all[len(list_of_all) - 1][1])])
-
     reply_keyboard.append(["Подтвердить"])
     return reply_keyboard
 
@@ -111,15 +108,15 @@ def get_reply_keyboard(list_of_all):
 async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE):
     all_hair = select_all('hair')
     reply_keyboard = get_reply_keyboard(all_hair)
-    hair_list = []
-    for i in range(len(all_hair)):
-        hair_list.append(InputMediaPhoto(open(os.path.abspath(f'../res/avatars/hair/{all_hair[i][1]}.png'), 'rb')))
+    hair_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/hair/{hair[1]}.png'), 'rb')) for hair in
+                 all_hair]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-    await update.message.reply_text(
-        "Выберите один из вариантов волос:",
-        reply_markup=markup,
-    )
-    await context.bot.send_media_group(chat_id=update.effective_chat.id, media=hair_list)
+    with open(os.path.abspath(f'../res/avatars/hair/{all_hair[0][1]}.png'), 'rb'):
+        await update.message.reply_text(
+            "Выберите один из вариантов волос:",
+            reply_markup=markup,
+        )
+        await context.bot.send_media_group(chat_id=update.effective_chat.id, media=hair_list)
     return TYPING_HAIR
 
 
@@ -127,15 +124,15 @@ async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE):
     all_face = select_all('face')
     reply_keyboard = get_reply_keyboard(all_face)
-    face_list = []
-    for i in range(len(all_face)):
-        face_list.append(InputMediaPhoto(open(os.path.abspath(f'../res/avatars/face/{all_face[i][1]}.png'), 'rb')))
+    face_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/face/{face[1]}.png'), 'rb')) for face in
+                 all_face]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-    await update.message.reply_text(
-        "Выберите один из вариантов лица:",
-        reply_markup=markup,
-    )
-    await context.bot.send_media_group(chat_id=update.effective_chat.id, media=face_list)
+    with open(os.path.abspath(f'../res/avatars/face/{all_face[0][1]}.png'), 'rb'):
+        await update.message.reply_text(
+            "Выберите один из вариантов лица:",
+            reply_markup=markup,
+        )
+        await context.bot.send_media_group(chat_id=update.effective_chat.id, media=face_list)
     return TYPING_FACE
 
 
@@ -143,16 +140,15 @@ async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE):
     all_shoulders = select_all('shoulders')
     reply_keyboard = get_reply_keyboard(all_shoulders)
-    shoulders_list = []
-    for i in range(len(all_shoulders)):
-        shoulders_list.append(
-            InputMediaPhoto(open(os.path.abspath(f'../res/avatars/body/{all_shoulders[i][1]}.png'), 'rb')))
+    shoulders_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/body/{shoulder[1]}.png'), 'rb')) for
+                      shoulder in all_shoulders]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-    await update.message.reply_text(
-        "Выберите один из вариантов тела:",
-        reply_markup=markup,
-    )
-    await context.bot.send_media_group(chat_id=update.effective_chat.id, media=shoulders_list)
+    with open(os.path.abspath(f'../res/avatars/body/{all_shoulders[0][1]}.png'), 'rb'):
+        await update.message.reply_text(
+            "Выберите один из вариантов тела:",
+            reply_markup=markup,
+        )
+        await context.bot.send_media_group(chat_id=update.effective_chat.id, media=shoulders_list)
     return TYPING_BODY
 
 

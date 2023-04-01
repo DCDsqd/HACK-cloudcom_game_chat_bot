@@ -11,7 +11,7 @@ from telegram.ext import (
     PollAnswerHandler
 )
 
-from common_func import start, main_menu, profile, help_me, danet, netda, meme, del_keyboard, \
+from common_func import start, main_menu, profile, help_me, danet, netda, del_keyboard, \
     get_events
 from customization import custom_name_handler, avatar_handler
 from admin import admin_handler
@@ -25,7 +25,6 @@ if __name__ == '__main__':
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('help', help_me))
     application.add_handler(CommandHandler('events', get_events))
-    application.add_handler(CommandHandler('meme', meme))
     application.add_handler(CommandHandler('del', del_keyboard))
     application.add_handler(CommandHandler('menu', main_menu))
     application.add_handler(CommandHandler('profile', profile))

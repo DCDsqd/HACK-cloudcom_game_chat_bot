@@ -25,7 +25,7 @@ def get_rank(user_id):
 # This function takes a user ID and a required amount of experience points as input and returns a boolean indicating
 # whether the user has at least the required amount of experience points. It returns True if the user has at least
 # the required amount, and False otherwise.
-def is_available(user_id, required_exp):
+def is_available(user_id, required_exp) -> bool:
     con = create_connection('../db/database.db')
     request = f"SELECT exp FROM users WHERE id={user_id}"
     user_exp = execute_read_query(con, request)
@@ -120,6 +120,7 @@ async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = """
         SELECT * FROM global_events
         ORDER BY start_time
+        DESC LIMIT 20
     """
     res = execute_read_query(con, query)
     con.close()
@@ -161,10 +162,3 @@ async def netda(update: Update, context: ContextTypes.DEFAULT_TYPE):  # и эт�
 async def del_keyboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text='Клавиатура удалена!',
                                    reply_markup=ReplyKeyboardRemove())
-
-
-# Не уверен, что нам нужно существование этой функции, но в принципе потом уберём
-async def meme(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    rand = random.randint(1, 9)
-    photo = [InputMediaPhoto(open(os.path.abspath('../res/meme/meme_' + str(rand) + '.jpg'), 'rb'))]
-    await context.bot.send_media_group(chat_id=update.effective_chat.id, media=photo)

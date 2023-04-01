@@ -50,32 +50,29 @@ async def event_by_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return EVENT_BY_DATE
 
 
-async def received_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def received_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     event_date = update.message.text
     markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
     if len(event_date) == 10 and event_date[4] == '-' and event_date[7] == '-' and \
             event_date[0:4].isdigit() and event_date[5:7].isdigit() and event_date[8:10].isdigit():
         con = create_connection('../db/database.db')
         query = "SELECT * FROM global_events"
-        res = execute_read_query(con, query)
-        new_res = []
-        for i in range(len(res)):
-            if event_date in res[i][3]:
-                new_res.append(res[i])
-        if len(new_res) == 0:
+        events_data = execute_read_query(con, query)
+        filtered_events = [event for event in events_data if event_date in event[3]]
+        if len(filtered_events) == 0:
             events_keyboard = [["Ближайшие события", "По дате"], ["Назад"]]
             markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text=f"Не найдены события с началом в {event_date}", reply_markup=markup)
             return WHAT_DEL
         events = ""
-        for row in new_res:
-            event = f"<b>ID: {row[0]}</b>\n"
-            event += f"<b>{row[1]}</b>\n"
-            event += f"<i>{row[2]}</i>\n"
-            event += f"<u>Start time:</u> {row[3]}\n"
-            event += f"<u>Duration:</u> {row[4]}\n"
-            events += event + "\n"
+        for row in filtered_events:
+            event_text = f"<b>ID: {row[0]}</b>\n"
+            event_text += f"<b>{row[1]}</b>\n"
+            event_text += f"<i>{row[2]}</i>\n"
+            event_text += f"<u>Start time:</u> {row[3]}\n"
+            event_text += f"<u>Duration:</u> {row[4]}\n"
+            events += event_text + "\n"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Введите ID события, которое хотите удалить.", reply_markup=markup)
@@ -326,7 +323,7 @@ admin_handler = ConversationHandler(
         ],
         EVENT_BY_DATE: [
             MessageHandler(
-                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$|^Назад$")), received_data),
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$|^Назад$")), received_date),
             MessageHandler(filters.Regex("^Назад$"), delete_event),
         ],
         GET_EVENT_ID: [

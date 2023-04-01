@@ -38,7 +38,6 @@ def execute_query(connection, query):
 # returns the result obtained from executing the query.
 def execute_read_query(connection, query):
     cursor = connection.cursor()
-    result = None
     try:
         cursor.execute(query)
         result = cursor.fetchall()
@@ -117,42 +116,11 @@ def check_if_user_exists(user_id) -> bool:
 # could be used in the bot system (db + code) since we use everywhere
 # only one determined time string format which is: "yyyy-MM-dd hh:mm:ss"
 def ensure_time_format(time_str: str) -> bool:
-    if len(time_str) != len('yyyy-MM-dd hh:mm:ss'):
-        return False
-
-    if time_str[4] != '-' or time_str[7] != '-' or time_str[10] != ' ' or time_str[13] != ':' or time_str[16] != ':':
-        return False
-
-    year = time_str[0:4]
-    if not year.isdigit():
-        return False
-
-    month = time_str[5:7]
-    if not month.isdigit():
-        return False
-
-    day = time_str[8:10]
-    if not day.isdigit():
-        return False
-
-    hour = time_str[11:13]
-    if not hour.isdigit():
-        return False
-
-    minute = time_str[14:16]
-    if not minute.isdigit():
-        return False
-
-    second = time_str[17:19]
-    if not second.isdigit():
-        return False
-
     try:
-        datetime.datetime(int(year), int(month), int(day), int(hour), int(minute), int(second))
+        datetime.datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+        return True
     except ValueError:
         return False
-
-    return True
 
 
 # This function creates all tables in the database.db and gamedata.db databases using the SQL scripts stored in the
@@ -246,6 +214,7 @@ def save_new_event_info_string_to_db(text):
     execute_query(conn, query)
     conn.close()
 
+
 def select_all_buildings():
     conn = sqlite3.connect('../db/gamedata.db')
     query = f"""
@@ -253,4 +222,3 @@ def select_all_buildings():
             """
     res = execute_read_query(conn, query)
     return res
-
