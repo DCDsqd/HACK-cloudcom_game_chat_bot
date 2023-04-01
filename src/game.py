@@ -49,7 +49,7 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
             where_keyboard.append([all_buildings[i - 2][1], all_buildings[i - 1][1], all_buildings[i][1]])
 
         residue_of_buildings = []
-        for i in range (len(all_buildings) // 3 * 3 + 1, len(all_buildings)):
+        for i in range(len(all_buildings) // 3 * 3 + 1, len(all_buildings)):
             residue_of_buildings.append(all_buildings[i][1])
 
         where_keyboard.append(residue_of_buildings)
