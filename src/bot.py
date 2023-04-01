@@ -15,7 +15,7 @@ from common_func import start, main_menu, profile, help_me, danet, netda, meme, 
     get_events
 from customization import custom_name_handler, avatar_handler
 from admin import admin_handler
-from game import game_handler  # event_poll, receive_poll_answer, event_poll_handler
+from game import game_handler
 from database import *
 
 if __name__ == '__main__':
@@ -35,7 +35,4 @@ if __name__ == '__main__':
     application.add_handler(avatar_handler)
     application.add_handler(custom_name_handler)
     application.add_handler(game_handler)
-    # application.add_handler(CommandHandler("poll", event_poll))
-    # application.add_handler(event_poll_handler)
-    # application.add_handler(PollAnswerHandler(receive_poll_answer))
     application.run_polling()

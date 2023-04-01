@@ -1,4 +1,6 @@
 # use this file to create functions used to help admins manage global events & other admin-related stuff
+import logging
+
 from database import *
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
@@ -9,7 +11,7 @@ from telegram.ext import (
     filters,
 )
 
-ADMIN_CHOOSING, OP, DEOP, EVENT_INPUT = range(4)
+ADMIN_CHOOSING, OP, DEL_OP, EVENT_INPUT = range(4)
 
 
 # This function checks if a user has admin privileges and sends an appropriate message to the chat depending on the
@@ -117,6 +119,7 @@ async def event_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if is_ok:
         response = f"Создание нового события прошло успешно!\nКомментарий: {msg}"
         save_new_event_info_string_to_db(text)
+        logging.info(f"[{update.message.from_user.id}] New event was added by admin")
         markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
         return ADMIN_CHOOSING
@@ -153,12 +156,14 @@ async def received_op(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         new_admin_id = int(update.message.text)
     except ValueError:
-        await update.message.reply_text(f"Требуется ввести ID пользователя. Полученный текст не является ID!", reply_markup=markup)
+        await update.message.reply_text(f"Требуется ввести ID пользователя. Полученный текст не является ID!",
+                                        reply_markup=markup)
         return ADMIN_CHOOSING
     if new_admin_id in all_ids:
         context.user_data["admin"] = new_admin_id
         inserter('admin', 1, new_admin_id)
         await update.message.reply_text(f"Пользователь с ID: {new_admin_id} теперь администратор.", reply_markup=markup)
+        logging.info(f"[{update.message.from_user.id}] New admin with ID {new_admin_id} was added")
     else:
         await update.message.reply_text(f"Пользователя с ID: {new_admin_id} не существует!", reply_markup=markup)
     return ADMIN_CHOOSING
@@ -170,7 +175,7 @@ async def deop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "Для безопасности, требуется ввести ID игрока.\nЕго можно узнать с помощью команды /profile"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     await update.message.reply_text("Введите ID игрока:")
-    return DEOP
+    return DEL_OP
 
 
 # This function receives the ID of a user and delete them as an administrator if the user exists in the database. If
@@ -190,13 +195,15 @@ async def received_deop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         del_admin_id = int(update.message.text)
     except ValueError:
-        await update.message.reply_text(f"Требуется ввести ID пользователя. Полученный текст не является ID!", reply_markup=markup)
+        await update.message.reply_text(f"Требуется ввести ID пользователя. Полученный текст не является ID!",
+                                        reply_markup=markup)
         return ADMIN_CHOOSING
     if del_admin_id in all_ids:
         context.user_data["admin"] = del_admin_id
         inserter('admin', 0, del_admin_id)
         await update.message.reply_text(f"Пользователь с ID: {del_admin_id} больше не администратор.",
                                         reply_markup=markup)
+        logging.info(f"[{update.message.from_user.id}] User with ID {del_admin_id} now is not admin")
     else:
         await update.message.reply_text(f"Пользователя с ID: {del_admin_id} не существует!", reply_markup=markup)
     return ADMIN_CHOOSING
@@ -214,7 +221,7 @@ admin_handler = ConversationHandler(
             MessageHandler(
                 filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), received_op)
         ],
-        DEOP: [
+        DEL_OP: [
             MessageHandler(
                 filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), received_deop)
         ],
