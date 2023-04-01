@@ -2,16 +2,174 @@ from database import *
 from customization import regen_avatar
 import os
 import random
-from telegram import ReplyKeyboardMarkup, Update, InputMediaPhoto, ReplyKeyboardRemove
+from telegram import ReplyKeyboardMarkup, Update, InputMediaPhoto, ReplyKeyboardRemove, Chat
 from telegram.ext import (
     ContextTypes,
     ConversationHandler,
+    CommandHandler,
+    MessageHandler,
+    filters
+)
+
+from admin import parse_new_event_info_string
+
+EVENT_INPUT = range(1)
+
+TOTAL_VOTER_COUNT = 10
+
+
+async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    is_ok, msg = parse_new_event_info_string(text)
+    if is_ok:
+        questions = ["Да", "Нет"]
+        message = await context.bot.send_poll(
+            update.effective_chat.id,
+            "Поддерживаете ли вы проведение данного мероприятия?",
+            questions,
+            is_anonymous=False,
+            allows_multiple_answers=False,
+        )
+        poll_id = message.poll.id
+        con = create_connection('../db/database.db')
+        create_users = f"""
+                INSERT INTO
+                polls (poll_id)
+                VALUES
+                ('{poll_id}');
+                """
+        execute_query(con, create_users)
+        fields = text.split('\n')
+        name = fields[0]
+        descr = fields[1]
+        start_time = fields[2]
+        duration = fields[3]
+        exp_reward = fields[4]
+        query = f"""
+                UPDATE polls SET name='{name}', descr='{descr}', start_time='{start_time}', duration='{duration}', 
+                exp_reward='{exp_reward}'
+                WHERE poll_id={poll_id};
+                """
+        execute_query(con, query)
+        con.close()
+        payload = {
+            message.poll.id: {
+                "questions": questions,
+                "message_id": message.message_id,
+                "chat_id": update.effective_chat.id,
+                "answers": 0,
+            }
+        }
+        context.bot_data.update(payload)
+    else:
+        response = f"Ошибка при создании события!\nКомментарий: {msg}\n\nПопробуйте ещё раз."
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
+    return ConversationHandler.END
+
+
+async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    answer = update.poll_answer
+    poll_id = answer['poll_id']
+    option_id = answer['option_ids'][0]
+    col = 'for' if option_id == 0 else 'against'
+    with create_connection('../db/database.db') as con:
+        request = f"SELECT {col} FROM polls WHERE poll_id={poll_id}"
+        db_data = execute_read_query(con, request)
+        con = create_connection('../db/database.db')
+        updater = f"""
+                    UPDATE polls
+                    SET '{col}' = '{int(db_data[0][0]) + 1}'
+                    WHERE poll_id = '{poll_id}';
+                    """
+        execute_query(con, updater)
+    answered_poll = context.bot_data[answer.poll_id]
+    try:
+        questions = answered_poll["questions"]
+    except KeyError:
+        return
+    selected_options = answer.option_ids
+    answer_string = ""
+    for question_id in selected_options:
+        if question_id != selected_options[-1]:
+            answer_string += questions[question_id] + " and "
+        else:
+            answer_string += questions[question_id]
+    answered_poll["answers"] += 1
+    # Close poll after three participants voted
+    if answered_poll["answers"] == TOTAL_VOTER_COUNT:
+        await context.bot.stop_poll(answered_poll["chat_id"], answered_poll["message_id"])
+        con = create_connection('../db/database.db')
+        updater = f"""
+                        UPDATE polls
+                        SET 'is_ended' = '1'
+                        WHERE poll_id = '{poll_id}';
+                        """
+        execute_query(con, updater)
+        request = f"SELECT for, against FROM polls WHERE poll_id={poll_id}"
+        db_data = execute_read_query(con, request)
+        if db_data[0][0] < db_data[0][1]:
+            print("Голосование окончено. Мероприятие НЕ принято!")  # DEBUG
+        else:
+            request = "INSERT INTO global_events (name, descr, start_time, duration, exp_reward) SELECT name, descr, " \
+                      "start_time, duration, exp_reward FROM polls"
+            execute_query(con, request)
+        con.close()
+
+
+async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_members_count = await context.bot.getChatMemberCount(update.effective_chat.id) - 1
+    global TOTAL_VOTER_COUNT
+    if chat_members_count > 1:
+        TOTAL_VOTER_COUNT = chat_members_count // 2
+    else:
+        TOTAL_VOTER_COUNT = 1
+    chat: Chat = update.effective_chat
+    if chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
+        msg = "Вы собираетесь добавить новое глобальное событие\n\n" \
+              "Обратите внимание, что информацию о новом событии необходимо вводить СТРОГО в указанном ниже формате.\n" \
+              "Все поля должны быть разделены знаком переноса строки (через Shift+Enter).\n\n" \
+              "Формат информации о событии: \n" \
+              "Название события (не более 50 символов)\n" \
+              "Описание события (не более 500 символов)\n" \
+              "Время начала события в формате yyyy-MM-dd hh:mm:ss\n" \
+              "Продолжительность события (целое число, в минутах)\n" \
+              "Награда опытом за событие (целое число >=0)\n\n\n" \
+              "Пример ввода информации для нового события: \n" \
+              "Мое новое событие\n" \
+              "Это событие будет лучшим в истории!\n" \
+              "2027-12-12 23:59:59\n" \
+              "60\n" \
+              "365\n\n\n" \
+              "Теперь введите информацию о новом событии в ответном сообщении."
+        await update.message.reply_text(msg)
+        return EVENT_INPUT
+    else:
+        response = "Провести голосование можно только в групповых чатах!"
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
+        return ConversationHandler.END
+
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    return ConversationHandler.END
+
+
+poll_handler = ConversationHandler(
+    entry_points=[CommandHandler("poll", add_event)],
+    states={
+        EVENT_INPUT: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$|^Назад$")), poll),
+        ]
+    },
+    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), cancel)],
 )
 
 
 # This function takes a user ID as input and returns the rank of the user based on their experience points,
 # using a pre-selected table of ranks. It assumes that the ranks table is ordered by the exp_to_earn column. If the
 # user's experience points are greater than the highest rank, the function returns the highest rank.
+
+
 def get_rank(user_id):
     user_exp = get_user_exp(user_id)
     ranks = select_ranks_table()

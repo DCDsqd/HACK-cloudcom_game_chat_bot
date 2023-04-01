@@ -1,4 +1,3 @@
-# use this file to create functions used to help admins manage global events & other admin-related stuff
 from database import *
 from telegram import ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
 from telegram.ext import (
