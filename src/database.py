@@ -245,3 +245,12 @@ def save_new_event_info_string_to_db(text):
             """  # probably should test this as well...
     execute_query(conn, query)
     conn.close()
+
+def select_all_buildings():
+    conn = sqlite3.connect('../db/gamedata.db')
+    query = f"""
+            SELECT id, name FROM buildings; 
+            """
+    res = execute_read_query(conn, query)
+    return res
+

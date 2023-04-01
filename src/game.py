@@ -26,7 +26,7 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
     request = f"SELECT game_class FROM users WHERE id={user_id}"
     user_class = execute_read_query(con, request)
     con.close()
-    if user_class[0][0] is None:
+    if user_class[0][0] is None or user_class[0][0] == '':
         await context.bot.send_photo(chat_id=update.effective_chat.id,
                                      photo=open(os.path.abspath('../res/locations/gate.png'), 'rb'),
                                      caption="Добро пожаловать в Великую Империю. Ее выбрали вы, или ее выбрали за вас" \
@@ -43,9 +43,20 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=update.effective_chat.id, text=classes_description, reply_markup=markup)
         return CLASS_CHOOSING
     else:
-        where_keyboard = [["Дом поручений", "Храм Хроноса", "Лаборатория"],
-                          ["Дом гильдий", 'Кузница', 'Рынок'],
-                          ['Арена', 'Великая библиотека', 'Зал легионеров'], ["Отмена"]]
+        all_buildings = select_all_buildings()
+        where_keyboard = []
+        for i in range(2, len(all_buildings) // 3 * 3, 3):
+            where_keyboard.append([all_buildings[i - 2][1], all_buildings[i - 1][1], all_buildings[i][1]])
+
+        residue_of_buildings = []
+        for i in range (len(all_buildings) // 3 * 3 + 1, len(all_buildings)):
+            residue_of_buildings.append(all_buildings[i][1])
+
+        where_keyboard.append(residue_of_buildings)
+        where_keyboard.append(["Отмена"])
+        #where_keyboard = [["Дом поручений", "Храм Хроноса", "Лаборатория"],
+        #                  ["Дом гильдий", 'Кузница', 'Рынок'],
+        #                  ['Арена', 'Великая библиотека', 'Зал легионеров'], ["Отмена"]]
         markup = ReplyKeyboardMarkup(where_keyboard, one_time_keyboard=True)
         message = 'С возвращением! Куда отправимся?'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
@@ -58,9 +69,9 @@ async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["choice"] = text
     inserter('game_class', text, user_id)
     message = f'Вы успешно получили лицензию на роль "{text}".\n\n' \
-              "На данный момент вам недоступны все преимущества служителя империи, " \
-              "однако не расстраивайтесь, вам будут доступны новые возможности по мере получения следующих рангов. " \
-              "Вам предстоит пройти много испытаний и битв, но мы уверены, что вы сможете преодолеть все трудности" \
+              "На данный момент Вам недоступны все преимущества служителя империи, " \
+              "однако не расстраивайтесь, Вам будут доступны новые возможности по мере получения следующих рангов. " \
+              "Вам предстоит пройти много испытаний и битв, но мы уверены, что Вы сможете преодолеть все трудности" \
               " и стать одним из лучших в нашей империи. Желаем Вам удачи!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())
     where_keyboard = [["Дом поручений", "Храм Хроноса", "Лаборатория"],
