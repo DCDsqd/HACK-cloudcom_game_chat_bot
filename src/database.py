@@ -123,23 +123,23 @@ def ensure_time_format(time_str: str) -> bool:
     if time_str[4] != '-' or time_str[7] != '-' or time_str[10] != ' ' or time_str[13] != ':' or time_str[16] != ':':
         return False
 
-    year = time_str[0:3]
+    year = time_str[0:4]
     if not year.isdigit():
         return False
 
-    month = time_str[5:6]
+    month = time_str[5:7]
     if not month.isdigit():
         return False
 
-    day = time_str[8:9]
+    day = time_str[8:10]
     if not day.isdigit():
         return False
 
-    hour = time_str[11:12]
+    hour = time_str[11:13]
     if not hour.isdigit():
         return False
 
-    minute = time_str[14:15]
+    minute = time_str[14:16]
     if not minute.isdigit():
         return False
 
