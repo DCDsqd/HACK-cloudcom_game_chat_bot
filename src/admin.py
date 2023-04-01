@@ -1,8 +1,6 @@
 # use this file to create functions used to help admins manage global events & other admin-related stuff
-import logging
-
 from database import *
-from telegram import ReplyKeyboardMarkup, Update
+from telegram import ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
 from telegram.ext import (
     CommandHandler,
     ContextTypes,
@@ -11,7 +9,101 @@ from telegram.ext import (
     filters,
 )
 
-ADMIN_CHOOSING, OP, DEL_OP, EVENT_INPUT = range(4)
+ADMIN_CHOOSING, OP, DEL_OP, EVENT_INPUT, WHAT_DEL, EVENT_BY_DATE, GET_EVENT_ID = range(7)
+admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие", "Удалить событие"],
+                  ["Отмена"]]
+cancel_keyboard = [["Назад"]]
+
+
+async def delete_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    events_keyboard = [["Ближайшие события", "По дате"], ["Назад"]]
+    markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
+    response = "Как хотите посмотреть события?"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
+    return WHAT_DEL
+
+
+async def nearest_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
+    con = create_connection('../db/database.db')
+    query = "SELECT * FROM global_events ORDER BY start_time DESC LIMIT 20"
+    res = execute_read_query(con, query)
+    con.close()
+    events = ""
+    for row in res:
+        event = f"<b>ID: {row[0]}</b>\n"
+        event += f"<b>{row[1]}</b>\n"
+        event += f"<i>{row[2]}</i>\n"
+        event += f"<u>Start time:</u> {row[3]}\n"
+        event += f"<u>Duration:</u> {row[4]}\n"
+        events += event + "\n"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите ID события, которое хотите удалить.",
+                                   reply_markup=markup)
+    return GET_EVENT_ID
+
+
+async def event_by_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    response = "Введите дату в формате YYYY-MM-DD"
+    markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
+    return EVENT_BY_DATE
+
+
+async def received_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    event_date = update.message.text
+    markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
+    if len(event_date) == 10 and event_date[4] == '-' and event_date[7] == '-' and \
+            event_date[0:4].isdigit() and event_date[5:7].isdigit() and event_date[8:10].isdigit():
+        con = create_connection('../db/database.db')
+        query = "SELECT * FROM global_events"
+        res = execute_read_query(con, query)
+        new_res = []
+        for i in range(len(res)):
+            if event_date in res[i][3]:
+                new_res.append(res[i])
+        if len(new_res) == 0:
+            events_keyboard = [["Ближайшие события", "По дате"], ["Назад"]]
+            markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=f"Не найдены события с началом в {event_date}", reply_markup=markup)
+            return WHAT_DEL
+        events = ""
+        for row in new_res:
+            event = f"<b>ID: {row[0]}</b>\n"
+            event += f"<b>{row[1]}</b>\n"
+            event += f"<i>{row[2]}</i>\n"
+            event += f"<u>Start time:</u> {row[3]}\n"
+            event += f"<u>Duration:</u> {row[4]}\n"
+            events += event + "\n"
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Введите ID события, которое хотите удалить.", reply_markup=markup)
+        return GET_EVENT_ID
+    else:
+        response = "Введённая дата не соответствует формату YYYY-MM-DD. Попробуйте ещё раз."
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
+        return EVENT_BY_DATE
+
+
+async def delete_by_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    event_id = update.message.text
+    if event_id.isdigit():
+        con = create_connection('../db/database.db')
+        query = f"DELETE FROM global_events WHERE id = {event_id}"
+        execute_query(con, query)
+        con.close()
+        markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text=f"Событие с ID {event_id} успешно удалено!", reply_markup=markup)
+        logging.info(f"[{update.message.from_user.id}] Event with ID {event_id} was deleted")
+        return ADMIN_CHOOSING
+    else:
+        markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="ID должно быть числовым значением. Попробуйте ещё раз.",
+                                       reply_markup=markup)
+        return GET_EVENT_ID
 
 
 # This function checks if a user has admin privileges and sends an appropriate message to the chat depending on the
@@ -23,7 +115,6 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     is_admin = int(execute_read_query(con, request)[0][0])
     con.close()
     if is_admin:
-        admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие"], ["Отмена"]]
         markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
         message = "Доступ получен. Меню администратора:"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
@@ -37,7 +128,7 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # conversation with the user should end. This is typically used when an admin operation has been completed or cancelled.
 async def admin_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "Все изменения применены. Хорошего дня!"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 
@@ -112,8 +203,6 @@ def parse_new_event_info_string(text):
 # the user and returns the appropriate state. The function also generates a keyboard markup based on the outcome of
 # the input.
 async def event_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие"], ["Отмена"]]
-    cancel_keyboard = [["Назад"]]
     text = update.message.text
     is_ok, msg = parse_new_event_info_string(text)
     if is_ok:
@@ -151,7 +240,6 @@ async def received_op(update: Update, context: ContextTypes.DEFAULT_TYPE):
     all_ids = []
     for i in range(len(res)):
         all_ids.append(res[i][0])
-    admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
     try:
         new_admin_id = int(update.message.text)
@@ -190,7 +278,7 @@ async def received_deop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     all_ids = []
     for i in range(len(res)):
         all_ids.append(res[i][0])
-    admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие"], ["Отмена"]]
+
     markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
     try:
         del_admin_id = int(update.message.text)
@@ -214,6 +302,7 @@ admin_handler = ConversationHandler(
     states={
         ADMIN_CHOOSING: [
             MessageHandler(filters.Regex("^Добавить событие$"), add_event),
+            MessageHandler(filters.Regex("^Удалить событие$"), delete_event),
             MessageHandler(filters.Regex("^Добавить администратора$"), op),
             MessageHandler(filters.Regex("^Удалить администратора$"), deop),
         ],
@@ -229,7 +318,22 @@ admin_handler = ConversationHandler(
             MessageHandler(
                 filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$|^Назад$")), event_input),
             MessageHandler(filters.Regex("^Назад$"), admin),
-        ]
+        ],
+        WHAT_DEL: [
+            MessageHandler(filters.Regex("^Ближайшие события$"), nearest_events),
+            MessageHandler(filters.Regex("^По дате$"), event_by_data),
+            MessageHandler(filters.Regex("^Назад$"), admin),
+        ],
+        EVENT_BY_DATE: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$|^Назад$")), received_data),
+            MessageHandler(filters.Regex("^Назад$"), delete_event),
+        ],
+        GET_EVENT_ID: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$|^Назад$")), delete_by_id),
+            MessageHandler(filters.Regex("^Назад$"), delete_event),
+        ],
     },
     fallbacks=[MessageHandler(filters.Regex("^Отмена$"), admin_cancel)],
 )

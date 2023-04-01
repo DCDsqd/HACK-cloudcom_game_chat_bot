@@ -122,6 +122,7 @@ async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ORDER BY start_time
     """
     res = execute_read_query(con, query)
+    con.close()
     events = ""
     for row in res:
         event = f"<b>{row[1]}</b>\n"
