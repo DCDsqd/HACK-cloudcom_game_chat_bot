@@ -8,14 +8,14 @@ from telegram.ext import (
     filters,
 )
 
-ADMIN_CHOOSING, OP, DEL_OP, EVENT_INPUT, WHAT_DEL, EVENT_BY_DATE, GET_EVENT_ID = range(7)
+ADMIN_CHOOSING, OP, DEL_OP, EVENT_INPUT, WHAT_DEL, EVENT_BY_DATE, EVENT_BY_NAME, GET_EVENT_ID = range(8)
 admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие", "Удалить событие"],
                   ["Отмена"]]
 cancel_keyboard = [["Назад"]]
+events_keyboard = [["Ближайшие события"], ["По дате", "По имени"], ["Назад"]]
 
 
 async def delete_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    events_keyboard = [["Ближайшие события", "По дате"], ["Назад"]]
     markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
     response = "Как хотите посмотреть события?"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
@@ -49,6 +49,13 @@ async def event_by_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return EVENT_BY_DATE
 
 
+async def event_by_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    response = "Введите название мероприятия"
+    markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
+    return EVENT_BY_NAME
+
+
 async def received_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     event_date = update.message.text
     markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
@@ -59,7 +66,6 @@ async def received_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
         events_data = execute_read_query(con, query)
         filtered_events = [event for event in events_data if event_date in event[3]]
         if len(filtered_events) == 0:
-            events_keyboard = [["Ближайшие события", "По дате"], ["Назад"]]
             markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text=f"Не найдены события с началом в {event_date}", reply_markup=markup)
@@ -80,6 +86,32 @@ async def received_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response = "Введённая дата не соответствует формату YYYY-MM-DD. Попробуйте ещё раз."
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
         return EVENT_BY_DATE
+
+
+async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    event_name = update.message.text
+    markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
+    con = create_connection('../db/database.db')
+    query = "SELECT * FROM global_events"
+    events_data = execute_read_query(con, query)
+    filtered_events = [event for event in events_data if event_name in event[1]]
+    if len(filtered_events) == 0:
+        markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text=f"Не найдены события с названием {event_name}", reply_markup=markup)
+        return WHAT_DEL
+    events = ""
+    for row in filtered_events:
+        event_text = f"<b>ID: {row[0]}</b>\n"
+        event_text += f"<b>{row[1]}</b>\n"
+        event_text += f"<i>{row[2]}</i>\n"
+        event_text += f"<u>Start time:</u> {row[3]}\n"
+        event_text += f"<u>Duration:</u> {row[4]}\n"
+        events += event_text + "\n"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="Введите ID события, которое хотите удалить.", reply_markup=markup)
+    return GET_EVENT_ID
 
 
 async def delete_by_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -318,11 +350,17 @@ admin_handler = ConversationHandler(
         WHAT_DEL: [
             MessageHandler(filters.Regex("^Ближайшие события$"), nearest_events),
             MessageHandler(filters.Regex("^По дате$"), event_by_data),
+            MessageHandler(filters.Regex("^По имени$"), event_by_name),
             MessageHandler(filters.Regex("^Назад$"), admin),
         ],
         EVENT_BY_DATE: [
             MessageHandler(
                 filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$|^Назад$")), received_date),
+            MessageHandler(filters.Regex("^Назад$"), delete_event),
+        ],
+        EVENT_BY_NAME: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$|^Назад$")), received_name),
             MessageHandler(filters.Regex("^Назад$"), delete_event),
         ],
         GET_EVENT_ID: [

@@ -23,7 +23,6 @@ if __name__ == '__main__':
     application = ApplicationBuilder().token(token_file.read()).build()
     token_file.close()
     application.add_handler(CommandHandler('start', start))
-    # application.add_handler(CommandHandler("poll", poll))
     application.add_handler(poll_handler)
     application.add_handler(PollAnswerHandler(receive_poll_answer))
     application.add_handler(CommandHandler('help', help_me))

@@ -13,8 +13,7 @@ from telegram.ext import (
 
 from admin import parse_new_event_info_string
 
-EVENT_INPUT = range(1)
-
+EVENT_INPUT = 0
 TOTAL_VOTER_COUNT = 10
 
 
@@ -31,27 +30,22 @@ async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE):
             allows_multiple_answers=False,
         )
         poll_id = message.poll.id
-        con = create_connection('../db/database.db')
-        create_users = f"""
-                INSERT INTO
-                polls (poll_id)
-                VALUES
-                ('{poll_id}');
-                """
-        execute_query(con, create_users)
-        fields = text.split('\n')
-        name = fields[0]
-        descr = fields[1]
-        start_time = fields[2]
-        duration = fields[3]
-        exp_reward = fields[4]
-        query = f"""
-                UPDATE polls SET name='{name}', descr='{descr}', start_time='{start_time}', duration='{duration}', 
-                exp_reward='{exp_reward}'
-                WHERE poll_id={poll_id};
-                """
-        execute_query(con, query)
-        con.close()
+        with create_connection('../db/database.db') as con:
+            create_poll_query = f"""
+                    INSERT INTO
+                    polls (poll_id)
+                    VALUES
+                    ('{poll_id}');
+                    """
+            execute_query(con, create_poll_query)
+            fields = text.split('\n')
+            name, descr, start_time, duration, exp_reward = fields[:5]
+            update_poll_query = f"""
+                    UPDATE polls SET name='{name}', descr='{descr}', start_time='{start_time}', duration='{duration}', 
+                    exp_reward='{exp_reward}'
+                    WHERE poll_id={poll_id};
+                    """
+            execute_query(con, update_poll_query)
         payload = {
             message.poll.id: {
                 "questions": questions,
@@ -108,49 +102,46 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
         request = f"SELECT for, against FROM polls WHERE poll_id={poll_id}"
         db_data = execute_read_query(con, request)
         if db_data[0][0] < db_data[0][1]:
-            print("Голосование окончено. Мероприятие НЕ принято!")  # DEBUG
+            logging.info(f"[{poll_id}] Голосование окончено. Мероприятие НЕ принято!")
         else:
             request = "INSERT INTO global_events (name, descr, start_time, duration, exp_reward) SELECT name, descr, " \
                       f"start_time, duration, exp_reward FROM polls WHERE poll_id = {poll_id}"
             execute_query(con, request)
+            logging.info(f"[{poll_id}] Голосование окончено. Мероприятие принято и добавлено в БД!")
         con.close()
 
 
 async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_members_count = await context.bot.getChatMemberCount(update.effective_chat.id) - 1
-    global TOTAL_VOTER_COUNT
-    if chat_members_count > 1:
-        TOTAL_VOTER_COUNT = chat_members_count // 2
-    else:
-        TOTAL_VOTER_COUNT = 1
     chat: Chat = update.effective_chat
-    if chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
-        msg = "Вы собираетесь добавить новое глобальное событие\n\n" \
-              "Обратите внимание, что информацию о новом событии необходимо вводить СТРОГО в указанном ниже формате.\n" \
-              "Все поля должны быть разделены знаком переноса строки (через Shift+Enter).\n\n" \
-              "Формат информации о событии: \n" \
-              "Название события (не более 50 символов)\n" \
-              "Описание события (не более 500 символов)\n" \
-              "Время начала события в формате yyyy-MM-dd hh:mm:ss\n" \
-              "Продолжительность события (целое число, в минутах)\n" \
-              "Награда опытом за событие (целое число >=0)\n\n\n" \
-              "Пример ввода информации для нового события: \n" \
-              "Мое новое событие\n" \
-              "Это событие будет лучшим в истории!\n" \
-              "2027-12-12 23:59:59\n" \
-              "60\n" \
-              "365\n\n\n" \
-              "Теперь введите информацию о новом событии в ответном сообщении."
-        await update.message.reply_text(msg)
-        return EVENT_INPUT
-    else:
+    chat_members_count: int = await context.bot.getChatMemberCount(chat.id) - 1
+    global TOTAL_VOTER_COUNT
+    TOTAL_VOTER_COUNT = chat_members_count // 2 if chat_members_count > 1 else 1
+    if chat.type not in [Chat.GROUP, Chat.SUPERGROUP]:
         response = "Провести голосование можно только в групповых чатах!"
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
+        await context.bot.send_message(chat_id=chat.id, text=response)
         return ConversationHandler.END
 
+    new_event_info = (
+        "Вы собираетесь добавить новое глобальное событие\n\n"
+        "Обратите внимание, что информацию о новом событии необходимо вводить СТРОГО в указанном ниже формате.\n"
+        "Все поля должны быть разделены знаком переноса строки (через Shift+Enter).\n\n"
+        "Формат информации о событии: \n"
+        "Название события (не более 50 символов)\n"
+        "Описание события (не более 500 символов)\n"
+        "Время начала события в формате yyyy-MM-dd hh:mm:ss\n"
+        "Продолжительность события (целое число, в минутах)\n"
+        "Награда опытом за событие (целое число >=0)\n\n\n"
+        "Пример ввода информации для нового события: \n"
+        "Мое новое событие\n"
+        "Это событие будет лучшим в истории!\n"
+        "2027-12-12 23:59:59\n"
+        "60\n"
+        "365\n\n\n"
+        "Теперь введите информацию о новом событии в ответном сообщении."
+    )
 
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    return ConversationHandler.END
+    await update.message.reply_text(new_event_info)
+    return EVENT_INPUT
 
 
 poll_handler = ConversationHandler(
@@ -161,7 +152,7 @@ poll_handler = ConversationHandler(
                 filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), poll),
         ]
     },
-    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), cancel)],
+    fallbacks=[],
 )
 
 
