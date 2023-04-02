@@ -1,8 +1,7 @@
 from database import *
 from customization import regen_avatar
 import os
-import random
-from telegram import ReplyKeyboardMarkup, Update, InputMediaPhoto, ReplyKeyboardRemove, Chat
+from telegram import ReplyKeyboardMarkup, Update, ReplyKeyboardRemove, Chat
 from telegram.ext import (
     ContextTypes,
     ConversationHandler,
@@ -17,6 +16,12 @@ EVENT_INPUT = 0
 TOTAL_VOTER_COUNT = 10
 
 
+# This code defines an async function poll that creates a poll message in a chat and stores its information in a
+# database. If the parse_new_event_info_string() function returns True, the function creates a poll message with two
+# possible answers ("Да" and "Нет") and stores its id in a database table called polls. Then, it extracts the fields
+# from the text variable, updates the database table with the information, and updates the bot_data dictionary with
+# information about the poll. If parse_new_event_info_string() returns False, the function sends an error message to
+# the chat.
 async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     is_ok, msg = parse_new_event_info_string(text)
@@ -61,6 +66,9 @@ async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
+# The receive_poll_answer function updates the poll data in the database and handles the answers received from users.
+# It increments the vote count for the respective option and checks if the poll is ended. If the poll is ended,
+# it stops the poll, updates the database, and logs the result. If the event is accepted, it is added to the database.
 async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     answer = update.poll_answer
     poll_id = answer['poll_id']
@@ -111,6 +119,10 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
         con.close()
 
 
+# This is function, that checks if the chat is a group or supergroup and sends a message with instructions on how to
+# add a new global event. If the chat is not a group or supergroup, the function sends an error message and
+# terminates the conversation. If the chat is a group or supergroup, the function sends a message with instructions
+# on how to add a new global event and returns EVENT_INPUT, which is the next state in the conversation.
 async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat: Chat = update.effective_chat
     chat_members_count: int = await context.bot.getChatMemberCount(chat.id) - 1
@@ -149,7 +161,7 @@ poll_handler = ConversationHandler(
     states={
         EVENT_INPUT: [
             MessageHandler(
-                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), poll),
+                filters.TEXT & ~filters.COMMAND, poll),
         ]
     },
     fallbacks=[],
@@ -159,8 +171,6 @@ poll_handler = ConversationHandler(
 # This function takes a user ID as input and returns the rank of the user based on their experience points,
 # using a pre-selected table of ranks. It assumes that the ranks table is ordered by the exp_to_earn column. If the
 # user's experience points are greater than the highest rank, the function returns the highest rank.
-
-
 def get_rank(user_id):
     user_exp = get_user_exp(user_id)
     ranks = select_ranks_table()
@@ -186,7 +196,7 @@ def is_available(user_id, required_exp) -> bool:
 # the user_id of the user whose experience points need to be updated and the amount of experience points to add. It
 # fetches the current experience points of the user from the database, adds the new experience points to it,
 # and then updates the database with the new experience points.
-def add_exp(user_id, exp):
+def add_exp(user_id, exp) -> None:
     con = create_connection('../db/database.db')
     request = f"SELECT exp FROM users WHERE id={user_id}"
     db_data = execute_read_query(con, request)
@@ -197,7 +207,7 @@ def add_exp(user_id, exp):
 # This function that sends a welcome message to the user and then checks if the user exists in the database. If the
 # user does not exist, the function creates a connection to a database, executes an SQL query to insert the user's ID
 # and username (if available) into a users table, generates an avatar for the user, and then closes the connection.
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     await context.bot.send_message(chat_id=user_id,
                                    text="Добро пожаловать в Team Builder Bot! Введите /help, чтобы просмотреть "
@@ -238,7 +248,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # This function that retrieves user data from a database, generates a message containing the user's profile
 # information (including personal username, Telegram username, subclass, rank, class, and experience points),
 # sends the message along with the user's avatar, and then deletes the message that triggered the function.
-async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     con = create_connection('../db/database.db')
     message = update.message
     user_id = message.from_user.id
@@ -264,7 +274,7 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # message to the Telegram chat. It uses the create_connection() function to connect to the database, executes a SQL
 # query to select all the events in the global_events table and order them by their start time. Then it loops through
 # the results and formats each event's data as an HTML string.
-async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     con = create_connection('../db/database.db')
     query = """
         SELECT * FROM global_events
@@ -277,10 +287,10 @@ async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for row in res:
         event = f"<b>{row[1]}</b>\n"
         event += f"<i>{row[2]}</i>\n"
-        event += f"<u>Start time:</u> {row[3]}\n"
-        event += f"<u>Duration:</u> {row[4]}\n"
-        event += f"<u>Participants:</u> {row[5]}\n"
-        event += f"<u>Experience reward:</u> {row[6]}\n"
+        event += f"<u>Начало :</u> {row[3]}\n"
+        event += f"<u>Длительность:</u> {row[4]}\n"
+        event += f"<u>Участники:</u> {row[5]}\n"
+        event += f"<u>Награда (опыт):</u> {row[6]}\n"
         events += event + "\n"
     con.close()
     await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
@@ -288,7 +298,7 @@ async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # This function sends a message to the user with the available commands for the bot. It  sends a message containing a
 # list of commands that the user can enter.
-async def help_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def help_me(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = "Вот доступные команды:\n\n" \
               "/start - Начало использования бота\n" \
               "/help - Просмотр доступных команд\n" \
@@ -297,17 +307,17 @@ async def help_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
 
 
-async def danet(update: Update, context: ContextTypes.DEFAULT_TYPE):  # не забыть бы удалить
+async def danet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:  # не забыть бы удалить
     message = "пизда"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
-async def netda(update: Update, context: ContextTypes.DEFAULT_TYPE):  # и это
+async def netda(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:  # и это
     message = "пидора ответ"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 # Требуемая функция на этапе разработки, потом нужно будет убрать
-async def del_keyboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def del_keyboard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_message(chat_id=update.effective_chat.id, text='Клавиатура удалена!',
                                    reply_markup=ReplyKeyboardRemove())

@@ -31,3 +31,16 @@ CREATE TABLE IF NOT EXISTS "local_events" (
 	"result"	TEXT NOT NULL DEFAULT "in progress",
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
+
+CREATE TABLE IF NOT EXISTS "polls" (
+	"poll_id"	INTEGER UNIQUE,
+	"for"	INTEGER NOT NULL DEFAULT 0,
+	"against"	INTEGER NOT NULL DEFAULT 0,
+	"is_ended"	INTEGER NOT NULL DEFAULT 0,
+	"name"	TEXT,
+	"descr"	TEXT CHECK(length("descr") < 1000),
+	"start_time"	TEXT,
+	"duration"	INTEGER NOT NULL DEFAULT 5,
+	"exp_reward"	INTEGER DEFAULT 0,
+	PRIMARY KEY("poll_id")
+);

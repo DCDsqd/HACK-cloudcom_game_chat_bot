@@ -68,7 +68,7 @@ async def custom_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # This function merges three images (hair, face, and body) together to create an avatar image for a user with the
 # specified user ID. The images are located in three separate folders, and the function uses the Pillow library to
 # open and manipulate the images. The resulting image is saved to a file in a specific directory.
-def merge_image(img1, img2, img3, user_id):
+def merge_image(img1, img2, img3, user_id) -> None:
     hair = Image.open(os.path.abspath(f'../res/avatars/hair/Вариант {img1}.png')).convert("RGBA")
     face = Image.open(os.path.abspath(f'../res/avatars/face/Вариант {img2}.png')).convert("RGBA")
     body = Image.open(os.path.abspath(f'../res/avatars/body/Вариант {img3}.png')).convert("RGBA")
@@ -82,7 +82,7 @@ def merge_image(img1, img2, img3, user_id):
 # This function is used to regenerate the user's avatar by calling the merge_image function with the avatar_id values
 # obtained from get_avatar_ids function for the given user_id. The resulting image is saved to the corresponding file
 # in the user's avatar folder.
-def regen_avatar(user_id):
+def regen_avatar(user_id) -> None:
     ids = get_avatar_ids(user_id)
     merge_image(ids[0], ids[1], ids[2], user_id)
 
@@ -90,7 +90,7 @@ def regen_avatar(user_id):
 # This function generates a reply keyboard for displaying options to the user based on the given list of all
 # available options. It arranges the options in pairs and returns a list of lists, with each inner list representing
 # a row of options, and the last row containing a confirmation button.
-def get_reply_keyboard(list_of_all):
+def get_reply_keyboard(list_of_all) -> list:
     reply_keyboard = []
     for index in range(1, len(list_of_all)):
         if index % 2 == 1:

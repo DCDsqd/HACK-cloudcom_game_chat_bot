@@ -125,7 +125,7 @@ def ensure_time_format(time_str: str) -> bool:
 
 # This function creates all tables in the database.db and gamedata.db databases using the SQL scripts stored in the
 # sql directory.
-def create_all_tables_from_sql_scripts():
+def create_all_tables_from_sql_scripts() -> None:
     conn = sqlite3.connect('../db/database.db')
     with open('../sql/database_create_tables.sql', 'r') as sql_file:
         conn.executescript(sql_file.read())
@@ -138,7 +138,7 @@ def create_all_tables_from_sql_scripts():
 
 
 # TEST FUNCTION -> DELETE IN RELEASE
-def create_all_tables_from_sql_scripts_test():
+def create_all_tables_from_sql_scripts_test() -> None:
     conn = sqlite3.connect('../db/test/database.db')
     with open('../sql/database_create_tables.sql', 'r') as sql_file:
         conn.executescript(sql_file.read())
@@ -180,7 +180,7 @@ def get_user_exp(user_id):
 # (the ID of the new participant). The function connects to the database.db database, retrieves the current list of
 # participants for the given global_event_id, appends the new_participant_id to the list (if it's not already
 # present), and updates the participants field in the global_events table. The function does not return anything.
-def update_participants_in_global_event(global_event_id, new_participant_id):
+def update_participants_in_global_event(global_event_id, new_participant_id) -> None:
     conn = sqlite3.connect('../db/database.db')
     query = f"""
             SELECT participants FROM global_events WHERE id='{global_event_id}';
@@ -199,7 +199,7 @@ def update_participants_in_global_event(global_event_id, new_participant_id):
 
 
 # This function relies on fact that @text is valid, a.k.a parse_new_event_info_string(@text) == {True, 'Some message'}
-def save_new_event_info_string_to_db(text):
+def save_new_event_info_string_to_db(text) -> None:
     fields = text.split('\n')
     name = fields[0]
     descr = fields[1]

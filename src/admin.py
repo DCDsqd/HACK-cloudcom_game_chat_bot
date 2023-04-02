@@ -1,3 +1,5 @@
+import telegram.ext
+
 from database import *
 from telegram import ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
 from telegram.ext import (
@@ -33,8 +35,8 @@ async def nearest_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
         event = f"<b>ID: {row[0]}</b>\n"
         event += f"<b>{row[1]}</b>\n"
         event += f"<i>{row[2]}</i>\n"
-        event += f"<u>Start time:</u> {row[3]}\n"
-        event += f"<u>Duration:</u> {row[4]}\n"
+        event += f"<u>Начало:</u> {row[3]}\n"
+        event += f"<u>Длительность:</u> {row[4]}\n"
         events += event + "\n"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите ID события, которое хотите удалить.",
@@ -75,8 +77,8 @@ async def received_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
             event_text = f"<b>ID: {row[0]}</b>\n"
             event_text += f"<b>{row[1]}</b>\n"
             event_text += f"<i>{row[2]}</i>\n"
-            event_text += f"<u>Start time:</u> {row[3]}\n"
-            event_text += f"<u>Duration:</u> {row[4]}\n"
+            event_text += f"<u>Начало:</u> {row[3]}\n"
+            event_text += f"<u>Длительность:</u> {row[4]}\n"
             events += event_text + "\n"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
         await context.bot.send_message(chat_id=update.effective_chat.id,
@@ -105,8 +107,8 @@ async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
         event_text = f"<b>ID: {row[0]}</b>\n"
         event_text += f"<b>{row[1]}</b>\n"
         event_text += f"<i>{row[2]}</i>\n"
-        event_text += f"<u>Start time:</u> {row[3]}\n"
-        event_text += f"<u>Duration:</u> {row[4]}\n"
+        event_text += f"<u>Начало:</u> {row[3]}\n"
+        event_text += f"<u>Длительность:</u> {row[4]}\n"
         events += event_text + "\n"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
     await context.bot.send_message(chat_id=update.effective_chat.id,
@@ -186,8 +188,8 @@ async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # This function parse_new_event_info_string takes a string text containing information about a new event, parses and
 # validates it. It returns a tuple consisting of a boolean value indicating whether the information is valid or not,
 # and a string message indicating the reason for validation failure if applicable.
-def parse_new_event_info_string(text):
-    minutes_in_year = 525600
+def parse_new_event_info_string(text: str) -> tuple[bool, str]:
+    MAX_DURATION = 525600
     fields = text.split('\n')
 
     if len(fields) != 5:
@@ -195,12 +197,12 @@ def parse_new_event_info_string(text):
                       'Возможно, Вы забыли разделить информацию с помощью Shift+Enter, либо пропустили какое-то из ' \
                       'полей.'
 
-    name = fields[0]
-    if len(name) > 50:
+    event_name = fields[0]
+    if len(event_name) > 50:
         return False, 'Вы указали слишком длинное имя для события. Оно не должно превышать 50 символов.'
 
-    descr = fields[1]
-    if len(descr) > 500:
+    event_description = fields[1]
+    if len(event_description) > 500:
         return False, 'Вы указали слишком длинное описание для события. Оно не должно превышать 500 символов.'
 
     start_time = fields[2]
@@ -214,8 +216,8 @@ def parse_new_event_info_string(text):
         return False, 'Указанная Вами продолжительность события не является числом.'
     if int(duration) < 1:
         return False, 'Продолжительность события не может быть меньше 1 минуты.'
-    if int(duration) > minutes_in_year:
-        return False, f"Продолжительность события не может быть больше года ('{minutes_in_year}' минут)."
+    if int(duration) > MAX_DURATION:
+        return False, f"Продолжительность события не может быть больше года ('{MAX_DURATION}' минут)."
 
     exp_reward = fields[4]
     if not exp_reward.isdigit():
