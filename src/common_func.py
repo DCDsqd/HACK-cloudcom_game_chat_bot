@@ -77,7 +77,6 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
     with create_connection('../db/database.db') as con:
         request = f"SELECT {col} FROM polls WHERE poll_id={poll_id}"
         db_data = execute_read_query(con, request)
-        con = create_connection('../db/database.db')
         updater = f"""
                     UPDATE polls
                     SET '{col}' = '{int(db_data[0][0]) + 1}'
@@ -97,8 +96,10 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
         else:
             answer_string += questions[question_id]
     answered_poll["answers"] += 1
-    # Close poll after three participants voted
-    if answered_poll["answers"] == TOTAL_VOTER_COUNT:
+    with create_connection('../db/database.db') as con:
+        request = f"SELECT for, against FROM polls WHERE poll_id={poll_id}"
+        for_and_against = execute_read_query(con, request)
+    if for_and_against[0][0] == TOTAL_VOTER_COUNT or for_and_against[0][1] == TOTAL_VOTER_COUNT:
         await context.bot.stop_poll(answered_poll["chat_id"], answered_poll["message_id"])
         con = create_connection('../db/database.db')
         updater = f"""
