@@ -12,7 +12,7 @@ from telegram.ext import (
 )
 
 from common_func import start, main_menu, profile, help_me, danet, netda, del_keyboard, \
-    get_events, poll, receive_poll_answer, poll_handler
+    get_events, poll, receive_poll_answer, poll_handler, rating
 from customization import custom_name_handler, avatar_handler
 from admin import admin_handler
 from game import game_handler
@@ -26,6 +26,7 @@ if __name__ == '__main__':
     application.add_handler(poll_handler)
     application.add_handler(PollAnswerHandler(receive_poll_answer))
     application.add_handler(CommandHandler('help', help_me))
+    application.add_handler(CommandHandler('rating', rating))
     application.add_handler(CommandHandler('events', get_events))
     application.add_handler(CommandHandler('del', del_keyboard))
     application.add_handler(CommandHandler('menu', main_menu))

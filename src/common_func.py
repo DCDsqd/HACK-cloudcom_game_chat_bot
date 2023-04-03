@@ -16,6 +16,23 @@ EVENT_INPUT = 0
 TOTAL_VOTER_COUNT = 10
 
 
+async def rating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    con = create_connection('../db/database.db')
+    query = """
+        SELECT * FROM users
+        ORDER BY exp
+        DESC LIMIT 10
+    """
+    res = execute_read_query(con, query)
+    con.close()
+    events = "Топ-10 игроков по опыту:\n"
+    for row in res:
+        event = f"<b>{row[2]} ({row[1]}) - {row[5]}</b>\n"
+        events += event
+    con.close()
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
+
+
 # This code defines an async function poll that creates a poll message in a chat and stores its information in a
 # database. If the parse_new_event_info_string() function returns True, the function creates a poll message with two
 # possible answers ("Да" and "Нет") and stores its id in a database table called polls. Then, it extracts the fields
@@ -225,9 +242,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         con = create_connection('../db/database.db')
         create_users = f"""
         INSERT INTO
-        users (id, username)
+        users (id, username, personal_username)
         VALUES
-        ('{user_id}', '{username}');
+        ('{user_id}', '{username}', '{username}');
         """
         execute_query(con, create_users)
         regen_avatar(user_id)
