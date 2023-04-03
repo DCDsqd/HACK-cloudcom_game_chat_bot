@@ -1,7 +1,6 @@
 import sqlite3
 from sqlite3 import Error
 import logging
-import time
 import datetime
 
 logging.basicConfig(
@@ -203,7 +202,7 @@ def update_participants_in_global_event(global_event_id, new_participant_id) -> 
         participants_text += ',' + str(new_participant_id)
     query = f"""
             UPDATE global_events SET participants='{participants_text}' WHERE id='{global_event_id}';
-            """  # probably should test this...
+            """
     execute_query(conn, query)
     conn.close()
 
@@ -220,7 +219,7 @@ def save_new_event_info_string_to_db(text) -> None:
     query = f"""
             INSERT INTO global_events (name,descr,start_time,duration,exp_reward) VALUES 
             ('{name}','{descr}','{start_time}','{duration}','{exp_reward}');
-            """  # probably should test this as well...
+            """
     execute_query(conn, query)
     conn.close()
 
@@ -232,3 +231,128 @@ def select_all_buildings():
             """
     res = execute_read_query(conn, query)
     return res
+
+
+def create_friend_request(id_sender, id_receiver):
+    conn = sqlite3.connect('../db/database.db')
+
+    query = f"""
+                INSERT INTO friends (sender_id,receiver_id) VALUES 
+                ('{id_sender}','{id_receiver}');
+            """
+    execute_query(conn, query)
+    conn.close()
+
+
+def accept_friend_request(id_sender, id_receiver):
+    conn = sqlite3.connect('../db/database.db')
+    query = f"""
+                UPDATE friends SET is_accepted = 1 WHERE  
+                sender_id = '{id_sender}' AND
+                receiver_id = '{id_receiver}');
+            """
+    execute_query(conn, query)
+    conn.close()
+
+
+def delete_from_friends(id_initiator, id_target):
+    conn = sqlite3.connect('../db/database.db')
+    query = f"""
+                DELETE FROM friends WHERE  
+                sender_id = '{id_initiator}' AND
+                receiver_id = '{id_target}');
+            """
+    execute_query(conn, query)
+    query = f"""
+                DELETE FROM friends WHERE  
+                sender_id = '{id_target}' AND
+                receiver_id = '{id_initiator}');
+            """
+    execute_query(conn, query)
+    conn.close()
+
+
+def get_friend_list_ids(user_id):
+    friend_list = []
+    conn = sqlite3.connect('../db/database.db')
+    query = f"""
+                SELECT receiver_id FROM friends WHERE  
+                sender_id = '{user_id}' AND
+                is_accepted = 1);
+            """
+    query_res = execute_read_query(conn, query)
+    for i in range(len(query_res)):
+        friend_list.append(query_res[i][0])
+
+    query = f"""
+                SELECT sender_id FROM friends WHERE  
+                receiver_id = '{user_id}' AND
+                is_accepted = 1);
+            """
+    query_res = execute_read_query(conn, query)
+    for i in range(len(query_res)):
+        friend_list.append(query_res[i][0])
+
+    conn.close()
+    return friend_list
+
+
+def get_incoming_pending_friend_requests(user_id):
+    requests_list = []
+    conn = sqlite3.connect('../db/database.db')
+    query = f"""
+                SELECT sender_id FROM friends WHERE  
+                receiver_id = '{user_id}' AND
+                is_accepted = 0);
+            """
+    query_res = execute_read_query(conn, query)
+    for i in range(len(query_res)):
+        requests_list.append(query_res[i][0])
+    conn.close()
+    return requests_list
+
+
+def get_outgoing_pending_friend_requests(user_id):
+    requests_list = []
+    conn = sqlite3.connect('../db/database.db')
+    query = f"""
+                SELECT receiver_id FROM friends WHERE  
+                sender_id = '{user_id}' AND
+                is_accepted = 0);
+            """
+    query_res = execute_read_query(conn, query)
+    for i in range(len(query_res)):
+        requests_list.append(query_res[i][0])
+    conn.close()
+    return requests_list
+
+
+# Checks whether two ids are currently friends, returns:
+# -1 if they are not friends
+# 0 if @first_user_id is a sender
+# 1 if @first_user_id is a receiver (reversed order)
+# 2 if @first_user_id is a sender, but request is still pending
+# 3 if @first_user_id is a receiver (reversed_order), but request is still pending
+def check_if_friends(first_user_id, second_user_id) -> int:
+    conn = sqlite3.connect('../db/database.db')
+    query = f"""
+                SELECT is_accepted FROM friends WHERE  
+                sender_id = '{first_user_id}' AND
+                receiver_id = '{second_user_id}');
+            """
+    res = execute_read_query(conn, query)
+    if len(res) != 0:
+        return 0 if res[0][0] == 1 else 2
+
+    query = f"""
+                SELECT is_accepted FROM friends WHERE  
+                sender_id = '{second_user_id}' AND
+                receiver_id = '{first_user_id}');
+            """
+    res = execute_read_query(conn, query)
+    if len(res) != 0:
+        return 1 if res[0][0] == 1 else 3
+
+    conn.close()
+    return -1
+
