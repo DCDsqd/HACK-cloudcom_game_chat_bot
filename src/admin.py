@@ -17,14 +17,14 @@ cancel_keyboard = [["Назад"]]
 events_keyboard = [["Ближайшие события"], ["По дате", "По имени"], ["Назад"]]
 
 
-async def delete_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def delete_event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
     response = "Как хотите посмотреть события?"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
     return WHAT_DEL
 
 
-async def nearest_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def nearest_events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
     con = create_connection('../db/database.db')
     query = "SELECT * FROM global_events ORDER BY start_time DESC LIMIT 20"
@@ -44,21 +44,21 @@ async def nearest_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return GET_EVENT_ID
 
 
-async def event_by_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def event_by_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     response = "Введите дату в формате YYYY-MM-DD"
     markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
     return EVENT_BY_DATE
 
 
-async def event_by_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def event_by_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     response = "Введите название мероприятия"
     markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
     return EVENT_BY_NAME
 
 
-async def received_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def received_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     event_date = update.message.text
     markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
     if len(event_date) == 10 and event_date[4] == '-' and event_date[7] == '-' and \
@@ -90,7 +90,7 @@ async def received_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return EVENT_BY_DATE
 
 
-async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     event_name = update.message.text
     markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
     con = create_connection('../db/database.db')
@@ -116,7 +116,7 @@ async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return GET_EVENT_ID
 
 
-async def delete_by_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def delete_by_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     event_id = update.message.text
     if event_id.isdigit():
         con = create_connection('../db/database.db')
@@ -138,7 +138,7 @@ async def delete_by_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # This function checks if a user has admin privileges and sends an appropriate message to the chat depending on the
 # result. If the user is an admin, an admin menu is also sent with options for the user to choose from.
-async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     con = create_connection('../db/database.db')
     user_id = update.message.from_user.id
     request = f"SELECT admin FROM users WHERE id={user_id}"
@@ -156,7 +156,7 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # This function is used to send a message to the chat indicating that all changes have been applied and the
 # conversation with the user should end. This is typically used when an admin operation has been completed or cancelled.
-async def admin_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = "Все изменения применены. Хорошего дня!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
@@ -164,7 +164,7 @@ async def admin_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # This function is used to send a message to the chat explaining how to format information about a new event and 
 # asking the user to input that information. This is typically used when an admin wants to add a new event.
-async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     msg = "Вы собираетесь добавить новое глобальное событие\n\n" \
           "Обратите внимание, что информацию о новом событии необходимо вводить СТРОГО в указанном ниже формате.\n" \
           "Все поля должны быть разделены знаком переноса строки (через Shift+Enter).\n\n" \
@@ -232,7 +232,7 @@ def parse_new_event_info_string(text: str) -> tuple[bool, str]:
 # the text of the new event, and depending on whether the information is valid or not, it sends a response message to
 # the user and returns the appropriate state. The function also generates a keyboard markup based on the outcome of
 # the input.
-async def event_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def event_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
     is_ok, msg = parse_new_event_info_string(text)
     if is_ok:
@@ -251,7 +251,7 @@ async def event_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # This function prompts the user to enter a player ID for security reasons and then returns the state OP. It is used
 # as a step in a larger conversation flow. Op means "Make an operator"
-async def op(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def op(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = "Для безопасности, требуется ввести ID игрока.\nЕго можно узнать с помощью команды /profile"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     await update.message.reply_text("Введите ID игрока:")
@@ -261,7 +261,7 @@ async def op(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # This function receives the ID of a user and adds them as an administrator if the user exists in the database. If
 # the user does not exist, the function sends a message indicating that the user does not exist. The function then
 # returns the user to the administrator choosing menu.
-async def received_op(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def received_op(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     con = create_connection('../db/database.db')
     query = f"""
                 SELECT id FROM users
@@ -289,7 +289,7 @@ async def received_op(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # This function prompts the user to enter a player ID for security reasons and then returns the state DEOP. It is used
 # as a step in a larger conversation flow. Deop means "Delete an operator"
-async def deop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def deop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = "Для безопасности, требуется ввести ID игрока.\nЕго можно узнать с помощью команды /profile"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     await update.message.reply_text("Введите ID игрока:")
@@ -299,7 +299,7 @@ async def deop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # This function receives the ID of a user and delete them as an administrator if the user exists in the database. If
 # the user does not exist, the function sends a message indicating that the user does not exist. The function then
 # returns the user to the administrator choosing menu.
-async def received_deop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def received_deop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     con = create_connection('../db/database.db')
     query = f"""
                 SELECT id FROM users

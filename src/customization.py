@@ -19,7 +19,7 @@ CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = r
 # This is a function that sends a message with a keyboard to let users choose what they want to modify in their
 # account. The available options are "Изменить имя" (change name), "Изменить аватар" (change avatar), and "Отмена" (
 # cancel). After sending the message, the function returns the next state of the conversation (CHOOSING).
-async def custom(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def custom(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(
@@ -32,7 +32,7 @@ async def custom(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # This function handles the user's choice of changing their name and prompts them to enter a new name by replying
 # with a message. The function returns the TYPING_REPLY state to indicate that the bot is waiting for the user to
 # enter a new name.
-async def custom_name_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def custom_name_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
     context.user_data["choice"] = text
     await update.message.reply_text("Введите новое имя:")
@@ -41,7 +41,7 @@ async def custom_name_choice(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 # This function handles the user input for their new custom name, and updates it in the database. It then sends a
 # message confirming the change and prompts the user to choose what to change next.
-async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
@@ -55,7 +55,7 @@ async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # This function displays a keyboard to allow the user to choose which aspect of their avatar they want to change (
 # hair, face, or body). The function is called when the "Изменить аватара" button is pressed.
-async def custom_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def custom_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_keyboard = [["Изменить волосы", "Изменить лицо", "Изменить тело"], ["Назад"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(
@@ -105,7 +105,7 @@ def get_reply_keyboard(list_of_all) -> list:
 # It first retrieves all available hair options using the select_all_hair() function and generates a media group of
 # images for each hair option. It then sends a message to the user with the available hair options and the generated
 # reply keyboard, and sends the media group of hair images.
-async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     all_hair = select_all('hair')
     reply_keyboard = get_reply_keyboard(all_hair)
     hair_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/hair/{hair[1]}.png'), 'rb')) for hair in
@@ -121,7 +121,7 @@ async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 # The same with face
-async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     all_face = select_all('face')
     reply_keyboard = get_reply_keyboard(all_face)
     face_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/face/{face[1]}.png'), 'rb')) for face in
@@ -137,7 +137,7 @@ async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 # The same with body
-async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     all_shoulders = select_all('shoulders')
     reply_keyboard = get_reply_keyboard(all_shoulders)
     shoulders_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/body/{shoulder[1]}.png'), 'rb')) for
@@ -154,7 +154,7 @@ async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 # This function handles the user's choice of hair for their custom avatar, updates the database and generates a new
 # avatar image. It then sends a message to the user with the new avatar image and returns to the "TYPING HAIR" state.
-async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_keyboard = get_reply_keyboard(select_all('hair'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
@@ -171,7 +171,7 @@ async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 # The same with face
-async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_keyboard = get_reply_keyboard(select_all('face'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
@@ -188,7 +188,7 @@ async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 # The same with body
-async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_keyboard = get_reply_keyboard(select_all('shoulders'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
@@ -206,7 +206,7 @@ async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
 # This function displays a reply keyboard with the options "Изменить имя", "Изменить аватара", and "Отмена". It is
 # part of a larger conversation handler for managing user profile settings.
-async def enter_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def enter_change(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(
@@ -217,7 +217,7 @@ async def enter_change(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # This is a temporary solution. It will have to be deleted!
-async def cancel_custom(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def cancel_custom(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = [['/custom', '/game'], ['/fight', '/help']]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await context.bot.send_message(chat_id=update.effective_chat.id,

@@ -22,7 +22,7 @@ TOTAL_VOTER_COUNT = 10
 # from the text variable, updates the database table with the information, and updates the bot_data dictionary with
 # information about the poll. If parse_new_event_info_string() returns False, the function sends an error message to
 # the chat.
-async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
     is_ok, msg = parse_new_event_info_string(text)
     if is_ok:
@@ -124,7 +124,7 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
 # add a new global event. If the chat is not a group or supergroup, the function sends an error message and
 # terminates the conversation. If the chat is a group or supergroup, the function sends a message with instructions
 # on how to add a new global event and returns EVENT_INPUT, which is the next state in the conversation.
-async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat: Chat = update.effective_chat
     chat_members_count: int = await context.bot.getChatMemberCount(chat.id) - 1
     global TOTAL_VOTER_COUNT
@@ -236,7 +236,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 # This is a temporary solution. It will have to be deleted!
-async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = [['/custom', '/game'], ['/fight', '/help']]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await context.bot.send_message(chat_id=update.message.from_user.id,

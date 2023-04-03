@@ -10,15 +10,17 @@ from telegram.ext import (
 
 from common_func import is_available
 from database import *
+import random
 
-CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS = range(6)
+CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
+    MULTIPLAYER_TASK_CHOOSING = range(6)
 
 TOTAL_VOTER_COUNT = 3
 
 POLL_INPUT = range(1)
 
 
-async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     con = create_connection('../db/database.db')
     user_id = update.message.from_user.id
     request = f"SELECT game_class FROM users WHERE id={user_id}"
@@ -58,7 +60,7 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return WHERE_CHOOSING
 
 
-async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
     user_id = update.message.from_user.id
     context.user_data["choice"] = text
@@ -78,7 +80,7 @@ async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return WHERE_CHOOSING
 
 
-async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = 'Вы подходите к небольшому зданию с вывеской "Дом поручений". ' \
               'При входе Вы замечаете, что на стенах висят доски объявлений с различными заданиями.\n' \
               'Может и получится найти, что-то, что Вам по душе...\n\n' \
@@ -86,19 +88,69 @@ async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE):
     count_keyboard = [["В одиночку", "С друзьями"], ["Назад"]]
     markup = ReplyKeyboardMarkup(count_keyboard, one_time_keyboard=True)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message,
-                                   reply_markup=markup)  # Здесь будут задания
+                                   reply_markup=markup)
     return TASKS
 
 
-async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    pass  # Сюда добавим одиночные задания
+async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    tasks = get_tasks(0)
+    alone_tasks_keyboard = [["Мелкое поручение", "Среднее поручение"], ["Классовая лицензия"], ["Назад"]]
+    small_tasks = [task for task in tasks if task[6] == 'small']
+    medium_tasks = [task for task in tasks if task[6] == 'medium']
+    class_tasks = [task for task in tasks if task[6] == 'class_license']
+    small_task = random.choice(small_tasks)
+    medium_task = random.choice(medium_tasks)
+    class_task = random.choice(class_tasks)
+    message = f"Доступные задания:\n\n" \
+              f"Мелкое поручение:\n" \
+              f"Название: {small_task[1]}\n" \
+              f"Описание: {small_task[2]}\n" \
+              f"Сложность: {small_task[3]}\n" \
+              f"Награда опытом: {small_task[4]}\n" \
+              f"Награда предметом: {small_task[5]}\n\n" \
+              f"Среднее поручение:\n" \
+              f"Название: {medium_task[1]}\n" \
+              f"Описание: {medium_task[2]}\n" \
+              f"Сложность: {medium_task[3]}\n" \
+              f"Награда опытом: {medium_task[4]}\n" \
+              f"Награда предметом: {medium_task[5]}\n\n" \
+              f"Классовая лицензия:\n" \
+              f"Название: {class_task[1]}\n" \
+              f"Описание: {class_task[2]}\n" \
+              f"Сложность: {class_task[3]}\n" \
+              f"Награда опытом: {class_task[4]}\n" \
+              f"Награда предметом: {class_task[5]}\n\n" \
+              "Какое задание хотите взять?"
+    markup = ReplyKeyboardMarkup(alone_tasks_keyboard)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    return ALONE_TASK_CHOOSING
 
 
-async def multiplayer_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    pass  # Сюда добавим мультиплеер задания
+async def multiplayer_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    multiplayer_tasks_keyboard = [["Дело особой важности", "Сбор ресурсов"], ["Назад"]]
+    tasks = get_tasks(1)
+    special_tasks = [task for task in tasks if task[6] == 'special']
+    random_tasks = [task for task in tasks if task[6] == 'random']
+    special_task = random.choice(special_tasks)
+    random_task = random.choice(random_tasks)
+    message = f"Доступные задания:\n\n" \
+              f"Дело особой важности:\n" \
+              f"Название: {special_task[1]}\n" \
+              f"Описание: {special_task[2]}\n" \
+              f"Сложность: {special_task[3]}\n" \
+              f"Награда опытом: {special_task[4]}\n" \
+              f"Награда предметом: {special_task[5]}\n\n" \
+              f"Сбор ресурсов (АФК):\n" \
+              f"Описание: {random_task[2]}\n" \
+              f"Сложность: {random_task[3]}\n" \
+              f"Награда опытом: {random_task[4]}\n" \
+              f"Награда предметом: {random_task[5]}\n\n"
+    markup = ReplyKeyboardMarkup(multiplayer_tasks_keyboard)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    return MULTIPLAYER_TASK_CHOOSING
 
 
-async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not is_available(update.message.from_user.id, 500):
         message = 'Вы подходите к огромному храму, но какая-то неведомая сила не даёт Вам пройти внутрь.\nВозможно, ' \
                   'Вам пока что не хватает опыта.'
@@ -159,7 +211,7 @@ async def change_subclass(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
-async def subclass_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def subclass_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
     user_id = update.message.from_user.id
     context.user_data["choice"] = text
@@ -168,7 +220,7 @@ async def subclass_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
-async def lab(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def lab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not is_available(update.message.from_user.id, 500):
         message = 'Вы приходите к лаборатории, но дверь оказывается закрытой.\nВозможно, Вам пока что не хватает опыта.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
@@ -176,7 +228,7 @@ async def lab(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass  # Здесь можно будет крафтить расходники
 
 
-async def guild_house(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def guild_house(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not is_available(update.message.from_user.id, 1000):
         message = 'Вы приходите к дому гильдий. По крайней мере так сказал стражник...\nОн не пропускает Вас под ' \
                   'предлогом, что Вы недостаточно опытны.'
@@ -185,7 +237,7 @@ async def guild_house(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass  # Здесь можно будет запрашивать ресурсы
 
 
-async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not is_available(update.message.from_user.id, 4000):
         message = 'Вы подходите к кузнице, но мастер-кузнец категорически отказывается принимать Ваш заказ. \n' \
                   'Он объясняет, что его работа требует большого опыта и мастерства, и он не хочет рисковать' \
@@ -195,7 +247,7 @@ async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass  # Здесь можно будет крафтить броню и оружие
 
 
-async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def market(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not is_available(update.message.from_user.id, 4000):
         message = 'Вы приходите на рынок, но продавцы не проявляют к Вам интереса.\n' \
                   'Возможно, Ваш опыт в покупке товаров на рынке еще недостаточен, и Вы не знаете, ' \
@@ -206,7 +258,7 @@ async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass  # Здесь можно будет покупать товары
 
 
-async def arena(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def arena(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not is_available(update.message.from_user.id, 8000):
         message = 'Вы приходите на арену для сражений, но охранник не пускает Вас внутрь.\nОн объясняет, что на арене ' \
                   'сражаются только опытные и знающие свое дело бойцы, и он не хочет допустить риска для Вашей жизни.\n' \
@@ -217,7 +269,7 @@ async def arena(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass  # Здесь можно будет устроить состязание
 
 
-async def library(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def library(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not is_available(update.message.from_user.id, 8000):
         message = 'Вы подходите к великой библиотеке, но библиотекарь отказывается выдать Вам книгу, на которую Вы ' \
                   'хотели бы посмотреть.\nОн объясняет, что для того чтобы обращаться с такими ценностями, как книги, ' \
@@ -228,7 +280,7 @@ async def library(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass  # Здесь можно будет за деньги покупать абилки
 
 
-async def hall_of_legionnaires(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def hall_of_legionnaires(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not is_available(update.message.from_user.id, 16000):
         message = 'Вы приходите в зал легионеров, но стражник не позволяет Вам войти внутрь.\nОн объясняет, что в зале ' \
                   'собираются только настоящие воины, которые прошли определенные испытания и доказали свою боевую ' \
@@ -238,7 +290,7 @@ async def hall_of_legionnaires(update: Update, context: ContextTypes.DEFAULT_TYP
         pass  # Здесь можно будет брать задания легиона (Возможно стоит перенести это в дом поручений)
 
 
-async def game_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def game_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = " До встречи! Мы будем ждать Вас в Империи!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END

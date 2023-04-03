@@ -22,3 +22,15 @@ CREATE TABLE IF NOT EXISTS "ranks" (
 	"exp_to_earn"	INTEGER UNIQUE,
 	PRIMARY KEY("id")
 );
+
+CREATE TABLE IF NOT EXISTS "tasks" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"name"	TEXT NOT NULL UNIQUE,
+	"description"	TEXT NOT NULL UNIQUE,
+	"difficulty"	INTEGER NOT NULL,
+	"exp_reward"	INTEGER NOT NULL,
+	"item_reward"	TEXT NOT NULL DEFAULT 'Нет',
+	"type"	TEXT NOT NULL,
+	"is_multiplayer"	INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);

@@ -10,6 +10,16 @@ logging.basicConfig(
 )
 
 
+def get_tasks(is_multiplayer: int) -> list:
+    con = create_connection('../db/gamedata.db')
+    query = f"""
+            SELECT * FROM tasks WHERE is_multiplayer='{is_multiplayer}';
+            """
+    res = execute_read_query(con, query)
+    con.close()
+    return res
+
+
 # This function creates a connection to a SQLite database at a given path and returns it. It also logs any errors
 # that may occur during the connection process.
 def create_connection(path):
