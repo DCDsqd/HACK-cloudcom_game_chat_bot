@@ -247,7 +247,9 @@ def create_friend_request(id_sender, id_receiver):
 def accept_friend_request(id_sender, id_receiver):
     conn = sqlite3.connect('../db/database.db')
     query = f"""
-                UPDATE friends SET is_accepted = 1 WHERE  
+                UPDATE friends SET
+                is_accepted = 1,
+                date = '{datetime.date.today().strftime('%Y-%m-%d %H:%M:%S')}' WHERE  
                 sender_id = '{id_sender}' AND
                 receiver_id = '{id_receiver}');
             """

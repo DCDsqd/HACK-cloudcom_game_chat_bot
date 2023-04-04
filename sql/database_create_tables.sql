@@ -44,3 +44,30 @@ CREATE TABLE IF NOT EXISTS "polls" (
 	"exp_reward"	INTEGER DEFAULT 0,
 	PRIMARY KEY("poll_id")
 );
+
+CREATE TABLE IF NOT EXISTS "items_owned" (
+	"owner"	INTEGER NOT NULL,
+	"item"	INTEGER NOT NULL,
+	"date"	TEXT NOT NULL,
+	PRIMARY KEY("owner")
+);
+
+CREATE TABLE IF NOT EXISTS "friends" (
+	"sender_id"	INTEGER NOT NULL,
+	"receiver_id"	INTEGER NOT NULL,
+	"is_accepted"	INTEGER NOT NULL DEFAULT 0,
+	"date_accepted"	TEXT,
+	PRIMARY KEY("sender_id")
+);
+
+CREATE TABLE "user_daily_events" (
+	"user_id"	INTEGER NOT NULL,
+	"event_id"	INTEGER NOT NULL,
+	PRIMARY KEY("user_id")
+);
+
+CREATE TABLE "user_daily_events_updated" (
+	"user_id"	INTEGER NOT NULL,
+	"last_update"	TEXT NOT NULL,
+	PRIMARY KEY("user_id")
+);
