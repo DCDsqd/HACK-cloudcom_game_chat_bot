@@ -9,6 +9,10 @@ logging.basicConfig(
 )
 
 
+def cur_time():
+    return datetime.date.today().strftime('%Y-%m-%d %H:%M:%S')
+
+
 def get_tasks(is_multiplayer: int) -> list:
     con = create_connection('../db/gamedata.db')
     query = f"""
@@ -249,7 +253,7 @@ def accept_friend_request(id_sender, id_receiver):
     query = f"""
                 UPDATE friends SET
                 is_accepted = 1,
-                date = '{datetime.date.today().strftime('%Y-%m-%d %H:%M:%S')}' WHERE  
+                date = '{cur_time()}' WHERE  
                 sender_id = '{id_sender}' AND
                 receiver_id = '{id_receiver}');
             """
@@ -357,4 +361,70 @@ def check_if_friends(first_user_id, second_user_id) -> int:
 
     conn.close()
     return -1
+
+
+def check_if_need_to_update_daily_tasks(user_id) -> bool:
+    conn = sqlite3.connect('../db/database.db')
+    query = f"""
+                SELECT last_update FROM user_daily_tasks_updated WHERE  
+                user_id = '{user_id}');
+            """
+    res = execute_read_query(conn, query)
+    if len(res) == 0:
+        return False
+    conn.close()
+    return bool(res[0][0])
+
+
+# @task_type should be one of:
+# 1) 'small'
+# 2) 'medium'
+# 3) 'class_license'
+# 4) 'any' (Do not take into consideration type of the task)
+def get_random_task(task_type):
+    conn = sqlite3.connect('../db/gamedata.db')
+    query = f"""
+                SELECT * FROM tasks ORDER BY RANDOM() LIMIT 1
+            """
+    if task_type != 'any':
+        query += f"""WHERE type = '{task_type}'"""
+    query += ';'
+    task = execute_read_query(conn, query)
+    conn.close()
+    return task
+
+
+def regenerate_daily_tasks(user_id):
+    conn = sqlite3.connect('../db/database.db')
+
+    # Delete outdated daily tasks (if they exist)
+    query = f"""
+                DELETE FROM user_daily_tasks WHERE  
+                user_id = '{user_id}');
+            """
+    execute_query(conn, query)
+
+    # Add new random tasks
+    random_small_task = get_random_task('small')
+    random_medium_task = get_random_task('medium')
+    random_class_license_task = get_random_task('class_license')
+    query = f"""
+                INSERT INTO user_daily_tasks (user_id,event_id) VALUES
+                ('{user_id}','{random_small_task[0]}'),
+                ('{user_id}','{random_medium_task[0]}'),
+                ('{user_id}','{random_class_license_task[0]}');
+            """
+    execute_query(conn, query)
+
+    # Update user_daily_tasks_updated table
+    query = f"""
+                INSERT OR IGNORE INTO user_daily_tasks_updated (user_id, last_updated)
+                VALUES ('{cur_time()}')
+                UPDATE user_daily_tasks_updated SET date = '{cur_time()}'
+                WHERE user_id = '{user_id}');
+            """
+    execute_query(conn, query)
+
+    conn.close()
+
 

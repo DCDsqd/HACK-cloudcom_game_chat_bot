@@ -60,13 +60,13 @@ CREATE TABLE IF NOT EXISTS "friends" (
 	PRIMARY KEY("sender_id")
 );
 
-CREATE TABLE "user_daily_events" (
+CREATE TABLE IF NOT EXISTS "user_daily_tasks" (
 	"user_id"	INTEGER NOT NULL,
-	"event_id"	INTEGER NOT NULL,
+	"task_id"	INTEGER NOT NULL,
 	PRIMARY KEY("user_id")
 );
 
-CREATE TABLE "user_daily_events_updated" (
+CREATE TABLE IF NOT EXISTS "user_daily_tasks_updated" (
 	"user_id"	INTEGER NOT NULL,
 	"last_update"	TEXT NOT NULL,
 	PRIMARY KEY("user_id")
