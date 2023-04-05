@@ -105,11 +105,11 @@ void MainWindow::deleteRowFromLayout(size_t row)
         if(itemWidget)
         {
             ui->eventsLayout->removeWidget(itemWidget);
-            try
-            {
-                current_translatable_widgets.erase(current_translatable_widgets.find(itemWidget));
+            auto it = current_translatable_widgets.find(itemWidget);
+            if(it != current_translatable_widgets.end()){
+                current_translatable_widgets.erase(it);
             }
-            catch(...){
+            else{
                 qDebug() << "Was not able to find widget that needs to be deleted in current_translatable_widgets, "
                             "itemWidget = " << itemWidget;
             }
@@ -303,11 +303,11 @@ void MainWindow::ClearLay(QGridLayout *lay)
             //qDebug() << "Deleted widget: " << curItem->widget() << " i = " << i;
             curItem->widget()->hide();
             //curItem->widget()->deleteLater();
-            try
-            {
-                current_translatable_widgets.erase(current_translatable_widgets.find(curItem->widget()));
+            auto it = current_translatable_widgets.find(curItem->widget());
+            if(it != current_translatable_widgets.end()){
+                current_translatable_widgets.erase(it);
             }
-            catch(...){
+            else{
                 qDebug() << "Was not able to find widget that needs to be deleted in current_translatable_widgets, "
                             "curItem->widget() = " << curItem->widget();
             }
