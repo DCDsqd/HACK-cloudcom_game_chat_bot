@@ -237,7 +237,7 @@ def select_all_buildings():
     return res
 
 
-def create_friend_request(id_sender, id_receiver):
+def create_friend_request(id_sender: int, id_receiver: int) -> None:
     conn = sqlite3.connect('../db/database.db')
 
     query = f"""
@@ -248,7 +248,7 @@ def create_friend_request(id_sender, id_receiver):
     conn.close()
 
 
-def accept_friend_request(id_sender, id_receiver):
+def accept_friend_request(id_sender: int, id_receiver: int) -> None:
     conn = sqlite3.connect('../db/database.db')
     query = f"""
                 UPDATE friends SET
@@ -261,7 +261,7 @@ def accept_friend_request(id_sender, id_receiver):
     conn.close()
 
 
-def delete_from_friends(id_initiator, id_target):
+def delete_from_friends(id_initiator: int, id_target: int) -> None:
     conn = sqlite3.connect('../db/database.db')
     query = f"""
                 DELETE FROM friends WHERE  
@@ -278,7 +278,7 @@ def delete_from_friends(id_initiator, id_target):
     conn.close()
 
 
-def get_friend_list_ids(user_id):
+def get_friend_list_ids(user_id: int) -> list:
     friend_list = []
     conn = sqlite3.connect('../db/database.db')
     query = f"""
@@ -303,7 +303,7 @@ def get_friend_list_ids(user_id):
     return friend_list
 
 
-def get_incoming_pending_friend_requests(user_id):
+def get_incoming_pending_friend_requests(user_id: int) -> list:
     requests_list = []
     conn = sqlite3.connect('../db/database.db')
     query = f"""
@@ -318,7 +318,7 @@ def get_incoming_pending_friend_requests(user_id):
     return requests_list
 
 
-def get_outgoing_pending_friend_requests(user_id):
+def get_outgoing_pending_friend_requests(user_id: int) -> list:
     requests_list = []
     conn = sqlite3.connect('../db/database.db')
     query = f"""
@@ -339,7 +339,7 @@ def get_outgoing_pending_friend_requests(user_id):
 # 1 if @first_user_id is a receiver (reversed order)
 # 2 if @first_user_id is a sender, but request is still pending
 # 3 if @first_user_id is a receiver (reversed_order), but request is still pending
-def check_if_friends(first_user_id, second_user_id) -> int:
+def check_if_friends(first_user_id: int, second_user_id: int) -> int:
     conn = sqlite3.connect('../db/database.db')
     query = f"""
                 SELECT is_accepted FROM friends WHERE  
@@ -363,7 +363,7 @@ def check_if_friends(first_user_id, second_user_id) -> int:
     return -1
 
 
-def check_if_need_to_update_daily_tasks(user_id) -> bool:
+def check_if_need_to_update_daily_tasks(user_id: int) -> bool:
     conn = sqlite3.connect('../db/database.db')
     query = f"""
                 SELECT last_update FROM user_daily_tasks_updated WHERE  
@@ -381,7 +381,7 @@ def check_if_need_to_update_daily_tasks(user_id) -> bool:
 # 2) 'medium'
 # 3) 'class_license'
 # 4) 'any' (Do not take into consideration type of the task)
-def get_random_task(task_type):
+def get_random_task(task_type: str):
     conn = sqlite3.connect('../db/gamedata.db')
     query = f"""
                 SELECT * FROM tasks ORDER BY RANDOM() LIMIT 1
@@ -394,7 +394,7 @@ def get_random_task(task_type):
     return task
 
 
-def regenerate_daily_tasks(user_id):
+def regenerate_daily_tasks(user_id: int) -> None:
     conn = sqlite3.connect('../db/database.db')
 
     # Delete outdated daily tasks (if they exist)
