@@ -10,7 +10,7 @@ logging.basicConfig(
 
 
 def cur_time():
-    return datetime.date.today().strftime('%Y-%m-%d %H:%M:%S')
+    return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
 def get_tasks(is_multiplayer: int) -> list:
@@ -253,9 +253,9 @@ def accept_friend_request(id_sender, id_receiver):
     query = f"""
                 UPDATE friends SET
                 is_accepted = 1,
-                date = '{cur_time()}' WHERE  
-                sender_id = '{id_sender}' AND
-                receiver_id = '{id_receiver}');
+                date_accepted = '{cur_time()}' WHERE  
+                sender_id = '{id_receiver}' AND
+                receiver_id = '{id_sender}';
             """
     execute_query(conn, query)
     conn.close()
@@ -266,13 +266,13 @@ def delete_from_friends(id_initiator, id_target):
     query = f"""
                 DELETE FROM friends WHERE  
                 sender_id = '{id_initiator}' AND
-                receiver_id = '{id_target}');
+                receiver_id = '{id_target}';
             """
     execute_query(conn, query)
     query = f"""
                 DELETE FROM friends WHERE  
                 sender_id = '{id_target}' AND
-                receiver_id = '{id_initiator}');
+                receiver_id = '{id_initiator}';
             """
     execute_query(conn, query)
     conn.close()
@@ -284,7 +284,7 @@ def get_friend_list_ids(user_id):
     query = f"""
                 SELECT receiver_id FROM friends WHERE  
                 sender_id = '{user_id}' AND
-                is_accepted = 1);
+                is_accepted = 1;
             """
     query_res = execute_read_query(conn, query)
     for i in range(len(query_res)):
@@ -293,7 +293,7 @@ def get_friend_list_ids(user_id):
     query = f"""
                 SELECT sender_id FROM friends WHERE  
                 receiver_id = '{user_id}' AND
-                is_accepted = 1);
+                is_accepted = 1;
             """
     query_res = execute_read_query(conn, query)
     for i in range(len(query_res)):
@@ -309,7 +309,7 @@ def get_incoming_pending_friend_requests(user_id):
     query = f"""
                 SELECT sender_id FROM friends WHERE  
                 receiver_id = '{user_id}' AND
-                is_accepted = 0);
+                is_accepted = 0;
             """
     query_res = execute_read_query(conn, query)
     for i in range(len(query_res)):
@@ -324,7 +324,7 @@ def get_outgoing_pending_friend_requests(user_id):
     query = f"""
                 SELECT receiver_id FROM friends WHERE  
                 sender_id = '{user_id}' AND
-                is_accepted = 0);
+                is_accepted = 0;
             """
     query_res = execute_read_query(conn, query)
     for i in range(len(query_res)):

@@ -12,7 +12,7 @@ from telegram.ext import (
 )
 
 from common_func import start, main_menu, profile, help_me, danet, netda, del_keyboard, \
-    get_events, poll, receive_poll_answer, poll_handler, rating
+    get_events, receive_poll_answer, poll_handler, rating, friends_handler
 from customization import custom_name_handler, avatar_handler
 from admin import admin_handler
 from game import game_handler
@@ -37,4 +37,5 @@ if __name__ == '__main__':
     application.add_handler(avatar_handler)
     application.add_handler(custom_name_handler)
     application.add_handler(game_handler)
+    application.add_handler(friends_handler)
     application.run_polling()
