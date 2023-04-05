@@ -129,23 +129,23 @@ void MainWindow::insertHeadersIntoLayout()
     int cur_next_row = ui->eventsLayout->rowCount();
 
     // Event name
-    QLabel* event_name = new QLabel("Name");
+    QLabel* event_name = new QLabel(tr("Name"));
     event_name->setFixedSize(EPI[E_NAME].sz);
 
     // Event description
-    QLabel* event_descr = new QLabel("Description");
+    QLabel* event_descr = new QLabel(tr("Description"));
     event_descr->setFixedSize(EPI[E_DESCR].sz);
 
     // Event start time
-    QLabel *event_start_date = new QLabel("Start time");
+    QLabel *event_start_date = new QLabel(tr("Start time"));
     event_start_date->setFixedSize(EPI[E_START].sz);
 
     // Event duration
-    QLabel* event_dur = new QLabel("Duration (in mins)");
+    QLabel* event_dur = new QLabel(tr("Duration\n (mins)"));
     event_dur->setFixedSize(EPI[E_DUR].sz);
 
     // Event experience reward
-    QLabel* event_exp_reward = new QLabel("Exp rew.");
+    QLabel* event_exp_reward = new QLabel(tr("Exp rew."));
     event_exp_reward->setFixedSize(EPI[E_EXP].sz);
 
     // Delete event button
@@ -163,7 +163,7 @@ void MainWindow::insertHeadersIntoLayout()
     current_translatable_widgets.insert({event_name, {"QLabel", "Name"}});
     current_translatable_widgets.insert({event_descr, {"QLabel", "Description"}});
     current_translatable_widgets.insert({event_start_date, {"QLabel", "Start time"}});
-    current_translatable_widgets.insert({event_dur, {"QLabel", "Duration (mins)"}});
+    current_translatable_widgets.insert({event_dur, {"QLabel", "Duration\n (mins)"}});
     current_translatable_widgets.insert({event_exp_reward, {"QLabel", "Exp rew."}});
     current_translatable_widgets.insert({event_delete, {"QLabel", "Delete buttons"}});
 }
@@ -219,8 +219,8 @@ QVector<EventPlacementData> MainWindow::constructEventPlacementData()
         {E_NAME, 130, 35},
         {E_DESCR, 130, 100},
         {E_START, 130, 30},
-        {E_DUR, 50, 30},
-        {E_EXP, 50, 30},
+        {E_DUR, 80, 30},
+        {E_EXP, 80, 30},
         {E_DEL, 100, 50}
     };
 }
