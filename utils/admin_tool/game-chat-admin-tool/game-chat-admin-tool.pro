@@ -11,25 +11,56 @@ SOURCES += \
     src/event.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
-    src/qss_helper.cpp \
-    src/translator_wrapper.cpp
+    src/qss_helper.cpp
 
 HEADERS += \
     src/database.h \
     src/event.h \
     src/mainwindow.h \
-    src/qss_helper.h \
-    src/translator_wrapper.h
+    src/qss_helper.h
 
 FORMS += \
     ui/mainwindow.ui
 
 TRANSLATIONS += \
-    ts/game-chat-admin-tool_ru_RU.ts
+    ts/game-chat-admin-tool_Russian.ts \
+    ts/game-chat-admin-tool_English.ts
 
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 RESOURCES += \
+    res/qrc/flags.qrc \
+    res/qrc/langs.qrc \
     res/qrc/qss_files.qrc
+
+QMAKE_POST_LINK = lrelease game-chat-admin-tool.pro
+
+
+#LANGUAGES = ru
+#
+## parameters: var, prepend, append
+#defineReplace(prependAll) {
+#     for(a,$$1):result += $$2$${a}$$3
+#     return($$result)
+#}
+#
+#TRANSLATIONS = $$prependAll(LANGUAGES, $$PWD/ts/game-chat-admin-tool_, .ts)
+#
+#TRANSLATIONS_FILES =
+#
+#qtPrepareTool(LRELEASE, lrelease)
+#for(tsfile, TRANSLATIONS) {
+#     qmfile = $$shadowed($$tsfile)
+#     qmfile ~= s,.ts$,.qm,
+#     qmdir = $$dirname(qmfile)
+#     !exists($$qmdir) {
+#     mkpath($$qmdir)|error("Aborting.")
+#     }
+#     command = $$LRELEASE -removeidentical $$tsfile -qm $$qmfile
+#     system($$command)|error("Failed to run: $$command")
+#     TRANSLATIONS_FILES += $$qmfile
+#}
+#
+#wd = $$replace(PWD, /, $$QMAKE_DIR_SEP)

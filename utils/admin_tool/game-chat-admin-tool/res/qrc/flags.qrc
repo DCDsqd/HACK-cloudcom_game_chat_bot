@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>../lang_icons/ru.png</file>
+        <file>../lang_icons/uk.png</file>
+    </qresource>
+</RCC>

@@ -13,11 +13,19 @@
 #include <QDateTimeEdit>
 #include <QLineEdit>
 #include <QValidator>
+#include <QString>
 #include <QDate>
 #include <QTime>
 #include <QTranslator>
+#include <QSet>
+#include <QEvent>
+#include <QMap>
+#include <QDir>
+#include <QLocale>
+#include <QApplication>
 
 #include <memory>
+#include <map>
 
 #define EPI event_placement_info // for shorter name usage
 
@@ -33,13 +41,16 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    static void ClearLay(QGridLayout *lay);
+    void ClearLay(QGridLayout *lay);
+    void SetLang(QString ts_file_path);
 private slots:
     void on_addEventButton_clicked();
 
     void on_saveAllButton_clicked();
 
     void on_reloadDataButton_clicked();
+
+    void on_langBox_currentIndexChanged(int index);
 
 private: //functions
     void addEventToLayout();
@@ -54,6 +65,9 @@ private: //functions
     void insertHeadersIntoLayout();
     void loadEventsFromDb();
     QVector<Event> getCurrentEventsList() const;
+    void changeEvent(QEvent* event);
+    void reTranslateNonUiWidgets();
+
     static QVector<EventPlacementData> constructEventPlacementData();
 
 private: //fields
@@ -63,5 +77,7 @@ private: //fields
     static constexpr int event_exp_reward_upper_limit = 200000;
     const QString default_events_table_name = "global_events";
     const QVector<EventPlacementData> event_placement_info = constructEventPlacementData();
+    std::map<QWidget*, std::pair<QString, QString>> current_translatable_widgets;
+    QTranslator* translator = new QTranslator();
 };
 #endif // MAINWINDOW_H

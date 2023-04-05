@@ -109,11 +109,41 @@
        <string>Reload Data</string>
       </property>
      </widget>
+     <widget class="QComboBox" name="langBox">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>121</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <item>
+       <property name="text">
+        <string notr="true">English</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../res/qrc/flags.qrc">
+         <normaloff>:/lang_icons/uk.png</normaloff>:/lang_icons/uk.png</iconset>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string notr="true">Russian</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../res/qrc/flags.qrc">
+         <normaloff>:/lang_icons/ru.png</normaloff>:/lang_icons/ru.png</iconset>
+       </property>
+      </item>
+     </widget>
     </widget>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <resources/>
+ <resources>
+  <include location="../res/qrc/flags.qrc"/>
+ </resources>
  <connections/>
 </ui>

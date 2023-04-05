@@ -78,6 +78,10 @@ void MainWindow::addEventToLayout(const QString &name,
     ui->eventsLayout->addWidget(event_exp_reward, cur_next_row, E_EXP, Qt::AlignCenter);
     ui->eventsLayout->addWidget(event_delete, cur_next_row, E_DEL, Qt::AlignCenter);
 
+    //current_translatable_widgets.insert({event_name, "QLineEdit"});
+    //current_translatable_widgets.insert({event_descr, "QTextEdit"});
+    current_translatable_widgets.insert({event_delete, {"QPushButton", "Delete!"}});
+
     //Scroll down to be able to see a newly added widget
     ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->maximumHeight());
     //ui->scrollArea->ensureWidgetVisible(eventName, 100, 100);
@@ -101,6 +105,14 @@ void MainWindow::deleteRowFromLayout(size_t row)
         if(itemWidget)
         {
             ui->eventsLayout->removeWidget(itemWidget);
+            try
+            {
+                current_translatable_widgets.erase(current_translatable_widgets.find(itemWidget));
+            }
+            catch(...){
+                qDebug() << "Was not able to find widget that needs to be deleted in current_translatable_widgets, "
+                            "itemWidget = " << itemWidget;
+            }
             delete itemWidget;
         }
     }
@@ -147,6 +159,13 @@ void MainWindow::insertHeadersIntoLayout()
     ui->eventsLayout->addWidget(event_dur, cur_next_row, E_DUR, Qt::AlignCenter);
     ui->eventsLayout->addWidget(event_exp_reward, cur_next_row, E_EXP, Qt::AlignCenter);
     ui->eventsLayout->addWidget(event_delete, cur_next_row, E_DEL, Qt::AlignCenter);
+
+    current_translatable_widgets.insert({event_name, {"QLabel", "Name"}});
+    current_translatable_widgets.insert({event_descr, {"QLabel", "Description"}});
+    current_translatable_widgets.insert({event_start_date, {"QLabel", "Start time"}});
+    current_translatable_widgets.insert({event_dur, {"QLabel", "Duration (mins)"}});
+    current_translatable_widgets.insert({event_exp_reward, {"QLabel", "Exp rew."}});
+    current_translatable_widgets.insert({event_delete, {"QLabel", "Delete buttons"}});
 }
 
 void MainWindow::loadEventsFromDb()
@@ -197,13 +216,50 @@ QVector<EventPlacementData> MainWindow::constructEventPlacementData()
 {
     return
     {
-        {E_NAME, 100, 50},
-        {E_DESCR, 100, 100},
+        {E_NAME, 130, 35},
+        {E_DESCR, 130, 100},
         {E_START, 130, 30},
         {E_DUR, 50, 30},
         {E_EXP, 50, 30},
         {E_DEL, 100, 50}
     };
+}
+
+void MainWindow::changeEvent(QEvent *event)
+{
+    //QDialog::changeEvent(event);
+    if( QEvent::LanguageChange == event->type() )
+    {
+        ui->retranslateUi(this);
+        reTranslateNonUiWidgets();
+    }
+}
+
+void MainWindow::reTranslateNonUiWidgets()
+{
+    for(auto& [widget, info_pair] : current_translatable_widgets){
+        const QString& type = info_pair.first;
+        const char* original_text = info_pair.second.toLocal8Bit().data();
+        if(type == "QLabel"){
+            QLabel* label = static_cast<QLabel*>(widget);
+            label->setText(tr(original_text));
+        }
+        else if(type == "QLineEdit"){
+            QLineEdit* line = static_cast<QLineEdit*>(widget);
+            line->setText(tr(original_text));
+        }
+        else if(type == "QTextEdit"){
+            QTextEdit* text = static_cast<QTextEdit*>(widget);
+            text->setText(tr(original_text));
+        }
+        else if(type == "QPushButton"){
+            QPushButton* button = static_cast<QPushButton*>(widget);
+            button->setText(tr(original_text));
+        }
+        else{
+            qDebug() << "Unknown type = " << type << " in reTranslateNonUiWidgets(). Widget was not translated.";
+        }
+    }
 }
 
 
@@ -247,6 +303,14 @@ void MainWindow::ClearLay(QGridLayout *lay)
             //qDebug() << "Deleted widget: " << curItem->widget() << " i = " << i;
             curItem->widget()->hide();
             //curItem->widget()->deleteLater();
+            try
+            {
+                current_translatable_widgets.erase(current_translatable_widgets.find(curItem->widget()));
+            }
+            catch(...){
+                qDebug() << "Was not able to find widget that needs to be deleted in current_translatable_widgets, "
+                            "curItem->widget() = " << curItem->widget();
+            }
             delete curItem->widget();
         }
         //qDebug() << "Trying to delete item: " << curItem;
@@ -257,3 +321,18 @@ void MainWindow::ClearLay(QGridLayout *lay)
     }
     //qDebug() << "ClearLay() finished working";
 }
+
+void MainWindow::SetLang(QString ts_file_path)
+{
+    if(!translator->load(ts_file_path, qApp->applicationDirPath())){
+        qDebug() << "Failed to set language with the ts_file_path = " << ts_file_path << ". Aborting.";
+        return;
+    }
+    qApp->installTranslator(translator);
+}
+
+void MainWindow::on_langBox_currentIndexChanged([[maybe_unused]] int index)
+{
+    SetLang("game-chat-admin-tool_" + ui->langBox->currentText());
+}
+

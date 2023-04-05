@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>../../ts/game-chat-admin-tool_Russian.ts</file>
+    </qresource>
+</RCC>
