@@ -42,11 +42,14 @@ async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def get_friends_list(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    response = "Ваш список друзей:\n\n"
     friend_list = get_friend_list_ids(update.message.from_user.id)
-    if not friend_list:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="У Вас нет друзей :(")
+    if len(friend_list) == 0:
+        response = "У Вас нет друзей :("
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
     else:
-        response = "Ваш список друзей:\n\n" + "\n".join(friend_list)
+        for i in range(len(friend_list)):
+            response += str(friend_list[i]) + "\n"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
 
