@@ -71,3 +71,13 @@ CREATE TABLE IF NOT EXISTS "user_daily_tasks_updated" (
 	"last_update"	TEXT NOT NULL,
 	PRIMARY KEY("user_id")
 );
+
+CREATE TABLE IF NOT EXISTS "global_events_participants" (
+	"id"	INTEGER NOT NULL,
+	"user_id"	INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "local_events_participants" (
+	"id"	INTEGER NOT NULL,
+	"user_id"	INTEGER NOT NULL
+);
