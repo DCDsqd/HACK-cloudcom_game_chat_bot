@@ -93,33 +93,71 @@ async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 
 async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+
     if check_if_need_to_update_daily_tasks(update.message.from_user.id):
         regenerate_daily_tasks(update.message.from_user.id)
     tasks = get_cur_user_tasks(update.message.from_user.id)
-    small_task = get_task_by_id(tasks[0])
-    medium_task = get_task_by_id(tasks[1])
-    class_task = get_task_by_id(tasks[2])
-    message = f"Доступные ежедневные задания ({cur_date()}):\n\n" \
-              f"Мелкое поручение:\n" \
-              f"Название: {small_task[1]}\n" \
-              f"Описание: {small_task[2]}\n" \
-              f"Сложность: {small_task[3]}\n" \
-              f"Награда опытом: {small_task[4]}\n" \
-              f"Награда предметом: {small_task[5]}\n\n" \
-              f"Среднее поручение:\n" \
-              f"Название: {medium_task[1]}\n" \
-              f"Описание: {medium_task[2]}\n" \
-              f"Сложность: {medium_task[3]}\n" \
-              f"Награда опытом: {medium_task[4]}\n" \
-              f"Награда предметом: {medium_task[5]}\n\n" \
-              f"Классовая лицензия:\n" \
-              f"Название: {class_task[1]}\n" \
-              f"Описание: {class_task[2]}\n" \
-              f"Сложность: {class_task[3]}\n" \
-              f"Награда опытом: {class_task[4]}\n" \
-              f"Награда предметом: {class_task[5]}\n\n" \
-              "Какое задание хотите взять?"
-    alone_tasks_keyboard = [["Мелкое поручение", "Среднее поручение"], ["Классовая лицензия"], ["Назад"]]
+
+    small_task_id = tasks['small']
+    medium_task_id = tasks['medium']
+    class_task_id = tasks['class_license']
+
+    message = f"Доступные ежедневные задания ({cur_date()}):\n\n"
+    no_tasks_available = True
+
+    if small_task_id != -1:
+        small_task = get_task_by_id(small_task_id)
+        message +=  f"Мелкое поручение:\n" \
+                    f"Название: {small_task[1]}\n" \
+                    f"Описание: {small_task[2]}\n" \
+                    f"Сложность: {small_task[3]}\n" \
+                    f"Награда опытом: {small_task[4]}\n" \
+                    f"Награда предметом: {small_task[5]}\n\n"
+        no_tasks_available = False
+
+    if medium_task_id != -1:
+        medium_task = get_task_by_id(medium_task_id)
+        message +=  f"Среднее поручение:\n" \
+                    f"Название: {medium_task[1]}\n" \
+                    f"Описание: {medium_task[2]}\n" \
+                    f"Сложность: {medium_task[3]}\n" \
+                    f"Награда опытом: {medium_task[4]}\n" \
+                    f"Награда предметом: {medium_task[5]}\n\n"
+        no_tasks_available = False
+
+    if class_task_id != -1:
+        class_task = get_task_by_id(class_task_id)
+        message +=  f"Классовая лицензия:\n" \
+                    f"Название: {class_task[1]}\n" \
+                    f"Описание: {class_task[2]}\n" \
+                    f"Сложность: {class_task[3]}\n" \
+                    f"Награда опытом: {class_task[4]}\n" \
+                    f"Награда предметом: {class_task[5]}\n\n"
+        no_tasks_available = False
+
+    if no_tasks_available:
+        message += 'К сожалению, на сегодня у Вас больше нет заданий.\n' \
+                   'Возвращайтесь завтра!'
+    else:
+        message += 'Какое задание хотите взять?'
+
+
+    all_tasks_labels = []
+    if small_task_id != -1:
+        all_tasks_labels.append("Мелкое поручение")
+    if medium_task_id != -1:
+        all_tasks_labels.append("Среднее поручение")
+    if class_task_id != -1:
+        all_tasks_labels.append("Классовая лицензия")
+
+    alone_tasks_keyboard = [[], []]
+    for i in range(0, min(len(all_tasks_labels), 2)):
+        alone_tasks_keyboard[0].append(all_tasks_labels[i])
+    if len(all_tasks_labels) == 3:
+        alone_tasks_keyboard[1].append(all_tasks_labels[2])
+        alone_tasks_keyboard.append([])
+    alone_tasks_keyboard[-1].append("Назад")
+
     markup = ReplyKeyboardMarkup(alone_tasks_keyboard)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
     return ALONE_TASK_CHOOSING

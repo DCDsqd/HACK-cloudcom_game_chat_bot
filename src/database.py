@@ -403,21 +403,35 @@ def regenerate_daily_tasks(user_id: int) -> None:
     conn.close()
 
 
-def get_cur_user_tasks(user_id: int) -> list:
+def get_cur_user_tasks(user_id: int) -> dict:
     conn = sqlite3.connect('../db/database.db')
 
     attach_query = """ATTACH '../db/gamedata.db' AS gamedata;"""
     execute_query(conn, attach_query)
 
     query = f"""
-                SELECT user_daily_tasks.task_id, gamedata.tasks.difficulty
+                SELECT user_daily_tasks.task_id, gamedata.tasks.type, user_daily_tasks.is_completed
                 FROM user_daily_tasks
                 JOIN gamedata.tasks ON gamedata.tasks.id = user_daily_tasks.task_id
                 WHERE user_daily_tasks.user_id = '{user_id}';
             """
     res = execute_read_query(conn, query)
     conn.close()
-    return [res[0][0], res[1][0], res[2][0]]
+
+    # Expect to return only 3 tasks
+    if len(res) != 3:
+        logging.warning('Query result length is not equal to expected in function get_cur_user_tasks')
+
+    tasks_list = {}
+
+    for i in range(len(res)):
+        # Mark completed tasks as "-1"
+        if res[i][2] == 0:
+            tasks_list[str(res[i][1])] = res[i][0]
+        else:
+            tasks_list[str(res[i][1])] = -1
+
+    return tasks_list
 
 
 def get_task_by_id(task_id: int) -> list:
