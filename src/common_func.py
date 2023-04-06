@@ -16,6 +16,8 @@ EVENT_INPUT = 0
 TOTAL_VOTER_COUNT = 10
 
 
+# This function retrieves the top 10 players based on their experience and sends a message to the chat with their
+# username, level and experience. The message is formatted in HTML.
 async def rating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     con = create_connection('../db/database.db')
     query = """
