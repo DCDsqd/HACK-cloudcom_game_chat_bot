@@ -408,7 +408,7 @@ def regenerate_daily_tasks(user_id: int) -> None:
 def get_cur_user_tasks(user_id: int) -> list:
     conn = sqlite3.connect('../db/database.db')
 
-    attach_query = """ATTACH 'gamedata.db' AS gamedata;"""
+    attach_query = """ATTACH '../db/gamedata.db' AS gamedata;"""
     execute_query(conn, attach_query)
 
     query = f"""
@@ -419,7 +419,7 @@ def get_cur_user_tasks(user_id: int) -> list:
             """
     res = execute_read_query(conn, query)
     conn.close()
-    return [res[0][0], res[0][1], res[0][2]]
+    return [res[0][0], res[1][0], res[2][0]]
 
 
 def get_task_by_id(task_id: int) -> list:
