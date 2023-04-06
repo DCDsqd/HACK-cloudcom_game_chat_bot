@@ -350,7 +350,7 @@ def check_if_need_to_update_daily_tasks(user_id: int) -> bool:
             """
     res = execute_read_query(conn, query)
     if len(res) == 0:
-        return False
+        return True
     conn.close()
     return bool(res[0][0] != cur_date())
 
@@ -368,7 +368,7 @@ def get_random_task(task_type: str) -> list:
     query += f""" ORDER BY RANDOM() LIMIT 1"""
     task = execute_read_query(conn, query)
     conn.close()
-    return task
+    return task[0]
 
 
 def regenerate_daily_tasks(user_id: int) -> None:
@@ -386,19 +386,17 @@ def regenerate_daily_tasks(user_id: int) -> None:
     random_medium_task = get_random_task('medium')
     random_class_license_task = get_random_task('class_license')
     query = f"""
-                INSERT INTO user_daily_tasks (user_id,event_id) VALUES
+                INSERT INTO user_daily_tasks (user_id,task_id) VALUES
                 ('{user_id}','{random_small_task[0]}'),
                 ('{user_id}','{random_medium_task[0]}'),
-                ('{user_id}','{random_class_license_task[0]}';
+                ('{user_id}','{random_class_license_task[0]}');
             """
     execute_query(conn, query)
 
     # Update user_daily_tasks_updated table
     query = f"""
-                INSERT OR IGNORE INTO user_daily_tasks_updated (user_id, last_updated)
-                VALUES ('{cur_date()}')
-                UPDATE user_daily_tasks_updated SET date = '{cur_date()}'
-                WHERE user_id = '{user_id}';
+                INSERT OR REPLACE INTO user_daily_tasks_updated (user_id, last_update)
+                VALUES ('{user_id}', '{cur_date()}');
             """
     execute_query(conn, query)
 
@@ -425,8 +423,7 @@ def get_cur_user_tasks(user_id: int) -> list:
 def get_task_by_id(task_id: int) -> list:
     con = create_connection('../db/gamedata.db')
     query = f"""
-                SELECT * FROM tasks WHERE is_multiplayer=1
-                AND id = '{task_id}';
+                SELECT * FROM tasks WHERE id = '{task_id}';
             """
     res = execute_read_query(con, query)
     con.close()

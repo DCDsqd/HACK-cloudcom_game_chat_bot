@@ -95,12 +95,11 @@ async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if check_if_need_to_update_daily_tasks(update.message.from_user.id):
         regenerate_daily_tasks(update.message.from_user.id)
-    alone_tasks_keyboard = [["Мелкое поручение", "Среднее поручение"], ["Классовая лицензия"], ["Назад"]]
     tasks = get_cur_user_tasks(update.message.from_user.id)
     small_task = get_task_by_id(tasks[0])
     medium_task = get_task_by_id(tasks[1])
     class_task = get_task_by_id(tasks[2])
-    message = f"Доступные задания:\n\n" \
+    message = f"Доступные ежедневные задания ({cur_date()}):\n\n" \
               f"Мелкое поручение:\n" \
               f"Название: {small_task[1]}\n" \
               f"Описание: {small_task[2]}\n" \
@@ -120,6 +119,7 @@ async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
               f"Награда опытом: {class_task[4]}\n" \
               f"Награда предметом: {class_task[5]}\n\n" \
               "Какое задание хотите взять?"
+    alone_tasks_keyboard = [["Мелкое поручение", "Среднее поручение"], ["Классовая лицензия"], ["Назад"]]
     markup = ReplyKeyboardMarkup(alone_tasks_keyboard)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
     return ALONE_TASK_CHOOSING

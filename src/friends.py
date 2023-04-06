@@ -163,7 +163,7 @@ async def get_accepted_id(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 # It sends a message to the user asking for an ID to reject a friend request. It also returns a constant
 # DENY_FRIEND_REQUEST
 async def deny_friend(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    response = "Введите ID человека, от которого / к которому хотите отклонить запрос"
+    response = "Введите ID человека, от которого/к которому хотите отклонить/отменить запрос"
     markup = ReplyKeyboardMarkup(back_keyboard, resize_keyboard=True)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
     return DENY_FRIEND_REQUEST
