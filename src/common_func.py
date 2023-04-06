@@ -100,6 +100,8 @@ async def get_incoming_friends_requests(update: Update, context: ContextTypes.DE
     if not incoming_requests:
         response = "У вас нет входящих запросов на дружбу."
         markup = ReplyKeyboardMarkup(friends_keyboard, resize_keyboard=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
+        return FRIENDS_CHOOSING
     else:
         response = "Входящие запросы от пользователей с ID:\n\n" + "\n".join(
             str(ids) for ids in incoming_requests) + "\n\nВыберите действие:"
@@ -138,7 +140,7 @@ async def get_accepted_id(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         response = "ID должен быть числовым значением!"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
         return FRIENDS_CHOOSING
-    accept_friend_request(update.message.from_user.id, getting_user_id)
+    accept_friend_request(update.message.from_user.id, int(getting_user_id))
     response = f"Пользователь с ID {getting_user_id} теперь Ваш друг"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
     return FRIENDS_CHOOSING
@@ -158,7 +160,7 @@ async def get_denied_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         response = "ID должен быть числовым значением!"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
         return FRIENDS_CHOOSING
-    delete_from_friends(update.message.from_user.id, getting_user_id)
+    delete_from_friends(update.message.from_user.id, int(getting_user_id))
     response = f"Запрос от пользователя с ID {getting_user_id} отклонён."
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
     return FRIENDS_CHOOSING

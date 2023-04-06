@@ -262,74 +262,49 @@ def accept_friend_request(id_sender: int, id_receiver: int) -> None:
 
 
 def delete_from_friends(id_initiator: int, id_target: int) -> None:
-    conn = sqlite3.connect('../db/database.db')
-    query = f"""
-                DELETE FROM friends WHERE  
-                sender_id = '{id_initiator}' AND
-                receiver_id = '{id_target}';
-            """
-    execute_query(conn, query)
-    query = f"""
-                DELETE FROM friends WHERE  
-                sender_id = '{id_target}' AND
-                receiver_id = '{id_initiator}';
-            """
-    execute_query(conn, query)
-    conn.close()
+    with sqlite3.connect('../db/database.db') as conn:
+        query = f"""
+            DELETE FROM friends WHERE  
+            (sender_id = '{id_initiator}' AND receiver_id = '{id_target}')
+            OR (sender_id = '{id_target}' AND receiver_id = '{id_initiator}');
+        """
+        conn.execute(query)
 
 
 def get_friend_list_ids(user_id: int) -> list:
     friend_list = []
-    conn = sqlite3.connect('../db/database.db')
-    query = f"""
-                SELECT receiver_id FROM friends WHERE  
-                sender_id = '{user_id}' AND
-                is_accepted = 1;
-            """
-    query_res = execute_read_query(conn, query)
-    for i in range(len(query_res)):
-        friend_list.append(query_res[i][0])
-
-    query = f"""
-                SELECT sender_id FROM friends WHERE  
-                receiver_id = '{user_id}' AND
-                is_accepted = 1;
-            """
-    query_res = execute_read_query(conn, query)
-    for i in range(len(query_res)):
-        friend_list.append(query_res[i][0])
-
-    conn.close()
+    with sqlite3.connect('../db/database.db') as conn:
+        query = f"""
+            SELECT CASE WHEN sender_id = '{user_id}' THEN receiver_id ELSE sender_id END
+            FROM friends
+            WHERE (sender_id = '{user_id}' OR receiver_id = '{user_id}')
+            AND is_accepted = 1
+        """
+        cursor = conn.execute(query)
+        for row in cursor:
+            friend_list.append(row[0])
     return friend_list
 
 
 def get_incoming_pending_friend_requests(user_id: int) -> list:
-    requests_list = []
-    conn = sqlite3.connect('../db/database.db')
-    query = f"""
-                SELECT sender_id FROM friends WHERE  
-                receiver_id = '{user_id}' AND
-                is_accepted = 0;
-            """
-    query_res = execute_read_query(conn, query)
-    for i in range(len(query_res)):
-        requests_list.append(query_res[i][0])
-    conn.close()
+    with sqlite3.connect('../db/database.db') as conn:
+        query = f"""
+            SELECT sender_id FROM friends 
+            WHERE receiver_id = '{user_id}' AND is_accepted = 0;
+        """
+        cursor = conn.execute(query)
+        requests_list = [row[0] for row in cursor]
     return requests_list
 
 
 def get_outgoing_pending_friend_requests(user_id: int) -> list:
-    requests_list = []
-    conn = sqlite3.connect('../db/database.db')
-    query = f"""
-                SELECT receiver_id FROM friends WHERE  
-                sender_id = '{user_id}' AND
-                is_accepted = 0;
-            """
-    query_res = execute_read_query(conn, query)
-    for i in range(len(query_res)):
-        requests_list.append(query_res[i][0])
-    conn.close()
+    with sqlite3.connect('../db/database.db') as conn:
+        query = f"""
+            SELECT receiver_id FROM friends 
+            WHERE sender_id = '{user_id}' AND is_accepted = 0;
+        """
+        cursor = conn.execute(query)
+        requests_list = [row[0] for row in cursor]
     return requests_list
 
 
@@ -344,7 +319,7 @@ def check_if_friends(first_user_id: int, second_user_id: int) -> int:
     query = f"""
                 SELECT is_accepted FROM friends WHERE  
                 sender_id = '{first_user_id}' AND
-                receiver_id = '{second_user_id}');
+                receiver_id = '{second_user_id}';
             """
     res = execute_read_query(conn, query)
     if len(res) != 0:
@@ -353,7 +328,7 @@ def check_if_friends(first_user_id: int, second_user_id: int) -> int:
     query = f"""
                 SELECT is_accepted FROM friends WHERE  
                 sender_id = '{second_user_id}' AND
-                receiver_id = '{first_user_id}');
+                receiver_id = '{first_user_id}';
             """
     res = execute_read_query(conn, query)
     if len(res) != 0:
@@ -381,14 +356,13 @@ def check_if_need_to_update_daily_tasks(user_id: int) -> bool:
 # 2) 'medium'
 # 3) 'class_license'
 # 4) 'any' (Do not take into consideration type of the task)
-def get_random_task(task_type: str):
+def get_random_task(task_type: str) -> list:
     conn = sqlite3.connect('../db/gamedata.db')
     query = f"""
-                SELECT * FROM tasks ORDER BY RANDOM() LIMIT 1
-            """
+                SELECT * FROM tasks"""
     if task_type != 'any':
-        query += f"""WHERE type = '{task_type}'"""
-    query += ';'
+        query += f""" WHERE type = '{task_type}'"""
+    query += f""" ORDER BY RANDOM() LIMIT 1"""
     task = execute_read_query(conn, query)
     conn.close()
     return task
@@ -426,5 +400,3 @@ def regenerate_daily_tasks(user_id: int) -> None:
     execute_query(conn, query)
 
     conn.close()
-
-
