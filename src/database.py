@@ -13,6 +13,10 @@ def cur_time() -> str:
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
+def cur_date() -> str:
+    return datetime.datetime.now().strftime('%Y-%m-%d')
+
+
 def get_tasks(is_multiplayer: int) -> list:
     con = create_connection('../db/gamedata.db')
     query = f"""
@@ -342,13 +346,13 @@ def check_if_need_to_update_daily_tasks(user_id: int) -> bool:
     conn = sqlite3.connect('../db/database.db')
     query = f"""
                 SELECT last_update FROM user_daily_tasks_updated WHERE  
-                user_id = '{user_id}');
+                user_id = '{user_id}';
             """
     res = execute_read_query(conn, query)
     if len(res) == 0:
         return False
     conn.close()
-    return bool(res[0][0])
+    return bool(res[0][0] != cur_date())
 
 
 # @task_type should be one of:
@@ -374,7 +378,7 @@ def regenerate_daily_tasks(user_id: int) -> None:
     # Delete outdated daily tasks (if they exist)
     query = f"""
                 DELETE FROM user_daily_tasks WHERE  
-                user_id = '{user_id}');
+                user_id = '{user_id}';
             """
     execute_query(conn, query)
 
@@ -386,16 +390,16 @@ def regenerate_daily_tasks(user_id: int) -> None:
                 INSERT INTO user_daily_tasks (user_id,event_id) VALUES
                 ('{user_id}','{random_small_task[0]}'),
                 ('{user_id}','{random_medium_task[0]}'),
-                ('{user_id}','{random_class_license_task[0]}');
+                ('{user_id}','{random_class_license_task[0]}';
             """
     execute_query(conn, query)
 
     # Update user_daily_tasks_updated table
     query = f"""
                 INSERT OR IGNORE INTO user_daily_tasks_updated (user_id, last_updated)
-                VALUES ('{cur_time()}')
-                UPDATE user_daily_tasks_updated SET date = '{cur_time()}'
-                WHERE user_id = '{user_id}');
+                VALUES ('{cur_date()}')
+                UPDATE user_daily_tasks_updated SET date = '{cur_date()}'
+                WHERE user_id = '{user_id}';
             """
     execute_query(conn, query)
 

@@ -93,14 +93,12 @@ async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 
 async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    tasks = get_tasks(0)
+    if check_if_need_to_update_daily_tasks(update.message.from_user.id):
+        regenerate_daily_tasks(update.message.from_user.id)
     alone_tasks_keyboard = [["Мелкое поручение", "Среднее поручение"], ["Классовая лицензия"], ["Назад"]]
-    small_tasks = [task for task in tasks if task[6] == 'small']
-    medium_tasks = [task for task in tasks if task[6] == 'medium']
-    class_tasks = [task for task in tasks if task[6] == 'class_license']
-    small_task = random.choice(small_tasks)
-    medium_task = random.choice(medium_tasks)
-    class_task = random.choice(class_tasks)
+    small_task = get_random_task('small')[0]
+    medium_task = get_random_task('medium')[0]
+    class_task = get_random_task('class_license')[0]
     message = f"Доступные задания:\n\n" \
               f"Мелкое поручение:\n" \
               f"Название: {small_task[1]}\n" \
@@ -329,6 +327,14 @@ game_handler = ConversationHandler(
             MessageHandler(filters.Regex("^В одиночку$"), alone_tasks),
             MessageHandler(filters.Regex("^С друзьями$"), multiplayer_tasks),
             MessageHandler(filters.Regex("^Назад$"), game),
+        ],
+        ALONE_TASK_CHOOSING: [
+            # ADD MORE FUNCTIONS
+            MessageHandler(filters.Regex("^Назад$"), assignments),
+        ],
+        MULTIPLAYER_TASK_CHOOSING: [
+            # ADD MORE FUNCTIONS
+            MessageHandler(filters.Regex("^Назад$"), assignments),
         ],
     },
     fallbacks=[MessageHandler(filters.Regex("^Отмена$"), game_cancel)],
