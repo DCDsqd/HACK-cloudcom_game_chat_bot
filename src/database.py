@@ -9,7 +9,7 @@ logging.basicConfig(
 )
 
 
-def cur_time():
+def cur_time() -> str:
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
@@ -25,19 +25,17 @@ def get_tasks(is_multiplayer: int) -> list:
 
 # This function creates a connection to a SQLite database at a given path and returns it. It also logs any errors
 # that may occur during the connection process.
-def create_connection(path):
+def create_connection(path) -> sqlite3.Connection:
     connection = None
     try:
         connection = sqlite3.connect(path)
-        logging.info("Connection to SQLite DB successful")
     except Error as e:
         logging.warning(f"The error '{e}' occurred")
-
     return connection
 
 
 # This function executes a SQL query on a database connection and logs if any error occurs during execution.
-def execute_query(connection, query):
+def execute_query(connection: sqlite3.Connection, query: str) -> None:
     cursor = connection.cursor()
     try:
         cursor.execute(query)
@@ -49,7 +47,7 @@ def execute_query(connection, query):
 
 # This is a function to execute a read query on a SQLite database using the given connection and SQL query. It
 # returns the result obtained from executing the query.
-def execute_read_query(connection, query):
+def execute_read_query(connection: sqlite3.Connection, query: str) -> list:
     cursor = connection.cursor()
     try:
         cursor.execute(query)
@@ -63,7 +61,7 @@ def execute_read_query(connection, query):
 # parameters: col_name is the name of the column to update, text is the new value to set, and user_id is the ID of
 # the user whose record to update. It uses the create_connection function to establish a connection to the database,
 # executes an update query using execute_query, and closes the connection.
-def inserter(col_name, text, user_id):
+def inserter(col_name: str, text: str, user_id: int) -> None:
     con = create_connection('../db/database.db')
     updater = f"""
             UPDATE users
@@ -76,7 +74,7 @@ def inserter(col_name, text, user_id):
 
 # This function retrieves the hair_id, face_id, and shoulders_id of a user from the database given their user_id. It
 # returns a tuple containing these three values.
-def get_avatar_ids(user_id):
+def get_avatar_ids(user_id: int) -> tuple:
     con = create_connection('../db/database.db')
     query = f"""
             SELECT hair_id, face_id, shoulders_id 
@@ -91,7 +89,7 @@ def get_avatar_ids(user_id):
 # This function returns all the data from the given part of the gamedata database (hair, face, or shoulders). It
 # creates a connection to the database, executes a SELECT query, fetches all the data, and then closes the
 # connection. The result is returned.
-def select_all(part):
+def select_all(part: str) -> list:
     con = create_connection('../db/gamedata.db')
     query = f"""
             SELECT * FROM {part};
@@ -103,18 +101,19 @@ def select_all(part):
 
 # This function takes a table name and name of a body part and returns the corresponding id of that body part from
 # the gamedata database.
-def body_type_name_to_id(table, name):
+def body_type_name_to_id(table: str, name: str) -> int:
     con = create_connection('../db/gamedata.db')
     query = f"""
             SELECT id FROM {table} WHERE name='{name}';
             """
     res = execute_read_query(con, query)
+    print(type(res[0][0]))
     return res[0][0]
 
 
 # This function takes a user ID as an argument and returns a boolean indicating whether the user exists in the
 # database or not.
-def check_if_user_exists(user_id) -> bool:
+def check_if_user_exists(user_id: int) -> bool:
     con = create_connection('../db/database.db')
     query = f"""
             SELECT username FROM users WHERE id='{user_id}';
@@ -150,23 +149,10 @@ def create_all_tables_from_sql_scripts() -> None:
     conn.close()
 
 
-# TEST FUNCTION -> DELETE IN RELEASE
-def create_all_tables_from_sql_scripts_test() -> None:
-    conn = sqlite3.connect('../db/test/database.db')
-    with open('../sql/database_create_tables.sql', 'r') as sql_file:
-        conn.executescript(sql_file.read())
-    conn.close()
-
-    conn = sqlite3.connect('../db/test/gamedata.db')
-    with open('../sql/gamedata_create_tables.sql', 'r') as sql_file:
-        conn.executescript(sql_file.read())
-    conn.close()
-
-
 # This function selects all the rows from the ranks table in the gamedata.db database and returns a list of
 # dictionaries, where each dictionary represents a rank with its corresponding name and the amount of experience
 # points needed to reach it.
-def select_ranks_table():
+def select_ranks_table() -> list:
     conn = sqlite3.connect('../db/gamedata.db')
     query = f"""
             SELECT name, exp_to_earn FROM ranks ORDER BY exp_to_earn;
@@ -178,13 +164,14 @@ def select_ranks_table():
 
 # This function takes a user ID as input, retrieves the user's experience (exp) from the database, and returns it as
 # output.
-def get_user_exp(user_id):
+def get_user_exp(user_id: int) -> int:
     conn = sqlite3.connect('../db/database.db')
     query = f"""
             SELECT exp FROM users WHERE id='{user_id}';
             """
     res = execute_read_query(conn, query)
     conn.close()
+    print(type(res[0][0]))
     return res[0][0]
 
 
@@ -193,7 +180,7 @@ def get_user_exp(user_id):
 # (the ID of the new participant). The function connects to the database.db database, retrieves the current list of
 # participants for the given global_event_id, appends the new_participant_id to the list (if it's not already
 # present), and updates the participants field in the global_events table. The function does not return anything.
-def update_participants_in_global_event(global_event_id, new_participant_id) -> None:
+def update_participants_in_global_event(global_event_id: int, new_participant_id: int) -> None:
     conn = sqlite3.connect('../db/database.db')
     query = f"""
             SELECT participants FROM global_events WHERE id='{global_event_id}';
@@ -212,7 +199,7 @@ def update_participants_in_global_event(global_event_id, new_participant_id) -> 
 
 
 # This function relies on fact that @text is valid, a.k.a parse_new_event_info_string(@text) == {True, 'Some message'}
-def save_new_event_info_string_to_db(text) -> None:
+def save_new_event_info_string_to_db(text: str) -> None:
     fields = text.split('\n')
     name = fields[0]
     descr = fields[1]
@@ -228,7 +215,9 @@ def save_new_event_info_string_to_db(text) -> None:
     conn.close()
 
 
-def select_all_buildings():
+# This function selects all buildings from the "buildings" table in the gamedata database and returns a list of
+# tuples containing the building id and name.
+def select_all_buildings() -> list:
     conn = sqlite3.connect('../db/gamedata.db')
     query = f"""
             SELECT id, name FROM buildings; 
@@ -237,6 +226,9 @@ def select_all_buildings():
     return res
 
 
+# This function creates a new friend request by inserting a new row into the "friends" table of the database with the
+# sender_id and receiver_id specified as input parameters. The request will be marked as not accepted (is_accepted = 0)
+# by default.
 def create_friend_request(id_sender: int, id_receiver: int) -> None:
     conn = sqlite3.connect('../db/database.db')
 
@@ -248,6 +240,8 @@ def create_friend_request(id_sender: int, id_receiver: int) -> None:
     conn.close()
 
 
+# Accepts a friend request by updating the 'is_accepted' field to 1 and setting the 'date_accepted' field to the
+# current time
 def accept_friend_request(id_sender: int, id_receiver: int) -> None:
     conn = sqlite3.connect('../db/database.db')
     query = f"""
@@ -261,6 +255,8 @@ def accept_friend_request(id_sender: int, id_receiver: int) -> None:
     conn.close()
 
 
+# Deletes a friendship connection between two users from the 'friends' table in the database. The function uses a
+# single query to delete the friendship connection in both directions.
 def delete_from_friends(id_initiator: int, id_target: int) -> None:
     with sqlite3.connect('../db/database.db') as conn:
         query = f"""
@@ -271,6 +267,7 @@ def delete_from_friends(id_initiator: int, id_target: int) -> None:
         conn.execute(query)
 
 
+# Get the list of friend IDs for the given user. Only returns the IDs of friends who have accepted the request.
 def get_friend_list_ids(user_id: int) -> list:
     friend_list = []
     with sqlite3.connect('../db/database.db') as conn:
@@ -286,6 +283,8 @@ def get_friend_list_ids(user_id: int) -> list:
     return friend_list
 
 
+# Retrieves a list of the IDs of users who sent friend requests to the given user,
+# but the requests haven't been accepted yet.
 def get_incoming_pending_friend_requests(user_id: int) -> list:
     with sqlite3.connect('../db/database.db') as conn:
         query = f"""
@@ -297,6 +296,7 @@ def get_incoming_pending_friend_requests(user_id: int) -> list:
     return requests_list
 
 
+# Returns a list of `receiver_id`s for all pending friend requests initiated by the user with `user_id`.
 def get_outgoing_pending_friend_requests(user_id: int) -> list:
     with sqlite3.connect('../db/database.db') as conn:
         query = f"""

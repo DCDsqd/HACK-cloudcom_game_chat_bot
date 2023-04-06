@@ -1,22 +1,17 @@
-import os
-
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
-    ContextTypes,
-    ConversationHandler,
     MessageHandler,
     filters,
     PollAnswerHandler
 )
 
-from common_func import start, main_menu, profile, help_me, danet, netda, del_keyboard, \
-    get_events, receive_poll_answer, poll_handler, rating, friends_handler
+from common_func import start, profile, help_me, del_keyboard, \
+    get_events, receive_poll_answer, poll_handler, rating
+from friends import friends_handler
 from customization import custom_name_handler, avatar_handler
 from admin import admin_handler
 from game import game_handler
-from database import *
 
 if __name__ == '__main__':
     token_file = open("../tokens/tg_app_token.txt", "r")
@@ -29,10 +24,7 @@ if __name__ == '__main__':
     application.add_handler(CommandHandler('rating', rating))
     application.add_handler(CommandHandler('events', get_events))
     application.add_handler(CommandHandler('del', del_keyboard))
-    application.add_handler(CommandHandler('menu', main_menu))
     application.add_handler(CommandHandler('profile', profile))
-    application.add_handler(MessageHandler(filters.Regex("^Да$|^да$"), danet))
-    application.add_handler(MessageHandler(filters.Regex("^Нет$|^нет$"), netda))
     application.add_handler(admin_handler)
     application.add_handler(avatar_handler)
     application.add_handler(custom_name_handler)
