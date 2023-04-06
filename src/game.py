@@ -96,9 +96,10 @@ async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     if check_if_need_to_update_daily_tasks(update.message.from_user.id):
         regenerate_daily_tasks(update.message.from_user.id)
     alone_tasks_keyboard = [["Мелкое поручение", "Среднее поручение"], ["Классовая лицензия"], ["Назад"]]
-    small_task = get_random_task('small')[0]
-    medium_task = get_random_task('medium')[0]
-    class_task = get_random_task('class_license')[0]
+    tasks = get_cur_user_tasks(update.message.from_user.id)
+    small_task = get_task_by_id(tasks[0])
+    medium_task = get_task_by_id(tasks[1])
+    class_task = get_task_by_id(tasks[2])
     message = f"Доступные задания:\n\n" \
               f"Мелкое поручение:\n" \
               f"Название: {small_task[1]}\n" \

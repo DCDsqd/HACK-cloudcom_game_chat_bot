@@ -362,8 +362,7 @@ def check_if_need_to_update_daily_tasks(user_id: int) -> bool:
 # 4) 'any' (Do not take into consideration type of the task)
 def get_random_task(task_type: str) -> list:
     conn = sqlite3.connect('../db/gamedata.db')
-    query = f"""
-                SELECT * FROM tasks"""
+    query = f"""SELECT * FROM tasks"""
     if task_type != 'any':
         query += f""" WHERE type = '{task_type}'"""
     query += f""" ORDER BY RANDOM() LIMIT 1"""
@@ -404,3 +403,31 @@ def regenerate_daily_tasks(user_id: int) -> None:
     execute_query(conn, query)
 
     conn.close()
+
+
+def get_cur_user_tasks(user_id: int) -> list:
+    conn = sqlite3.connect('../db/database.db')
+
+    attach_query = """ATTACH 'gamedata.db' AS gamedata;"""
+    execute_query(conn, attach_query)
+
+    query = f"""
+                SELECT user_daily_tasks.task_id, gamedata.tasks.difficulty
+                FROM user_daily_tasks
+                JOIN gamedata.tasks ON gamedata.tasks.id = user_daily_tasks.task_id
+                WHERE user_daily_tasks.user_id = '{user_id}';
+            """
+    res = execute_read_query(conn, query)
+    conn.close()
+    return [res[0][0], res[0][1], res[0][2]]
+
+
+def get_task_by_id(task_id: int) -> list:
+    con = create_connection('../db/gamedata.db')
+    query = f"""
+                SELECT * FROM tasks WHERE is_multiplayer=1
+                AND id = '{task_id}';
+            """
+    res = execute_read_query(con, query)
+    con.close()
+    return res[0]
