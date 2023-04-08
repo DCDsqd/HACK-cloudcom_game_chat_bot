@@ -203,7 +203,7 @@ QVector<Event> MainWindow::getCurrentEventsList() const
             continue;
         }
         */
-        if(QLabel* tmp_label = qobject_cast<QLabel*>(name_widget)){
+        if([[maybe_unused]] QLabel* tmp_label = qobject_cast<QLabel*>(name_widget)){
             //delete tmp_label;
             continue;
         }
