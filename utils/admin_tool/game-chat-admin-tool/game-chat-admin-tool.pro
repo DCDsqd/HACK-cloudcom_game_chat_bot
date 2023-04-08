@@ -17,7 +17,8 @@ HEADERS += \
     src/database.h \
     src/event.h \
     src/mainwindow.h \
-    src/qss_helper.h
+    src/qss_helper.h \
+    src/widget_holder.h
 
 FORMS += \
     ui/mainwindow.ui

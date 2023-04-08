@@ -80,7 +80,7 @@ void MainWindow::addEventToLayout(const QString &name,
 
     //current_translatable_widgets.insert({event_name, "QLineEdit"});
     //current_translatable_widgets.insert({event_descr, "QTextEdit"});
-    current_translatable_widgets.insert({event_delete, {"QPushButton", "Delete!"}});
+    current_translatable_widgets->insert(new WidgetHolder{event_delete, "QPushButton", "Delete!"});
 
     //Scroll down to be able to see a newly added widget
     ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->maximumHeight());
@@ -105,15 +105,17 @@ void MainWindow::deleteRowFromLayout(size_t row)
         if(itemWidget)
         {
             ui->eventsLayout->removeWidget(itemWidget);
-            auto it = current_translatable_widgets.find(itemWidget);
-            if(it != current_translatable_widgets.end()){
-                current_translatable_widgets.erase(it);
+            WidgetHolder* tmp_widget_holder_for_cmp = new WidgetHolder(itemWidget);
+            auto it = current_translatable_widgets->find(tmp_widget_holder_for_cmp);
+            delete tmp_widget_holder_for_cmp;
+            if(it != current_translatable_widgets->end()){
+                current_translatable_widgets->erase(it);
             }
             else{
                 qDebug() << "Was not able to find widget that needs to be deleted in current_translatable_widgets, "
                             "itemWidget = " << itemWidget;
             }
-            delete itemWidget;
+            //delete itemWidget;      @current_translatable_widgets should take care of this
         }
     }
     ui->eventsLayout->update();
@@ -160,12 +162,12 @@ void MainWindow::insertHeadersIntoLayout()
     ui->eventsLayout->addWidget(event_exp_reward, cur_next_row, E_EXP, Qt::AlignCenter);
     ui->eventsLayout->addWidget(event_delete, cur_next_row, E_DEL, Qt::AlignCenter);
 
-    current_translatable_widgets.insert({event_name, {"QLabel", "Name"}});
-    current_translatable_widgets.insert({event_descr, {"QLabel", "Description"}});
-    current_translatable_widgets.insert({event_start_date, {"QLabel", "Start time"}});
-    current_translatable_widgets.insert({event_dur, {"QLabel", "Duration\n (mins)"}});
-    current_translatable_widgets.insert({event_exp_reward, {"QLabel", "Exp rew."}});
-    current_translatable_widgets.insert({event_delete, {"QLabel", "Delete buttons"}});
+    current_translatable_widgets->insert(new WidgetHolder{event_name, "QLabel", "Name"});
+    current_translatable_widgets->insert(new WidgetHolder{event_descr, "QLabel", "Description"});
+    current_translatable_widgets->insert(new WidgetHolder{event_start_date, "QLabel", "Start time"});
+    current_translatable_widgets->insert(new WidgetHolder{event_dur, "QLabel", "Duration\n (mins)"});
+    current_translatable_widgets->insert(new WidgetHolder{event_exp_reward, "QLabel", "Exp rew."});
+    current_translatable_widgets->insert(new WidgetHolder{event_delete, "QLabel", "Delete buttons"});
 }
 
 void MainWindow::loadEventsFromDb()
@@ -236,28 +238,27 @@ void MainWindow::changeEvent(QEvent *event)
 
 void MainWindow::reTranslateNonUiWidgets()
 {
-    for(auto& [widget, info_pair] : current_translatable_widgets){
-        const QString& type = info_pair.first;
-        QByteArray tmp_byte_array = info_pair.second.toLocal8Bit();
+    for(auto& widget_holder : *current_translatable_widgets){
+        QByteArray tmp_byte_array = widget_holder->text.toLocal8Bit();
         const char* original_text = tmp_byte_array.data();
-        if(type == "QLabel"){
-            QLabel* label = static_cast<QLabel*>(widget);
+        if(widget_holder->type == "QLabel"){
+            QLabel* label = static_cast<QLabel*>(widget_holder->widget);
             label->setText(tr(original_text));
         }
-        else if(type == "QLineEdit"){
-            QLineEdit* line = static_cast<QLineEdit*>(widget);
+        else if(widget_holder->type == "QLineEdit"){
+            QLineEdit* line = static_cast<QLineEdit*>(widget_holder->widget);
             line->setText(tr(original_text));
         }
-        else if(type == "QTextEdit"){
-            QTextEdit* text = static_cast<QTextEdit*>(widget);
+        else if(widget_holder->type == "QTextEdit"){
+            QTextEdit* text = static_cast<QTextEdit*>(widget_holder->widget);
             text->setText(tr(original_text));
         }
-        else if(type == "QPushButton"){
-            QPushButton* button = static_cast<QPushButton*>(widget);
+        else if(widget_holder->type == "QPushButton"){
+            QPushButton* button = static_cast<QPushButton*>(widget_holder->widget);
             button->setText(tr(original_text));
         }
         else{
-            qDebug() << "Unknown type = " << type << " in reTranslateNonUiWidgets(). Widget was not translated.";
+            qDebug() << "Unknown type = " << widget_holder->type << " in reTranslateNonUiWidgets(). Widget was not translated.";
         }
     }
 }
@@ -274,8 +275,6 @@ void MainWindow::on_saveAllButton_clicked()
 void MainWindow::on_reloadDataButton_clicked()
 {
     // Delete widgets from prev layout
-    // delete ui->eventsLayout;
-    //ui->eventsLayout = new QGridLayout();
     clearLayout();
     loadEventsFromDb();
 }
@@ -292,7 +291,6 @@ void MainWindow::ClearLay(QGridLayout *lay)
         if(curItem == nullptr){
             continue;
         }
-        //qDebug() << "Entered while, i = " << i;
         if(curItem->layout() != nullptr){
             ClearLay(dynamic_cast<QGridLayout*>(curItem->layout()));
             //qDebug() << "Deleted lay: " << curItem->layout();
@@ -303,16 +301,19 @@ void MainWindow::ClearLay(QGridLayout *lay)
             //qDebug() << "Deleted widget: " << curItem->widget() << " i = " << i;
             curItem->widget()->hide();
             //curItem->widget()->deleteLater();
-            auto it = current_translatable_widgets.find(curItem->widget());
-            if(it != current_translatable_widgets.end()){
-                current_translatable_widgets.erase(it);
+            WidgetHolder* tmp_widget_holder_for_cmp = new WidgetHolder(curItem->widget());
+            auto it = current_translatable_widgets->find(tmp_widget_holder_for_cmp);
+            delete tmp_widget_holder_for_cmp;
+            if(it != current_translatable_widgets->end()){
+                current_translatable_widgets->erase(it);
             }
             else{
                 qDebug() << "Was not able to find widget that needs to be deleted in current_translatable_widgets, "
                             "curItem->widget() = " << curItem->widget();
             }
-            delete curItem->widget();
+            //delete curItem->widget();         @current_translatable_widgets should take care of this
         }
+
         //qDebug() << "Trying to delete item: " << curItem;
         //else {
         // @TODO: Figure out if following line leads to memory leak or is it supposed to work like that

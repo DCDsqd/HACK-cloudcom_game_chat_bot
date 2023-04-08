@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "database.h"
+#include "widget_holder.h"
 
 #include <QMainWindow>
 #include <QGridLayout>
@@ -26,6 +27,7 @@
 
 #include <memory>
 #include <map>
+#include <set>
 
 #define EPI event_placement_info // for shorter name usage
 
@@ -77,7 +79,7 @@ private: //fields
     static constexpr int event_exp_reward_upper_limit = 200000;
     const QString default_events_table_name = "global_events";
     const QVector<EventPlacementData> event_placement_info = constructEventPlacementData();
-    std::map<QWidget*, std::pair<QString, QString>> current_translatable_widgets;
+    std::unique_ptr<std::set<WidgetHolder*>> current_translatable_widgets = std::make_unique<std::set<WidgetHolder*>>();
     QTranslator* translator = new QTranslator();
 };
 #endif // MAINWINDOW_H
