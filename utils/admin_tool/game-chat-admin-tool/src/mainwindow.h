@@ -3,6 +3,7 @@
 
 #include "database.h"
 #include "widget_holder.h"
+#include "grid_layout_util.h"
 
 #include <QMainWindow>
 #include <QGridLayout>

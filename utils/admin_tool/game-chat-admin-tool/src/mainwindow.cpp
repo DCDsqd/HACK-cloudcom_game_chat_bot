@@ -67,7 +67,8 @@ void MainWindow::addEventToLayout(const QString &name,
     QPushButton* event_delete = new QPushButton(tr("Delete!"));
     event_delete->setFixedSize(EPI[E_DEL].sz);
     QObject::connect(event_delete, &QPushButton::clicked, this, [this, cur_next_row]{
-        deleteRowFromLayout(cur_next_row);
+        GridLayoutUtil::removeRow(ui->eventsLayout, cur_next_row);
+        //deleteRowFromLayout(cur_next_row);
     });
 
     // Adding events to grid layout
@@ -115,7 +116,7 @@ void MainWindow::deleteRowFromLayout(size_t row)
                 qDebug() << "Was not able to find widget that needs to be deleted in current_translatable_widgets, "
                             "itemWidget = " << itemWidget;
             }
-            //delete itemWidget;      @current_translatable_widgets should take care of this
+            delete itemWidget;
         }
     }
     ui->eventsLayout->update();
@@ -123,7 +124,10 @@ void MainWindow::deleteRowFromLayout(size_t row)
 
 void MainWindow::clearLayout()
 {
-    ClearLay(ui->eventsLayout);
+    for(int i = 0; i < ui->eventsLayout->rowCount(); ++i){
+        GridLayoutUtil::removeRow(ui->eventsLayout, i);
+    }
+    //ClearLay(ui->eventsLayout);
 }
 
 void MainWindow::insertHeadersIntoLayout()
@@ -183,24 +187,35 @@ QVector<Event> MainWindow::getCurrentEventsList() const
 {
     QVector<Event> event_list;
 
-    for(size_t i = 1; i < (size_t)ui->eventsLayout->rowCount(); ++i){
+    for(size_t i = 2; i < (size_t)ui->eventsLayout->rowCount(); ++i){
         Event cur_event;
 
+        //QGridLayout* lay = ui->eventsLayout; // for debug purposes since ui->eventsLayout is not visible for debugger smh
         auto item = ui->eventsLayout->itemAtPosition(i, 0);
         if(!item){
             continue;
         }
         QWidget* name_widget = item->widget();
+        // Skip headers
+        /*
+        if(name_widget->metaObject()->className() == std::string("QLabel").c_str()){
+            continue;
+        }
+        */
+        if(QLabel* tmp_label = qobject_cast<QLabel*>(name_widget)){
+            delete tmp_label;
+            continue;
+        }
         QWidget* descr_widget = ui->eventsLayout->itemAtPosition(i, 1)->widget();
         QWidget* date_widget = ui->eventsLayout->itemAtPosition(i, 2)->widget();
         QWidget* duration_widget = ui->eventsLayout->itemAtPosition(i, 3)->widget();
         QWidget* exp_widget = ui->eventsLayout->itemAtPosition(i, 4)->widget();
 
-        QLineEdit* casted_name = static_cast<QLineEdit*>(name_widget);
-        QTextEdit* casted_descr = static_cast<QTextEdit*>(descr_widget);
-        QDateTimeEdit* casted_start_date = static_cast<QDateTimeEdit*>(date_widget);
-        QLineEdit* casted_duration = static_cast<QLineEdit*>(duration_widget);
-        QLineEdit* casted_exp = static_cast<QLineEdit*>(exp_widget);
+        QLineEdit* casted_name = qobject_cast<QLineEdit*>(name_widget);
+        QTextEdit* casted_descr = qobject_cast<QTextEdit*>(descr_widget);
+        QDateTimeEdit* casted_start_date = qobject_cast<QDateTimeEdit*>(date_widget);
+        QLineEdit* casted_duration = qobject_cast<QLineEdit*>(duration_widget);
+        QLineEdit* casted_exp = qobject_cast<QLineEdit*>(exp_widget);
 
         cur_event.name = casted_name->text();
         cur_event.description = casted_descr->toPlainText();
@@ -311,7 +326,7 @@ void MainWindow::ClearLay(QGridLayout *lay)
                 qDebug() << "Was not able to find widget that needs to be deleted in current_translatable_widgets, "
                             "curItem->widget() = " << curItem->widget();
             }
-            //delete curItem->widget();         @current_translatable_widgets should take care of this
+            delete curItem->widget();
         }
 
         //qDebug() << "Trying to delete item: " << curItem;

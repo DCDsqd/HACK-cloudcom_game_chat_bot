@@ -16,6 +16,7 @@ SOURCES += \
 HEADERS += \
     src/database.h \
     src/event.h \
+    src/grid_layout_util.h \
     src/mainwindow.h \
     src/qss_helper.h \
     src/widget_holder.h
