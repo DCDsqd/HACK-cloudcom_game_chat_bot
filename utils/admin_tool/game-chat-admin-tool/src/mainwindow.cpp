@@ -127,6 +127,7 @@ void MainWindow::clearLayout()
     for(int i = 0; i < ui->eventsLayout->rowCount(); ++i){
         GridLayoutUtil::removeRow(ui->eventsLayout, i);
     }
+    current_translatable_widgets->clear();
     //ClearLay(ui->eventsLayout);
 }
 
@@ -203,7 +204,7 @@ QVector<Event> MainWindow::getCurrentEventsList() const
         }
         */
         if(QLabel* tmp_label = qobject_cast<QLabel*>(name_widget)){
-            delete tmp_label;
+            //delete tmp_label;
             continue;
         }
         QWidget* descr_widget = ui->eventsLayout->itemAtPosition(i, 1)->widget();
