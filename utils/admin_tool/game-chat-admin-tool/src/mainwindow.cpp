@@ -227,8 +227,7 @@ QVector<EventPlacementData> MainWindow::constructEventPlacementData()
 
 void MainWindow::changeEvent(QEvent *event)
 {
-    //QDialog::changeEvent(event);
-    if( QEvent::LanguageChange == event->type() )
+    if(QEvent::LanguageChange == event->type())
     {
         ui->retranslateUi(this);
         reTranslateNonUiWidgets();
@@ -239,7 +238,8 @@ void MainWindow::reTranslateNonUiWidgets()
 {
     for(auto& [widget, info_pair] : current_translatable_widgets){
         const QString& type = info_pair.first;
-        const char* original_text = info_pair.second.toLocal8Bit().data();
+        QByteArray tmp_byte_array = info_pair.second.toLocal8Bit();
+        const char* original_text = tmp_byte_array.data();
         if(type == "QLabel"){
             QLabel* label = static_cast<QLabel*>(widget);
             label->setText(tr(original_text));
