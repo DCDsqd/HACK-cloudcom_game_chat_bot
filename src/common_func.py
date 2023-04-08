@@ -9,11 +9,29 @@ from telegram.ext import (
     MessageHandler,
     filters
 )
+from io import BytesIO
 
 from admin import parse_new_event_info_string
+from PIL import Image
 
 EVENT_INPUT = 0
 TOTAL_VOTER_COUNT = 10
+
+
+def merge_photos(background: str, user_id: int) -> BytesIO:
+    back = Image.open(os.path.abspath(f'../res/locations/{background}.png')).convert("RGBA")
+    character = Image.open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png')).convert("RGBA")
+    new_size = (character.size[0] // 2, character.size[1] // 2)
+    character = character.resize(new_size, Image.NEAREST)
+    if background == 'AnvilHouse' or background == 'Taverna':
+        back.paste(character, (250, 172), character)
+    else:
+        back.paste(character, (250, 250), character)
+    result_image = BytesIO()
+    result_image.name = 'image.jpeg'
+    back.save(result_image, 'PNG')
+    result_image.seek(0)
+    return result_image
 
 
 # This function retrieves the top 10 players based on their experience and sends a message to the chat with their

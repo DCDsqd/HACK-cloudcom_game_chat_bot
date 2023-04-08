@@ -65,7 +65,7 @@ def execute_read_query(connection: sqlite3.Connection, query: str) -> list:
 # parameters: col_name is the name of the column to update, text is the new value to set, and user_id is the ID of
 # the user whose record to update. It uses the create_connection function to establish a connection to the database,
 # executes an update query using execute_query, and closes the connection.
-def inserter(col_name: str, text: str, user_id: int) -> None:
+def inserter(col_name: str, text, user_id: int) -> None:
     con = create_connection('../db/database.db')
     updater = f"""
             UPDATE users
@@ -343,16 +343,13 @@ def check_if_friends(first_user_id: int, second_user_id: int) -> int:
 
 
 def check_if_need_to_update_daily_tasks(user_id: int) -> bool:
-    conn = sqlite3.connect('../db/database.db')
-    query = f"""
-                SELECT last_update FROM user_daily_tasks_updated WHERE  
-                user_id = '{user_id}';
-            """
-    res = execute_read_query(conn, query)
-    if len(res) == 0:
-        return True
-    conn.close()
-    return bool(res[0][0] != cur_date())
+    with sqlite3.connect('../db/database.db') as conn:
+        query = f"""
+                    SELECT last_update FROM user_daily_tasks_updated WHERE  
+                    user_id = '{user_id}';
+                """
+        res = execute_read_query(conn, query)
+    return not res or res[0][0] != cur_date()
 
 
 # @task_type should be one of:
@@ -422,14 +419,7 @@ def get_cur_user_tasks(user_id: int) -> dict:
     if len(res) != 3:
         logging.warning('Query result length is not equal to expected in function get_cur_user_tasks')
 
-    tasks_list = {}
-
-    for i in range(len(res)):
-        # Mark completed tasks as "-1"
-        if res[i][2] == 0:
-            tasks_list[str(res[i][1])] = res[i][0]
-        else:
-            tasks_list[str(res[i][1])] = -1
+    tasks_list = {str(task_type): task_id if is_completed == 0 else -1 for task_id, task_type, is_completed in res}
 
     return tasks_list
 

@@ -8,7 +8,7 @@ from telegram.ext import (
     filters,
 )
 
-from common_func import is_available
+from common_func import is_available, merge_photos
 from database import *
 import random
 
@@ -93,47 +93,30 @@ async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 
 async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_id = update.message.from_user.id
+    if check_if_need_to_update_daily_tasks(user_id):
+        regenerate_daily_tasks(user_id)
 
-    if check_if_need_to_update_daily_tasks(update.message.from_user.id):
-        regenerate_daily_tasks(update.message.from_user.id)
-    tasks = get_cur_user_tasks(update.message.from_user.id)
-
-    small_task_id = tasks['small']
-    medium_task_id = tasks['medium']
-    class_task_id = tasks['class_license']
+    tasks = get_cur_user_tasks(user_id)
+    task_labels = {
+        'small': "Мелкое поручение",
+        'medium': "Среднее поручение",
+        'class_license': "Классовая лицензия"
+    }
 
     message = f"Доступные ежедневные задания ({cur_date()}):\n\n"
     no_tasks_available = True
 
-    if small_task_id != -1:
-        small_task = get_task_by_id(small_task_id)
-        message +=  f"Мелкое поручение:\n" \
-                    f"Название: {small_task[1]}\n" \
-                    f"Описание: {small_task[2]}\n" \
-                    f"Сложность: {small_task[3]}\n" \
-                    f"Награда опытом: {small_task[4]}\n" \
-                    f"Награда предметом: {small_task[5]}\n\n"
-        no_tasks_available = False
-
-    if medium_task_id != -1:
-        medium_task = get_task_by_id(medium_task_id)
-        message +=  f"Среднее поручение:\n" \
-                    f"Название: {medium_task[1]}\n" \
-                    f"Описание: {medium_task[2]}\n" \
-                    f"Сложность: {medium_task[3]}\n" \
-                    f"Награда опытом: {medium_task[4]}\n" \
-                    f"Награда предметом: {medium_task[5]}\n\n"
-        no_tasks_available = False
-
-    if class_task_id != -1:
-        class_task = get_task_by_id(class_task_id)
-        message +=  f"Классовая лицензия:\n" \
-                    f"Название: {class_task[1]}\n" \
-                    f"Описание: {class_task[2]}\n" \
-                    f"Сложность: {class_task[3]}\n" \
-                    f"Награда опытом: {class_task[4]}\n" \
-                    f"Награда предметом: {class_task[5]}\n\n"
-        no_tasks_available = False
+    for task_id, label in task_labels.items():
+        if tasks[task_id] != -1:
+            task = get_task_by_id(tasks[task_id])
+            message += f"{label}:\n" \
+                       f"Название: {task[1]}\n" \
+                       f"Описание: {task[2]}\n" \
+                       f"Сложность: {task[3]}\n" \
+                       f"Награда опытом: {task[4]}\n" \
+                       f"Награда предметом: {task[5]}\n\n"
+            no_tasks_available = False
 
     if no_tasks_available:
         message += 'К сожалению, на сегодня у Вас больше нет заданий.\n' \
@@ -141,22 +124,9 @@ async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     else:
         message += 'Какое задание хотите взять?'
 
-
-    all_tasks_labels = []
-    if small_task_id != -1:
-        all_tasks_labels.append("Мелкое поручение")
-    if medium_task_id != -1:
-        all_tasks_labels.append("Среднее поручение")
-    if class_task_id != -1:
-        all_tasks_labels.append("Классовая лицензия")
-
-    alone_tasks_keyboard = [[], []]
-    for i in range(0, min(len(all_tasks_labels), 2)):
-        alone_tasks_keyboard[0].append(all_tasks_labels[i])
-    if len(all_tasks_labels) == 3:
-        alone_tasks_keyboard[1].append(all_tasks_labels[2])
-        alone_tasks_keyboard.append([])
-    alone_tasks_keyboard[-1].append("Назад")
+    all_tasks_labels = [label for task_id, label in task_labels.items() if tasks[task_id] != -1]
+    alone_tasks_keyboard = [all_tasks_labels[:2], all_tasks_labels[2:3], ["Назад"]] if len(all_tasks_labels) >= 2 else [
+        all_tasks_labels, ["Назад"]]
 
     markup = ReplyKeyboardMarkup(alone_tasks_keyboard)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
@@ -200,6 +170,8 @@ async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         else:
             chronos_keyboard = [["Улучшить персонажа", "Изменить подкласс"], ["Назад"]]
         markup = ReplyKeyboardMarkup(chronos_keyboard, one_time_keyboard=True)
+        await context.bot.send_photo(chat_id=update.effective_chat.id,
+                                     photo=merge_photos('Chronos', update.effective_chat.id))
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
         return CHRONOS_CHOOSING
 
@@ -248,7 +220,7 @@ async def change_subclass(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
-async def subclass_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def subclass_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = update.message.text
     user_id = update.message.from_user.id
     context.user_data["choice"] = text
@@ -262,6 +234,8 @@ async def lab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         message = 'Вы приходите к лаборатории, но дверь оказывается закрытой.\nВозможно, Вам пока что не хватает опыта.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
+        await context.bot.send_photo(chat_id=update.effective_chat.id,
+                                     photo=merge_photos('Lab', update.effective_chat.id))
         pass  # Здесь можно будет крафтить расходники
 
 
@@ -271,6 +245,8 @@ async def guild_house(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
                   'предлогом, что Вы недостаточно опытны.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
+        await context.bot.send_photo(chat_id=update.effective_chat.id,
+                                     photo=merge_photos('GuildHouse', update.effective_chat.id))
         pass  # Здесь можно будет запрашивать ресурсы
 
 
@@ -281,6 +257,8 @@ async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                   ' испортить изделие.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
+        await context.bot.send_photo(chat_id=update.effective_chat.id,
+                                     photo=merge_photos('AnvilHouse', update.effective_chat.id))
         pass  # Здесь можно будет крафтить броню и оружие
 
 
@@ -292,6 +270,8 @@ async def market(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                   'Вам стоит набраться опыта и знаний, чтобы стать более уверенным и компетентным покупателем.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
+        await context.bot.send_photo(chat_id=update.effective_chat.id,
+                                     photo=merge_photos('Market', update.effective_chat.id))
         pass  # Здесь можно будет покупать товары
 
 
@@ -303,6 +283,8 @@ async def arena(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                   'чтобы доказать свою готовность к сражениям на арене.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
+        await context.bot.send_photo(chat_id=update.effective_chat.id,
+                                     photo=merge_photos('Arena', update.effective_chat.id))
         pass  # Здесь можно будет устроить состязание
 
 
