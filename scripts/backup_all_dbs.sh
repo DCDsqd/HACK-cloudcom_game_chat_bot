@@ -1,3 +1,5 @@
+#!/bin/bash
+
 cd ../db
 mkdir -p backups
 for f in *.db
