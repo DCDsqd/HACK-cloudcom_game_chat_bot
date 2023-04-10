@@ -4,7 +4,7 @@ from telegram.ext import (
     ConversationHandler,
 )
 
-menu_keyboard = [['Кастомизация', 'Игра'], ['Добавить эвент', 'Друзья']]
+menu_keyboard = [['Кастомизация', 'Игра'], ['Добавить событие', 'Друзья']]
 
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
