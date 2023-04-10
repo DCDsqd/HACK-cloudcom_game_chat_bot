@@ -9,6 +9,7 @@ from telegram.ext import (
 )
 
 from common_func import is_available, merge_photos
+from menu_chain import main_menu
 from database import *
 import random
 
@@ -309,14 +310,9 @@ async def hall_of_legionnaires(update: Update, context: ContextTypes.DEFAULT_TYP
         pass  # Здесь можно будет брать задания легиона (Возможно стоит перенести это в дом поручений)
 
 
-async def game_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    message = " До встречи! Мы будем ждать Вас в Империи!"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())
-    return ConversationHandler.END
-
-
 game_handler = ConversationHandler(
-    entry_points=[CommandHandler("game", game)],
+    entry_points=[CommandHandler("game", game),
+                  MessageHandler(filters.Regex("^Игра$"), game)],
     states={
         CLASS_CHOOSING: [
             MessageHandler(filters.Regex("^Рыцарь$|^Маг$|^Лучник$|^Охотник$"), class_choosing),
@@ -358,5 +354,5 @@ game_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Назад$"), assignments),
         ],
     },
-    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), game_cancel)],
+    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
 )

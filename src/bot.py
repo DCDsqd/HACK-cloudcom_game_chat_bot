@@ -1,9 +1,12 @@
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, Poll, KeyboardButtonPollType
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
+    ContextTypes,
+    ConversationHandler,
     MessageHandler,
     filters,
-    PollAnswerHandler
+    PollAnswerHandler,
 )
 
 from common_func import start, profile, help_me, del_keyboard, \
@@ -12,6 +15,7 @@ from friends import friends_handler
 from customization import custom_name_handler, avatar_handler
 from admin import admin_handler
 from game import game_handler
+
 
 if __name__ == '__main__':
     token_file = open("../tokens/tg_app_token.txt", "r")

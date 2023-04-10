@@ -10,6 +10,8 @@ from telegram.ext import (
     filters,
 )
 
+from menu_chain import main_menu
+
 from PIL import Image
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
@@ -216,18 +218,9 @@ async def enter_change(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return ConversationHandler.END
 
 
-# This is a temporary solution. It will have to be deleted!
-async def cancel_custom(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    keyboard = [['/custom', '/game'], ['/fight', '/help']]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Выберите команду:",
-                                   reply_markup=reply_markup)
-    return ConversationHandler.END
-
-
 custom_name_handler = ConversationHandler(
-    entry_points=[CommandHandler("custom", custom)],
+    entry_points=[CommandHandler("custom", custom),
+                  MessageHandler(filters.Regex("^Кастомизация$"), custom)],
     states={
         CHOOSING: [
             MessageHandler(filters.Regex("^Изменить имя$"), custom_name_choice),
@@ -237,7 +230,7 @@ custom_name_handler = ConversationHandler(
                 filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), received_name, )
         ],
     },
-    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), cancel_custom)],
+    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
 )
 
 avatar_handler = ConversationHandler(
