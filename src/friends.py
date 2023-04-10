@@ -40,7 +40,7 @@ async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 # This is an async Python function that retrieves a user's friends list and sends it as a message to a chat using a bot.
 async def get_friends_list(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     response = "Ваш список друзей:\n\n"
-    friend_list = get_friend_list_ids(update.message.from_user.id)
+    friend_list = db.get_friend_list_ids(update.message.from_user.id)
     if len(friend_list) == 0:
         response = "У Вас нет друзей :("
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
@@ -69,7 +69,7 @@ async def friend_request(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
         return FRIENDS_CHOOSING
     getting_user_id = int(getting_user_id)
-    create_friend_request(update.message.from_user.id, getting_user_id)
+    db.create_friend_request(update.message.from_user.id, getting_user_id)
     response = "Запрос успешно отправлен!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
     return FRIENDS_CHOOSING
@@ -93,7 +93,7 @@ async def delete_friend_request(update: Update, context: ContextTypes.DEFAULT_TY
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
         return FRIENDS_CHOOSING
     getting_user_id = int(getting_user_id)
-    delete_from_friends(update.message.from_user.id, getting_user_id)
+    db.delete_from_friends(update.message.from_user.id, getting_user_id)
     response = f"Пользователь с ID {getting_user_id} больше не является Вашим другом."
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
     return FRIENDS_CHOOSING
@@ -102,7 +102,7 @@ async def delete_friend_request(update: Update, context: ContextTypes.DEFAULT_TY
 # This function retrieves a list of incoming friend requests and sends a message to the user with the list of
 # requests and options to cancel them if any exist.
 async def get_incoming_friends_requests(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    incoming_requests = get_incoming_pending_friend_requests(update.message.from_user.id)
+    incoming_requests = db.get_incoming_pending_friend_requests(update.message.from_user.id)
     if not incoming_requests:
         response = "У вас нет входящих запросов на дружбу."
         markup = ReplyKeyboardMarkup(friends_keyboard, resize_keyboard=True)
@@ -119,7 +119,7 @@ async def get_incoming_friends_requests(update: Update, context: ContextTypes.DE
 # This function retrieves a list of outgoing friend requests and sends a message to the user with the list of
 # requests and options to cancel them if any exist.
 async def get_outgoing_friends_requests(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    outgoing_requests = get_outgoing_pending_friend_requests(update.message.from_user.id)
+    outgoing_requests = db.get_outgoing_pending_friend_requests(update.message.from_user.id)
     if len(outgoing_requests) == 0:
         response = "У вас нет исходящих запросов на дружбу."
         markup = ReplyKeyboardMarkup(friends_keyboard, resize_keyboard=True)
@@ -154,7 +154,7 @@ async def get_accepted_id(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         response = "ID должен быть числовым значением!"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
         return FRIENDS_CHOOSING
-    accept_friend_request(update.message.from_user.id, int(getting_user_id))
+    db.accept_friend_request(update.message.from_user.id, int(getting_user_id))
     response = f"Пользователь с ID {getting_user_id} теперь Ваш друг"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
     return FRIENDS_CHOOSING
@@ -180,7 +180,7 @@ async def get_denied_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         response = "ID должен быть числовым значением!"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
         return FRIENDS_CHOOSING
-    delete_from_friends(update.message.from_user.id, int(getting_user_id))
+    db.delete_from_friends(update.message.from_user.id, int(getting_user_id))
     response = f"Запрос от пользователя с ID {getting_user_id} отклонён."
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
     return FRIENDS_CHOOSING

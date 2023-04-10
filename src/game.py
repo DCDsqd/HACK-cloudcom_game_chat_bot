@@ -44,7 +44,7 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await context.bot.send_message(chat_id=update.effective_chat.id, text=classes_description, reply_markup=markup)
         return CLASS_CHOOSING
     else:
-        all_buildings = select_all_buildings()
+        all_buildings = db.select_all_buildings()
         where_keyboard = []
         for i in range(2, len(all_buildings) // 3 * 3, 3):
             where_keyboard.append([all_buildings[i - 2][1], all_buildings[i - 1][1], all_buildings[i][1]])
@@ -95,10 +95,10 @@ async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.message.from_user.id
-    if check_if_need_to_update_daily_tasks(user_id):
-        regenerate_daily_tasks(user_id)
+    if db.check_if_need_to_update_daily_tasks(user_id):
+        db.regenerate_daily_tasks(user_id)
 
-    tasks = get_cur_user_tasks(user_id)
+    tasks = db.get_cur_user_tasks(user_id)
     task_labels = {
         'small': "Мелкое поручение",
         'medium': "Среднее поручение",
@@ -110,7 +110,7 @@ async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
     for task_id, label in task_labels.items():
         if tasks[task_id] != -1:
-            task = get_task_by_id(tasks[task_id])
+            task = db.get_task_by_id(tasks[task_id])
             message += f"{label}:\n" \
                        f"Название: {task[1]}\n" \
                        f"Описание: {task[2]}\n" \
@@ -136,7 +136,7 @@ async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 async def multiplayer_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     multiplayer_tasks_keyboard = [["Дело особой важности", "Сбор ресурсов"], ["Назад"]]
-    tasks = get_tasks(1)
+    tasks = db.get_tasks(1)
     special_tasks = [task for task in tasks if task[6] == 'special']
     random_tasks = [task for task in tasks if task[6] == 'random']
     special_task = random.choice(special_tasks)

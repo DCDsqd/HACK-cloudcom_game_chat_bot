@@ -210,8 +210,8 @@ poll_handler = ConversationHandler(
 # using a pre-selected table of ranks. It assumes that the ranks table is ordered by the exp_to_earn column. If the
 # user's experience points are greater than the highest rank, the function returns the highest rank.
 def get_rank(user_id):
-    user_exp = get_user_exp(user_id)
-    ranks = select_ranks_table()
+    user_exp = db.get_user_exp(user_id)
+    ranks = db.select_ranks_table()
     # Relies on the fact that ranks variable is ordered by exp_to_earn column
     for i in range(1, len(ranks)):
         if ranks[i][1] > user_exp:
@@ -258,7 +258,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         username = None
 
-    if not check_if_user_exists(user_id):
+    if not db.check_if_user_exists(user_id):
         con = create_connection('../db/database.db')
         create_users = f"""
         INSERT INTO

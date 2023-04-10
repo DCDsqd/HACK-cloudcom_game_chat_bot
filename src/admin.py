@@ -237,7 +237,7 @@ async def event_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     is_ok, msg = parse_new_event_info_string(text)
     if is_ok:
         response = f"Создание нового события прошло успешно!\nКомментарий: {msg}"
-        save_new_event_info_string_to_db(text)
+        db.save_new_event_info_string_to_db(text)
         logging.info(f"[{update.message.from_user.id}] New event was added by admin")
         markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)

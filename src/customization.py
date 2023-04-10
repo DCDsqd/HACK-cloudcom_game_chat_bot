@@ -85,7 +85,7 @@ def merge_image(img1, img2, img3, user_id) -> None:
 # obtained from get_avatar_ids function for the given user_id. The resulting image is saved to the corresponding file
 # in the user's avatar folder.
 def regen_avatar(user_id) -> None:
-    ids = get_avatar_ids(user_id)
+    ids = db.get_avatar_ids(user_id)
     merge_image(ids[0], ids[1], ids[2], user_id)
 
 
@@ -108,7 +108,7 @@ def get_reply_keyboard(list_of_all) -> list:
 # images for each hair option. It then sends a message to the user with the available hair options and the generated
 # reply keyboard, and sends the media group of hair images.
 async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    all_hair = select_all('hair')
+    all_hair = db.select_all('hair')
     reply_keyboard = get_reply_keyboard(all_hair)
     hair_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/hair/{hair[1]}.png'), 'rb')) for hair in
                  all_hair]
@@ -124,7 +124,7 @@ async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 # The same with face
 async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    all_face = select_all('face')
+    all_face = db.select_all('face')
     reply_keyboard = get_reply_keyboard(all_face)
     face_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/face/{face[1]}.png'), 'rb')) for face in
                  all_face]
@@ -140,7 +140,7 @@ async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 # The same with body
 async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    all_shoulders = select_all('shoulders')
+    all_shoulders = db.select_all('shoulders')
     reply_keyboard = get_reply_keyboard(all_shoulders)
     shoulders_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/body/{shoulder[1]}.png'), 'rb')) for
                       shoulder in all_shoulders]
@@ -157,12 +157,12 @@ async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE)
 # This function handles the user's choice of hair for their custom avatar, updates the database and generates a new
 # avatar image. It then sends a message to the user with the new avatar image and returns to the "TYPING HAIR" state.
 async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    reply_keyboard = get_reply_keyboard(select_all('hair'))
+    reply_keyboard = get_reply_keyboard(db.select_all('hair'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
     context.user_data["hair_id"] = text
     user_id = update.message.from_user.id
-    inserter('hair_id', body_type_name_to_id('hair', text), user_id)
+    inserter('hair_id', db.body_type_name_to_id('hair', text), user_id)
     await update.message.reply_text(f"Волосы изменены на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed hair to {text}")
     regen_avatar(user_id)
@@ -174,12 +174,12 @@ async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
 # The same with face
 async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    reply_keyboard = get_reply_keyboard(select_all('face'))
+    reply_keyboard = get_reply_keyboard(db.select_all('face'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
     context.user_data["face_id"] = text
     user_id = update.message.from_user.id
-    inserter('face_id', body_type_name_to_id('face', text), user_id)
+    inserter('face_id', db.body_type_name_to_id('face', text), user_id)
     await update.message.reply_text(f"Лицо изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed face to {text}")
     regen_avatar(user_id)
@@ -191,12 +191,12 @@ async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
 # The same with body
 async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    reply_keyboard = get_reply_keyboard(select_all('shoulders'))
+    reply_keyboard = get_reply_keyboard(db.select_all('shoulders'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
     context.user_data["shoulders_id"] = text
     user_id = update.message.from_user.id
-    inserter('shoulders_id', body_type_name_to_id('shoulders', text), user_id)
+    inserter('shoulders_id', db.body_type_name_to_id('shoulders', text), user_id)
     await update.message.reply_text(f"Тело изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed body to {text}")
     regen_avatar(user_id)
