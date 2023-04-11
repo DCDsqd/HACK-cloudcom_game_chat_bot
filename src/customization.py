@@ -48,7 +48,7 @@ async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     text = update.message.text
     context.user_data["name"] = text
     user_id = update.message.from_user.id
-    inserter('personal_username', text, user_id)
+    db.update_users('personal_username', text, user_id)
     await update.message.reply_text(f"Имя изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed personal name on {text}")
     return CHOOSING
@@ -161,7 +161,7 @@ async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     text = update.message.text
     context.user_data["hair_id"] = text
     user_id = update.message.from_user.id
-    inserter('hair_id', db.body_type_name_to_id('hair', text), user_id)
+    db.update_users('hair_id', db.body_type_name_to_id('hair', text), user_id)
     await update.message.reply_text(f"Волосы изменены на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed hair to {text}")
     regen_avatar(user_id)
@@ -178,7 +178,7 @@ async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     text = update.message.text
     context.user_data["face_id"] = text
     user_id = update.message.from_user.id
-    inserter('face_id', db.body_type_name_to_id('face', text), user_id)
+    db.update_users('face_id', db.body_type_name_to_id('face', text), user_id)
     await update.message.reply_text(f"Лицо изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed face to {text}")
     regen_avatar(user_id)
@@ -195,7 +195,7 @@ async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYP
     text = update.message.text
     context.user_data["shoulders_id"] = text
     user_id = update.message.from_user.id
-    inserter('shoulders_id', db.body_type_name_to_id('shoulders', text), user_id)
+    db.update_users('shoulders_id', db.body_type_name_to_id('shoulders', text), user_id)
     await update.message.reply_text(f"Тело изменено на {text}.", reply_markup=markup)
     logging.info(f"User with ID {user_id} changed body to {text}")
     regen_avatar(user_id)

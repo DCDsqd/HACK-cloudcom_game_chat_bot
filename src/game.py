@@ -65,7 +65,7 @@ async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     text = update.message.text
     user_id = update.message.from_user.id
     context.user_data["choice"] = text
-    inserter('game_class', text, user_id)
+    db.update_users('game_class', text, user_id)
     message = f'Вы успешно получили лицензию на роль "{text}".\n\n' \
               "На данный момент Вам недоступны все преимущества служителя империи, " \
               "однако не расстраивайтесь, Вам будут доступны новые возможности по мере получения следующих рангов. " \
@@ -225,7 +225,7 @@ async def subclass_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     text = update.message.text
     user_id = update.message.from_user.id
     context.user_data["choice"] = text
-    inserter('game_subclass', text, user_id)
+    db.update_users('game_subclass', text, user_id)
     message = f'Вы успешно изменили подкласс на "{text}!"'
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 

@@ -44,21 +44,6 @@ def execute_read_query(connection: sqlite3.Connection, query: str) -> list:
         print(f"The error '{e}' occurred")
 
 
-# This function updates a specific column with a value for a given user in the SQLite database. It takes three
-# parameters: col_name is the name of the column to update, text is the new value to set, and user_id is the ID of
-# the user whose record to update. It uses the create_connection function to establish a connection to the database,
-# executes an update query using execute_query, and closes the connection.
-def inserter(col_name: str, text, user_id: int) -> None:
-    con = create_connection('../db/database.db')
-    updater = f"""
-            UPDATE users
-            SET '{col_name}' = '{text}'
-            WHERE id = '{user_id}';
-            """
-    execute_query(con, updater)
-    con.close()
-
-
 class Database:
 
     def __init__(self):
@@ -68,6 +53,18 @@ class Database:
     def __del__(self):
         self.gamedata_conn.close()
         self.database_conn.close()
+
+    # This function updates a specific column with a value for a given user in the SQLite database. It takes three
+    # parameters: col_name is the name of the column to update, text is the new value to set, and user_id is the ID of
+    # the user whose record to update. It uses the create_connection function to establish a connection to the database,
+    # executes an update query using execute_query, and closes the connection.
+    def update_users(self, col_name: str, text, user_id: int) -> None:
+        updater = f"""
+                UPDATE users
+                SET '{col_name}' = '{text}'
+                WHERE id = '{user_id}';
+                """
+        execute_query(self.database_conn, updater)
 
     def get_tasks(self, is_multiplayer: int) -> list:
         query = f"""
@@ -417,7 +414,7 @@ class Database:
     def add_exp(self, user_id, exp) -> None:
         query = f"SELECT exp FROM users WHERE id={user_id}"
         db_data = execute_read_query(self.database_conn, query)
-        inserter('exp', int(db_data[0][0]) + exp, user_id)
+        self.update_users('exp', int(db_data[0][0]) + exp, user_id)
 
     def create_user(self, user_id, username) -> None:
         create_users = f"""

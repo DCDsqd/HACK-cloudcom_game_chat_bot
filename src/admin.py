@@ -259,7 +259,7 @@ async def received_op(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         return ADMIN_CHOOSING
     if new_admin_id in all_ids:
         context.user_data["admin"] = new_admin_id
-        inserter('admin', 1, new_admin_id)
+        db.update_users('admin', 1, new_admin_id)
         await update.message.reply_text(f"Пользователь с ID: {new_admin_id} теперь администратор.", reply_markup=markup)
         logging.info(f"[{update.message.from_user.id}] New admin with ID {new_admin_id} was added")
     else:
@@ -290,7 +290,7 @@ async def received_deop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         return ADMIN_CHOOSING
     if del_admin_id in all_ids:
         context.user_data["admin"] = del_admin_id
-        inserter('admin', 0, del_admin_id)
+        db.update_users('admin', 0, del_admin_id)
         await update.message.reply_text(f"Пользователь с ID: {del_admin_id} больше не администратор.",
                                         reply_markup=markup)
         logging.info(f"[{update.message.from_user.id}] User with ID {del_admin_id} now is not admin")
