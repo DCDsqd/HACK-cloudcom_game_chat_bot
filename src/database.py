@@ -87,7 +87,7 @@ class Database:
     # This function returns all the data from the given part of the gamedata database (hair, face, or shoulders). It
     # creates a connection to the database, executes a SELECT query, fetches all the data, and then closes the
     # connection. The result is returned.
-    def select_all(self, part: str) -> list:  # TODO: Rename to something more informative!!!
+    def select_all_body_parts_by_type(self, part: str) -> list:  # TODO: Rename to something more informative!!!
         query = f"""
                 SELECT * FROM {part};
                 """
@@ -465,6 +465,8 @@ class Database:
                 """
         execute_query(self.database_conn, query)
 
+    # This functions checks for existing duels and returns whether there could be
+    # initialized new duel with given params
     def check_if_could_send_duel(self, sender_id, receiver_id) -> bool:
         query = f"""
                     SELECT status FROM duels

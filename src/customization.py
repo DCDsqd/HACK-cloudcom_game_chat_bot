@@ -107,7 +107,7 @@ def get_reply_keyboard(list_of_all) -> list:
 # images for each hair option. It then sends a message to the user with the available hair options and the generated
 # reply keyboard, and sends the media group of hair images.
 async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    all_hair = db.select_all('hair')
+    all_hair = db.select_all_body_parts_by_type('hair')
     reply_keyboard = get_reply_keyboard(all_hair)
     hair_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/hair/{hair[1]}.png'), 'rb')) for hair in
                  all_hair]
@@ -123,7 +123,7 @@ async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 # The same with face
 async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    all_face = db.select_all('face')
+    all_face = db.select_all_body_parts_by_type('face')
     reply_keyboard = get_reply_keyboard(all_face)
     face_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/face/{face[1]}.png'), 'rb')) for face in
                  all_face]
@@ -139,7 +139,7 @@ async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 # The same with body
 async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    all_shoulders = db.select_all('shoulders')
+    all_shoulders = db.select_all_body_parts_by_type('shoulders')
     reply_keyboard = get_reply_keyboard(all_shoulders)
     shoulders_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/body/{shoulder[1]}.png'), 'rb')) for
                       shoulder in all_shoulders]
@@ -156,7 +156,7 @@ async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE)
 # This function handles the user's choice of hair for their custom avatar, updates the database and generates a new
 # avatar image. It then sends a message to the user with the new avatar image and returns to the "TYPING HAIR" state.
 async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    reply_keyboard = get_reply_keyboard(db.select_all('hair'))
+    reply_keyboard = get_reply_keyboard(db.select_all_body_parts_by_type('hair'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
     context.user_data["hair_id"] = text
@@ -173,7 +173,7 @@ async def received_hair_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
 # The same with face
 async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    reply_keyboard = get_reply_keyboard(db.select_all('face'))
+    reply_keyboard = get_reply_keyboard(db.select_all_body_parts_by_type('face'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
     context.user_data["face_id"] = text
@@ -190,7 +190,7 @@ async def received_face_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 
 # The same with body
 async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    reply_keyboard = get_reply_keyboard(db.select_all('shoulders'))
+    reply_keyboard = get_reply_keyboard(db.select_all_body_parts_by_type('shoulders'))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
     context.user_data["shoulders_id"] = text
