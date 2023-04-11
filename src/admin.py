@@ -1,5 +1,3 @@
-import telegram.ext
-
 from database import *
 from telegram import ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
 from telegram.ext import (
@@ -9,6 +7,8 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+
+from time_control import ensure_time_format
 
 ADMIN_CHOOSING, OP, DEL_OP, EVENT_INPUT, WHAT_DEL, EVENT_BY_DATE, EVENT_BY_NAME, GET_EVENT_ID = range(8)
 admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие", "Удалить событие"],

@@ -1,7 +1,7 @@
 import sqlite3
 from sqlite3 import Error
 import logging
-from time_control import cur_time, cur_date, ensure_time_format
+from time_control import cur_time, cur_date
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',

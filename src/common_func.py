@@ -1,7 +1,7 @@
 from database import *
 from customization import regen_avatar
 import os
-from telegram import ReplyKeyboardMarkup, Update, ReplyKeyboardRemove, Chat
+from telegram import Update, ReplyKeyboardRemove, Chat
 from telegram.ext import (
     ContextTypes,
     ConversationHandler,

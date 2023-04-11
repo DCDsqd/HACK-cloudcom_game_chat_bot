@@ -1,8 +1,7 @@
 from database import *
 import os
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InputMediaPhoto
+from telegram import ReplyKeyboardMarkup, Update, InputMediaPhoto
 from telegram.ext import (
-    ApplicationBuilder,
     CommandHandler,
     ContextTypes,
     ConversationHandler,

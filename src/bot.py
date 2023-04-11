@@ -1,11 +1,6 @@
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, Poll, KeyboardButtonPollType
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
-    ContextTypes,
-    ConversationHandler,
-    MessageHandler,
-    filters,
     PollAnswerHandler,
 )
 

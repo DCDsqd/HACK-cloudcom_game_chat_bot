@@ -1,5 +1,5 @@
 import os
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, Poll, KeyboardButtonPollType
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     CommandHandler,
     ContextTypes,
