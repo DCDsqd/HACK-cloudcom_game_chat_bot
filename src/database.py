@@ -494,6 +494,59 @@ class Database:
 
         return True
 
+    def load_armor_enchantments_perks(self, ench_id) -> list:
+        query = f"""
+                    SELECT  name, 
+                            mirror_dmg, 
+                            physical_damage_decr, 
+                            magic_damage_decr,
+                            element_damage_decr,
+                            no_damage_chance,
+                            health_buff 
+                    FROM enchantments_armor
+                    WHERE id = '{ench_id}';
+                """
+        ans_list = []
+        res = execute_read_query(self.gamedata_conn, query)
+        for i in range(len(res[0])):
+            ans_list.append(res[0][i])
+        return ans_list
+
+    def load_weapon_enchantments_perks(self, ench_id) -> list:
+        query = f"""
+                    SELECT  name, 
+                            physical_dmg_incr, 
+                            stun_chance,
+                            crit_chance,
+                            bleeding_chance,
+                            armor_ignore_chance,
+                            vampirism,
+                            element_dmg_incr 
+                    FROM enchantments_weapon 
+                    WHERE id = '{ench_id}';
+                """
+        return (execute_read_query(self.gamedata_conn, query))[0]
+
+    def get_all_armor_enchantments_ids(self) -> list:
+        query = f"""
+                    SELECT id FROM enchantments_armor;
+                """
+        ids_list = []
+        res = execute_read_query(self.gamedata_conn, query)
+        for i in range(len(res)):
+            ids_list.append(res[i][0])
+        return ids_list
+
+    def get_all_weapon_enchantments_ids(self) -> list:
+        query = f"""
+                    SELECT id FROM enchantments_weapon;
+                """
+        ids_list = []
+        res = execute_read_query(self.gamedata_conn, query)
+        for i in range(len(res)):
+            ids_list.append(res[i][0])
+        return ids_list
+
 
 # Global Database variable
 db = Database()
