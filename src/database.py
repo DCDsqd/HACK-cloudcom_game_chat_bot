@@ -141,7 +141,6 @@ class Database:
                 SELECT exp FROM users WHERE id='{user_id}';
                 """
         res = execute_read_query(self.database_conn, query)
-        print(type(res[0][0]))
         return res[0][0]
 
     # This function updates the list of participants in a global event by adding a new participant's ID to the existing

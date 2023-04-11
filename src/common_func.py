@@ -180,7 +180,7 @@ def get_rank(user_id):
 # the required amount, and False otherwise.
 def is_available(user_id, required_exp) -> bool:
     user_exp = db.get_user_exp(user_id)
-    return int(user_exp[0][0]) >= required_exp
+    return int(user_exp) >= required_exp
 
 
 # This function that sends a welcome message to the user and then checks if the user exists in the database. If the
