@@ -103,11 +103,11 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
             answer_string += questions[question_id]
     answered_poll["answers"] += 1
     for_and_against = db.get_poll_votes_both_col(poll_id)
-    if for_and_against[0][0] == TOTAL_VOTER_COUNT or for_and_against[0][1] == TOTAL_VOTER_COUNT:
+    if for_and_against[0] == TOTAL_VOTER_COUNT or for_and_against[1] == TOTAL_VOTER_COUNT:
         await context.bot.stop_poll(answered_poll["chat_id"], answered_poll["message_id"])
-        db.finish_poll()
+        db.finish_poll(poll_id)
         results = db.get_poll_votes_both_col(poll_id)
-        if results[0][0] < results[0][1]:
+        if results[0] < results[1]:
             logging.info(f"[{poll_id}] Голосование окончено. Мероприятие НЕ принято!")
         else:
             logging.info(f"[{poll_id}] Голосование окончено. Мероприятие принято и добавлено в БД!")

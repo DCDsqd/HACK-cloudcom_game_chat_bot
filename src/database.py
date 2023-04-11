@@ -28,7 +28,6 @@ def execute_query(connection: sqlite3.Connection, query: str) -> None:
     try:
         cursor.execute(query)
         connection.commit()
-        logging.info("Query executed successfully")
     except Error as e:
         logging.warning(f"The error '{e}' occurred")
 
@@ -387,7 +386,7 @@ class Database:
         return execute_read_query(self.database_conn, query)
 
     def get_poll_votes_both_col(self, poll_id) -> list:
-        return [self.get_poll_votes(poll_id, 'for'), self.get_poll_votes(poll_id, 'against')]
+        return [self.get_poll_votes(poll_id, 'for')[0][0], self.get_poll_votes(poll_id, 'against')[0][0]]
 
     def increment_poll_votes(self, poll_id, col: str) -> None:
         cur_votes = int(self.get_poll_votes(poll_id, col)[0][0])
@@ -408,7 +407,7 @@ class Database:
 
     def create_global_event_from_poll(self, poll_id) -> None:
         query = "INSERT INTO global_events (name, descr, start_time, duration, exp_reward) SELECT name, descr, " \
-                  f"start_time, duration, exp_reward FROM polls WHERE poll_id = {poll_id}"
+                f"start_time, duration, exp_reward FROM polls WHERE poll_id = {poll_id}"
         execute_query(self.database_conn, query)
 
     # This is a function that updates the experience points of a user in the database. It takes in two arguments,

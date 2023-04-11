@@ -8,6 +8,8 @@ from telegram.ext import (
     filters
 )
 
+from menu_chain import main_menu
+
 FRIENDS_CHOOSING, ADD_FRIEND_REQUEST, DELETE_FRIEND_REQUEST, ACCEPT_AND_DENY, ACCEPT_FRIEND_REQUEST, DENY_FRIEND_REQUEST, \
     DENY = range(7)
 back_keyboard = [['Назад']]
@@ -15,17 +17,6 @@ friends_keyboard = [['Посмотреть список друзей'], ['Доб
                     ['Входящие запросы', 'Исходящие запросы'], ['Отмена']]
 accept_deny_keyboard = [['Принять запрос', 'Отклонить запрос'], ['Назад']]
 cancel_request_keyboard = [['Отменить запрос'], ['Назад']]
-
-
-# This is a temporary solution. It will have to be deleted!
-async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    keyboard = [['/custom', '/game'], ['/fight', '/help']]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    await context.bot.send_message(chat_id=update.message.from_user.id,
-                                   text="Выберите команду:",
-                                   reply_markup=reply_markup)
-    await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
-    return ConversationHandler.END
 
 
 # This function returns an integer value of FRIENDS_CHOOSING. Inside the function, it sends a message to the user
@@ -194,7 +185,8 @@ async def get_denied_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 # the current state. The fallbacks parameter specifies the fallback MessageHandler for when the user input does not
 # match any of the defined states.
 friends_handler = ConversationHandler(
-    entry_points=[CommandHandler("friends", friends)],
+    entry_points=[CommandHandler("friends", friends),
+                  MessageHandler(filters.Regex("^Друзья$"), friends)],
     states={
         FRIENDS_CHOOSING: [
             MessageHandler(filters.Regex("^Посмотреть список друзей$"), get_friends_list),
