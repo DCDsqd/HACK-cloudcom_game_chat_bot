@@ -310,7 +310,16 @@ async def get_user_duel_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         markup = ReplyKeyboardMarkup(arena_keyboard, resize_keyboard=True)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
         return ARENA_CHOOSING
-    # ЗДЕСЬ ПРИНИМАЕМ ID
+    if not db.check_if_could_send_duel(update.message.from_user.id, getting_user_id):
+        response = "Невозможно отрпавить запрос данному игроку. Запрос уже отправлен или бой уже идёт."
+        markup = ReplyKeyboardMarkup(arena_keyboard, resize_keyboard=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
+        return ARENA_CHOOSING
+    db.add_pending_duel(update.message.from_user.id, getting_user_id)
+    message = "Запрос на дуэль успешно отправлен"
+    markup = ReplyKeyboardMarkup(arena_keyboard, resize_keyboard=True)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    return ARENA_CHOOSING
 
 
 async def create_open_duel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:

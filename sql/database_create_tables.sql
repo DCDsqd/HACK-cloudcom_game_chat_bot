@@ -81,3 +81,10 @@ CREATE TABLE IF NOT EXISTS "local_events_participants" (
 	"id"	INTEGER NOT NULL,
 	"user_id"	INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS "duels" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"sender_id"	INTEGER NOT NULL,
+	"receiver_id"	INTEGER,
+	"status"	TEXT
+);

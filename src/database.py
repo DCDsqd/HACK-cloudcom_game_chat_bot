@@ -458,6 +458,40 @@ class Database:
             all_ids.append(res[i][0])
         return all_ids
 
+    def add_pending_duel(self, sender_id, receiver_id) -> None:
+        query = f"""
+                    INSERT INTO duels (sender_id, receiver_id, status)
+                    VALUES('{sender_id}', '{receiver_id}', 'pending');
+                """
+        execute_query(self.database_conn, query)
+
+    def check_if_could_send_duel(self, sender_id, receiver_id) -> bool:
+        query = f"""
+                    SELECT status FROM duels
+                    WHERE sender_id='{sender_id}' AND receiver_id='{receiver_id}';
+                """
+        res = execute_read_query(self.database_conn, query)
+        if not res:
+            return True
+
+        for i in res:
+            if i[0] != 'done':
+                return False
+
+        query = f"""
+                    SELECT status FROM duels
+                    WHERE sender_id='{receiver_id}' AND receiver_id='{sender_id}';
+                """
+        res = execute_read_query(self.database_conn, query)
+        if not res:
+            return True
+
+        for i in res:
+            if i[0] != 'done':
+                return False
+
+        return True
+
 
 # Global Database variable
 db = Database()
