@@ -26,10 +26,7 @@ async def delete_event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
 async def nearest_events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
-    con = create_connection('../db/database.db')
-    query = "SELECT * FROM global_events ORDER BY start_time DESC LIMIT 20"
-    res = execute_read_query(con, query)
-    con.close()
+    res = db.get_20_closest_global_events()
     events = ""
     for row in res:
         event = f"<b>ID: {row[0]}</b>\n"
@@ -63,9 +60,7 @@ async def received_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
     if len(event_date) == 10 and event_date[4] == '-' and event_date[7] == '-' and \
             event_date[0:4].isdigit() and event_date[5:7].isdigit() and event_date[8:10].isdigit():
-        con = create_connection('../db/database.db')
-        query = "SELECT * FROM global_events"
-        events_data = execute_read_query(con, query)
+        events_data = db.get_all_global_events()
         filtered_events = [event for event in events_data if event_date in event[3]]
         if len(filtered_events) == 0:
             markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
@@ -93,9 +88,7 @@ async def received_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     event_name = update.message.text
     markup = ReplyKeyboardMarkup(cancel_keyboard, one_time_keyboard=True)
-    con = create_connection('../db/database.db')
-    query = "SELECT * FROM global_events"
-    events_data = execute_read_query(con, query)
+    events_data = db.get_all_global_events()
     filtered_events = [event for event in events_data if event_name in event[1]]
     if len(filtered_events) == 0:
         markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
@@ -119,10 +112,7 @@ async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 async def delete_by_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     event_id = update.message.text
     if event_id.isdigit():
-        con = create_connection('../db/database.db')
-        query = f"DELETE FROM global_events WHERE id = {event_id}"
-        execute_query(con, query)
-        con.close()
+        db.delete_global_event(event_id)
         markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text=f"Событие с ID {event_id} успешно удалено!", reply_markup=markup)
@@ -139,11 +129,8 @@ async def delete_by_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 # This function checks if a user has admin privileges and sends an appropriate message to the chat depending on the
 # result. If the user is an admin, an admin menu is also sent with options for the user to choose from.
 async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    con = create_connection('../db/database.db')
     user_id = update.message.from_user.id
-    request = f"SELECT admin FROM users WHERE id={user_id}"
-    is_admin = int(execute_read_query(con, request)[0][0])
-    con.close()
+    is_admin = db.check_if_user_is_admin(user_id)
     if is_admin:
         markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
         message = "Доступ получен. Меню администратора:"
@@ -262,14 +249,7 @@ async def op(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 # the user does not exist, the function sends a message indicating that the user does not exist. The function then
 # returns the user to the administrator choosing menu.
 async def received_op(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    con = create_connection('../db/database.db')
-    query = f"""
-                SELECT id FROM users
-                """
-    res = execute_read_query(con, query)
-    all_ids = []
-    for i in range(len(res)):
-        all_ids.append(res[i][0])
+    all_ids = db.get_all_user_ids()
     markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
     try:
         new_admin_id = int(update.message.text)
@@ -300,15 +280,7 @@ async def deop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 # the user does not exist, the function sends a message indicating that the user does not exist. The function then
 # returns the user to the administrator choosing menu.
 async def received_deop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    con = create_connection('../db/database.db')
-    query = f"""
-                SELECT id FROM users
-                """
-    res = execute_read_query(con, query)
-    all_ids = []
-    for i in range(len(res)):
-        all_ids.append(res[i][0])
-
+    all_ids = db.get_all_user_ids()
     markup = ReplyKeyboardMarkup(admin_keyboard, one_time_keyboard=True)
     try:
         del_admin_id = int(update.message.text)

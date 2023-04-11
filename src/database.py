@@ -441,6 +441,28 @@ class Database:
             """
         return execute_read_query(self.database_conn, query)
 
+    def get_all_global_events(self) -> list:
+        query = "SELECT * FROM global_events"
+        return execute_read_query(self.database_conn, query)
+
+    def delete_global_event(self, event_id) -> None:
+        query = f"DELETE FROM global_events WHERE id = {event_id}"
+        execute_query(self.database_conn, query)
+
+    def check_if_user_is_admin(self, user_id) -> int:
+        query = f"SELECT admin FROM users WHERE id={user_id}"
+        return execute_read_query(self.database_conn, query)[0][0]
+
+    def get_all_user_ids(self) -> list:
+        query = f"""
+                    SELECT id FROM users
+                """
+        res = execute_read_query(self.database_conn, query)
+        all_ids = []
+        for i in range(len(res)):
+            all_ids.append(res[i][0])
+        return all_ids
+
 
 # Global Database variable
 db = Database()
