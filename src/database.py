@@ -360,6 +360,87 @@ class Database:
         res = execute_read_query(self.gamedata_conn, query)
         return res[0]
 
+    def get_top_10_players(self) -> list:
+        query = """
+                    SELECT * FROM users
+                    ORDER BY exp
+                    DESC LIMIT 10
+                """
+        return execute_read_query(self.database_conn, query)
+
+    def create_poll(self, poll_id, name, descr, start_time, duration, exp_reward) -> None:
+        query = f"""
+                    INSERT INTO
+                    polls (poll_id, name, descr, start_time, duration, exp_reward)
+                    VALUES
+                    ('{poll_id}', '{name}', '{descr}', '{start_time}', '{duration}', '{exp_reward}');
+                """
+        execute_query(self.database_conn, query)
+
+    def create_poll_from_text(self, poll_id, text) -> None:
+        fields = text.split('\n')
+        name, descr, start_time, duration, exp_reward = fields[:5]
+        self.create_poll(poll_id, name, descr, start_time, duration, exp_reward)
+
+    def get_poll_votes(self, poll_id, col: str) -> list:
+        query = f"SELECT {col} FROM polls WHERE poll_id={poll_id}"
+        return execute_read_query(self.database_conn, query)
+
+    def get_poll_votes_both_col(self, poll_id) -> list:
+        return [self.get_poll_votes(poll_id, 'for'), self.get_poll_votes(poll_id, 'against')]
+
+    def increment_poll_votes(self, poll_id, col: str) -> None:
+        cur_votes = int(self.get_poll_votes(poll_id, col)[0][0])
+        query = f"""
+                    UPDATE polls
+                    SET '{col}' = '{cur_votes + 1}'
+                    WHERE poll_id = '{poll_id}';
+                """
+        execute_query(self.database_conn, query)
+
+    def finish_poll(self, poll_id) -> None:
+        query = f"""
+                        UPDATE polls
+                        SET 'is_ended' = '1'
+                        WHERE poll_id = '{poll_id}';
+                    """
+        execute_query(self.database_conn, query)
+
+    def create_global_event_from_poll(self, poll_id) -> None:
+        query = "INSERT INTO global_events (name, descr, start_time, duration, exp_reward) SELECT name, descr, " \
+                  f"start_time, duration, exp_reward FROM polls WHERE poll_id = {poll_id}"
+        execute_query(self.database_conn, query)
+
+    # This is a function that updates the experience points of a user in the database. It takes in two arguments,
+    # the user_id of the user whose experience points need to be updated and the amount of experience points to add. It
+    # fetches the current experience points of the user from the database, adds the new experience points to it,
+    # and then updates the database with the new experience points.
+    def add_exp(self, user_id, exp) -> None:
+        query = f"SELECT exp FROM users WHERE id={user_id}"
+        db_data = execute_read_query(self.database_conn, query)
+        inserter('exp', int(db_data[0][0]) + exp, user_id)
+
+    def create_user(self, user_id, username) -> None:
+        create_users = f"""
+                INSERT INTO
+                users (id, username, personal_username)
+                VALUES
+                ('{user_id}', '{username}', '{username}');
+                """
+        execute_query(self.database_conn, create_users)
+
+    def get_user_info(self, user_id) -> list:
+        query = f"SELECT personal_username, game_class, exp, game_subclass FROM users WHERE id={user_id}"
+        return execute_read_query(self.database_conn, query)
+
+    def get_20_closest_global_events(self) -> list:
+        query = """
+                SELECT * FROM global_events
+                ORDER BY start_time
+                DESC LIMIT 20
+            """
+        return execute_read_query(self.database_conn, query)
+
 
 # Global Database variable
 db = Database()

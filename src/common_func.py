@@ -37,19 +37,11 @@ def merge_photos(background: str, user_id: int) -> BytesIO:
 # This function retrieves the top 10 players based on their experience and sends a message to the chat with their
 # username, level and experience. The message is formatted in HTML.
 async def rating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    con = create_connection('../db/database.db')
-    query = """
-        SELECT * FROM users
-        ORDER BY exp
-        DESC LIMIT 10
-    """
-    res = execute_read_query(con, query)
-    con.close()
+    res = db.get_top_10_players()
     events = "Топ-10 игроков по опыту:\n"
     for row in res:
         event = f"<b>{row[2]} ({row[1]}) - {row[5]}</b>\n"
         events += event
-    con.close()
     await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
 
 
@@ -72,22 +64,7 @@ async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             allows_multiple_answers=False,
         )
         poll_id = message.poll.id
-        with create_connection('../db/database.db') as con:
-            create_poll_query = f"""
-                    INSERT INTO
-                    polls (poll_id)
-                    VALUES
-                    ('{poll_id}');
-                    """
-            execute_query(con, create_poll_query)
-            fields = text.split('\n')
-            name, descr, start_time, duration, exp_reward = fields[:5]
-            update_poll_query = f"""
-                    UPDATE polls SET name='{name}', descr='{descr}', start_time='{start_time}', duration='{duration}', 
-                    exp_reward='{exp_reward}'
-                    WHERE poll_id={poll_id};
-                    """
-            execute_query(con, update_poll_query)
+        db.create_poll_from_text(poll_id, text)
         payload = {
             message.poll.id: {
                 "questions": questions,
@@ -111,15 +88,7 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
     poll_id = answer['poll_id']
     option_id = answer['option_ids'][0]
     col = 'for' if option_id == 0 else 'against'
-    with create_connection('../db/database.db') as con:
-        request = f"SELECT {col} FROM polls WHERE poll_id={poll_id}"
-        db_data = execute_read_query(con, request)
-        updater = f"""
-                    UPDATE polls
-                    SET '{col}' = '{int(db_data[0][0]) + 1}'
-                    WHERE poll_id = '{poll_id}';
-                    """
-        execute_query(con, updater)
+    db.increment_poll_votes(poll_id, col)
     answered_poll = context.bot_data[answer.poll_id]
     try:
         questions = answered_poll["questions"]
@@ -133,28 +102,15 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
         else:
             answer_string += questions[question_id]
     answered_poll["answers"] += 1
-    with create_connection('../db/database.db') as con:
-        request = f"SELECT for, against FROM polls WHERE poll_id={poll_id}"
-        for_and_against = execute_read_query(con, request)
+    for_and_against = db.get_poll_votes_both_col(poll_id)
     if for_and_against[0][0] == TOTAL_VOTER_COUNT or for_and_against[0][1] == TOTAL_VOTER_COUNT:
         await context.bot.stop_poll(answered_poll["chat_id"], answered_poll["message_id"])
-        con = create_connection('../db/database.db')
-        updater = f"""
-                        UPDATE polls
-                        SET 'is_ended' = '1'
-                        WHERE poll_id = '{poll_id}';
-                        """
-        execute_query(con, updater)
-        request = f"SELECT for, against FROM polls WHERE poll_id={poll_id}"
-        db_data = execute_read_query(con, request)
-        if db_data[0][0] < db_data[0][1]:
+        db.finish_poll()
+        results = db.get_poll_votes_both_col(poll_id)
+        if results[0][0] < results[0][1]:
             logging.info(f"[{poll_id}] Голосование окончено. Мероприятие НЕ принято!")
         else:
-            request = "INSERT INTO global_events (name, descr, start_time, duration, exp_reward) SELECT name, descr, " \
-                      f"start_time, duration, exp_reward FROM polls WHERE poll_id = {poll_id}"
-            execute_query(con, request)
             logging.info(f"[{poll_id}] Голосование окончено. Мероприятие принято и добавлено в БД!")
-        con.close()
 
 
 # This is function, that checks if the chat is a group or supergroup and sends a message with instructions on how to
@@ -223,23 +179,8 @@ def get_rank(user_id):
 # whether the user has at least the required amount of experience points. It returns True if the user has at least
 # the required amount, and False otherwise.
 def is_available(user_id, required_exp) -> bool:
-    con = create_connection('../db/database.db')
-    request = f"SELECT exp FROM users WHERE id={user_id}"
-    user_exp = execute_read_query(con, request)
-    con.close()
+    user_exp = db.get_user_exp(user_id)
     return int(user_exp[0][0]) >= required_exp
-
-
-# This is a function that updates the experience points of a user in the database. It takes in two arguments,
-# the user_id of the user whose experience points need to be updated and the amount of experience points to add. It
-# fetches the current experience points of the user from the database, adds the new experience points to it,
-# and then updates the database with the new experience points.
-def add_exp(user_id, exp) -> None:
-    con = create_connection('../db/database.db')
-    request = f"SELECT exp FROM users WHERE id={user_id}"
-    db_data = execute_read_query(con, request)
-    con.close()
-    inserter('exp', int(db_data[0][0]) + exp, user_id)
 
 
 # This function that sends a welcome message to the user and then checks if the user exists in the database. If the
@@ -259,17 +200,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         username = None
 
     if not db.check_if_user_exists(user_id):
-        con = create_connection('../db/database.db')
-        create_users = f"""
-        INSERT INTO
-        users (id, username, personal_username)
-        VALUES
-        ('{user_id}', '{username}', '{username}');
-        """
-        execute_query(con, create_users)
+        db.create_user(user_id, username)
         regen_avatar(user_id)
-
-        con.close()
 
 
 # This function that retrieves user data from a database, generates a message containing the user's profile
@@ -280,8 +212,7 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     user_id = message.from_user.id
     username = message.from_user.username
-    request = f"SELECT personal_username, game_class, exp, game_subclass FROM users WHERE id={user_id}"
-    db_data = execute_read_query(con, request)
+    db_data = db.get_user_info()
     message = "Ваш профиль:\n\n" \
               f"Игровое имя: {db_data[0][0]}\n" \
               f"ID: {user_id}\n" \
@@ -302,14 +233,7 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 # query to select all the events in the global_events table and order them by their start time. Then it loops through
 # the results and formats each event's data as an HTML string.
 async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    con = create_connection('../db/database.db')
-    query = """
-        SELECT * FROM global_events
-        ORDER BY start_time
-        DESC LIMIT 20
-    """
-    res = execute_read_query(con, query)
-    con.close()
+    res = db.get_20_closest_global_events()
     events = ""
     for row in res:
         event = f"<b>{row[1]}</b>\n"
@@ -319,7 +243,6 @@ async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         event += f"<u>Участники:</u> {row[5]}\n"
         event += f"<u>Награда (опыт):</u> {row[6]}\n"
         events += event + "\n"
-    con.close()
     await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
 
 
