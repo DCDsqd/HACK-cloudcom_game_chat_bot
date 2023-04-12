@@ -10,12 +10,57 @@ from telegram.ext import (
     filters
 )
 from io import BytesIO
+from typing import Optional, Tuple
 
 from admin import parse_new_event_info_string
 from PIL import Image
 
+from telegram import ChatMember, ChatMemberUpdated
+
 EVENT_INPUT = 0
 TOTAL_VOTER_COUNT = 10
+
+
+def extract_status_change(chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
+    status_change = chat_member_update.difference().get("status")
+    old_is_member, new_is_member = chat_member_update.difference().get("is_member", (None, None))
+
+    if status_change is None:
+        return None
+
+    old_status, new_status = status_change
+    was_member = old_status in [
+        ChatMember.MEMBER,
+        ChatMember.OWNER,
+        ChatMember.ADMINISTRATOR,
+    ] or (old_status == ChatMember.RESTRICTED and old_is_member is True)
+    is_member = new_status in [
+        ChatMember.MEMBER,
+        ChatMember.OWNER,
+        ChatMember.ADMINISTRATOR,
+    ] or (new_status == ChatMember.RESTRICTED and new_is_member is True)
+
+    return was_member, is_member
+
+
+async def track_chats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    result = extract_status_change(update.my_chat_member)
+    if result is None:
+        return
+    was_member, is_member = result
+
+    # Let's check who is responsible for the change
+    cause_name = update.effective_user.full_name
+
+    # Handle chat types differently:
+    chat = update.effective_chat
+    if chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
+        if not was_member and is_member:
+            logging.info("%s added the bot to the group %s", cause_name, chat.title)
+            db.add_chat_id(chat.id, chat.title)
+        elif was_member and not is_member:
+            logging.info("%s removed the bot from the group %s", cause_name, chat.title)
+            db.delete_chat_id(chat.id)
 
 
 def merge_photos(background: str, user_id: int) -> BytesIO:
@@ -198,7 +243,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         username = user.username
     else:
         username = None
-
     if not db.check_if_user_exists(user_id):
         db.create_user(user_id, username)
         regen_avatar(user_id)

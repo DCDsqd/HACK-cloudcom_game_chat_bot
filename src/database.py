@@ -547,6 +547,22 @@ class Database:
             ids_list.append(res[i][0])
         return ids_list
 
+    def add_chat_id(self, chat_id: int, title: str) -> None:
+        query = f"""
+                    INSERT INTO chats (chat_id, title)
+                    VALUES('{chat_id}', '{title}');
+                """
+        execute_query(self.database_conn, query)
+
+    def delete_chat_id(self, chat_id: int) -> None:
+        query = f"DELETE FROM chats WHERE chat_id = {chat_id}"
+        execute_query(self.database_conn, query)
+
+    def get_chat_ids(self) -> list:
+        query = f"SELECT * FROM chats"
+        chats = execute_read_query(self.database_conn, query)
+        return chats
+
 
 # Global Database variable
 db = Database()

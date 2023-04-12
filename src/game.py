@@ -1,5 +1,5 @@
 import os
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     CommandHandler,
     ContextTypes,
@@ -319,11 +319,35 @@ async def get_user_duel_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     message = "Запрос на дуэль успешно отправлен"
     markup = ReplyKeyboardMarkup(arena_keyboard, resize_keyboard=True)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    message = f"Игрок с ID {update.effective_chat.id} вызывает вас на дуэль!"
+    keyboard = [
+        [
+            InlineKeyboardButton("Принять", callback_data="accept"),
+            InlineKeyboardButton("Отклонить", callback_data="reject"),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await context.bot.send_message(chat_id=getting_user_id, text=message, reply_markup=reply_markup)
     return ARENA_CHOOSING
 
 
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    if query.data == "accept":
+        await query.edit_message_text(text=f"Вы приняли приглашение на дуэль!")
+        # Здесь нужно сделать добавление в бд статуса "принято"
+    elif query.data == "reject":
+        await query.edit_message_text(text=f"Вы отклонили приглашение на дуэль!")
+
+
 async def create_open_duel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    pass
+    message = "Доступные чаты для открытой дуэли: \n\n"
+    chats = db.get_chat_ids()
+    for chat in chats:
+        message += f"{str(chat[2])}: {str(chat[1])}\n"
+    message += "\nВведите ID чата, в который хотите отправить приглашение!"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 async def library(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:

@@ -88,3 +88,10 @@ CREATE TABLE IF NOT EXISTS "duels" (
 	"receiver_id"	INTEGER,
 	"status"	TEXT
 );
+
+CREATE TABLE IF NOT EXISTS "chats" (
+	"id"	INTEGER NOT NULL,
+	"chat_id"	INTEGER NOT NULL,
+	"title"	TEXT,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
