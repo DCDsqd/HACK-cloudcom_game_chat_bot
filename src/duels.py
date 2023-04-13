@@ -2,6 +2,7 @@ from database import *
 from equipment import *
 from enum import Enum
 
+
 class PlayerInGame:
     def __init__(self, user_id_):
         self.user_id = user_id_
@@ -75,3 +76,4 @@ class Duel:
 
     def process_turn(self, turn: Turn):
         pass # Process turn here
+
