@@ -335,8 +335,9 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
     if query.data == "accept":
-        await query.edit_message_text(text=f"Вы приняли приглашение на дуэль!")
+        # db.start_duel(duel_id, sender_id, receiver_id)
         # Здесь нужно сделать добавление в бд статуса "принято"
+        await query.edit_message_text(text=f"Вы приняли приглашение на дуэль!")
     elif query.data == "reject":
         await query.edit_message_text(text=f"Вы отклонили приглашение на дуэль!")
 

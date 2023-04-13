@@ -88,3 +88,9 @@ class Duel:
             return 1
         return 0
 
+
+# Global dictionary to hold all ongoing duels in memory
+# Key: duel_id -> int
+# Value: duel_object -> class Duel
+duels_ongoing_dict = {}
+

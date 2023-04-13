@@ -466,30 +466,18 @@ class Database:
     # initialized new duel with given params
     def check_if_could_send_duel(self, sender_id, receiver_id) -> bool:
         query = f"""
-                    SELECT status FROM duels
-                    WHERE sender_id='{sender_id}' AND receiver_id='{receiver_id}';
+                    SELECT id FROM duels
+                    WHERE (sender_id='{sender_id}'     OR 
+                          sender_id='{receiver_id}'    OR
+                          receiver_id='{receiver_id}'  OR
+                          receiver_id='{sender_id}')   AND
+                          status = 'ongoing'
                 """
         res = execute_read_query(self.database_conn, query)
+
         if not res:
             return True
-
-        for i in res:
-            if i[0] != 'done':
-                return False
-
-        query = f"""
-                    SELECT status FROM duels
-                    WHERE sender_id='{receiver_id}' AND receiver_id='{sender_id}';
-                """
-        res = execute_read_query(self.database_conn, query)
-        if not res:
-            return True
-
-        for i in res:
-            if i[0] != 'done':
-                return False
-
-        return True
+        return False
 
     def add_pending_duel(self, sender_id, receiver_id) -> None:
         query = f"""
