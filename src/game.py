@@ -10,7 +10,7 @@ from telegram.ext import (
 
 from common_func import is_available, merge_photos
 from menu_chain import main_menu
-from database import *
+from duels import *  # this also imports database
 import random
 
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
@@ -335,7 +335,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
     if query.data == "accept":
-        # db.start_duel(duel_id, sender_id, receiver_id)
+        # init_duel(Duel(duel_id, sender_id, receiver_id))
         # Здесь нужно сделать добавление в бд статуса "принято"
         await query.edit_message_text(text=f"Вы приняли приглашение на дуэль!")
     elif query.data == "reject":

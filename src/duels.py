@@ -94,3 +94,16 @@ class Duel:
 # Value: duel_object -> class Duel
 duels_ongoing_dict = {}
 
+
+# Functions to operate with existing duels
+def init_duel(duel: Duel) -> None:
+    duels_ongoing_dict[duel.id] = duel
+    db.start_duel(duel.id)
+
+
+def kill_duel(duel_id: int) -> None:
+    killed_duel = duels_ongoing_dict.pop(duel_id)
+    if killed_duel.status() == 0:
+        logging.warning("kill_duel() call on ongoing duel with Duel::status() == 0!")
+    db.finish_duel(duel_id, killed_duel.status())
+
