@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"face_id"	TEXT NOT NULL DEFAULT 1,
 	"shoulders_id"	INTEGER NOT NULL DEFAULT 1,
 	"admin"	INTEGER NOT NULL DEFAULT 0,
+	"active_armor_meta_id"	INTEGER,
+	"active_weapon_meta_id"	INTEGER,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
@@ -46,10 +48,13 @@ CREATE TABLE IF NOT EXISTS "polls" (
 );
 
 CREATE TABLE IF NOT EXISTS "items_owned" (
-	"owner"	INTEGER NOT NULL,
-	"item"	INTEGER NOT NULL,
+	"meta_item_id"	INTEGER NOT NULL UNIQUE,
+	"owner_id"	INTEGER NOT NULL,
+	"base_item_id"	INTEGER NOT NULL,
+	"enchantments"	INTEGER,
+	"elements"	TEXT,
 	"date"	TEXT NOT NULL,
-	PRIMARY KEY("owner")
+	PRIMARY KEY("meta_item_id" AUTOINCREMENT)
 );
 
 CREATE TABLE IF NOT EXISTS "friends" (
@@ -86,7 +91,9 @@ CREATE TABLE IF NOT EXISTS "duels" (
 	"id"	INTEGER NOT NULL UNIQUE,
 	"sender_id"	INTEGER NOT NULL,
 	"receiver_id"	INTEGER,
-	"status"	TEXT
+	"status"	TEXT,
+	"outcome"	INTEGER DEFAULT 0 CHECK("outcome">-1 AND "outcome"<3),
+	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
 CREATE TABLE IF NOT EXISTS "chats" (

@@ -35,17 +35,6 @@ CREATE TABLE IF NOT EXISTS "tasks" (
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
-CREATE TABLE IF NOT EXISTS "equipment" (
-	"id"	INTEGER NOT NULL UNIQUE,
-	"name"	TEXT NOT NULL UNIQUE,
-	"type"	TEXT NOT NULL CHECK("type" = 'armor' OR "type" = 'weapon'),
-	"strength"	INTEGER NOT NULL DEFAULT 1,
-	"rarity"	INTEGER NOT NULL CHECK("rarity" > -2 AND "rarity" < 6),
-	"enchants"	TEXT,
-	"cost"	INTEGER NOT NULL DEFAULT 1,
-	PRIMARY KEY("id")
-);
-
 CREATE TABLE IF NOT EXISTS "danges" (
 	"id"	INTEGER NOT NULL UNIQUE,
 	"name"	TEXT,
@@ -69,5 +58,15 @@ CREATE TABLE IF NOT EXISTS "enemies" (
 	"health"	INTEGER NOT NULL DEFAULT 1,
 	"attack"	INTEGER NOT NULL DEFAULT 1,
 	"defence"	INTEGER NOT NULL DEFAULT 1,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE IF NOT EXISTS "base_items" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"name"	TEXT NOT NULL UNIQUE,
+	"type"	TEXT NOT NULL CHECK("type" = 'armor' OR "type" = 'weapon'),
+	"strength"	INTEGER NOT NULL DEFAULT 1,
+	"rarity"	INTEGER NOT NULL CHECK("rarity" > -2 AND "rarity" < 6),
+	"cost"	INTEGER NOT NULL DEFAULT 1,
 	PRIMARY KEY("id")
 );
