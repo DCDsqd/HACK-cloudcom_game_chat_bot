@@ -71,7 +71,7 @@ class Duel:
         self.sender_player = PlayerInGame(sender_id_)
         self.receiver_player = PlayerInGame(receiver_id_)
 
-        self.log = ""
+        self.log = "Дуэль началась!"
 
     def process_turn(self, turn: Turn):
         pass # Process turn here
