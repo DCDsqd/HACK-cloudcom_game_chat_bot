@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS "items_owned" (
 	"meta_item_id"	INTEGER NOT NULL UNIQUE,
 	"owner_id"	INTEGER NOT NULL,
 	"base_item_id"	INTEGER NOT NULL,
-	"enchantments"	INTEGER,
+	"enchantments"	TEXT,
 	"elements"	TEXT,
 	"date"	TEXT NOT NULL,
 	PRIMARY KEY("meta_item_id" AUTOINCREMENT)
