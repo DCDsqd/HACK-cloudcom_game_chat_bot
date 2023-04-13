@@ -14,7 +14,7 @@ from duels import *  # this also imports database
 import random
 
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
-    MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID = range(10)
+    MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID = range(11)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -333,6 +333,7 @@ async def get_user_duel_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
+    receiver_id = query.from_user.id
     await query.answer()
     if query.data == "accept":
         # init_duel(Duel(duel_id, sender_id, receiver_id))
@@ -343,12 +344,36 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def create_open_duel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
     message = "Доступные чаты для открытой дуэли: \n\n"
     chats = db.get_chat_ids()
     for chat in chats:
         message += f"{str(chat[2])}: {str(chat[1])}\n"
     message += "\nВведите ID чата, в который хотите отправить приглашение!"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    return GET_CHAT_ID
+
+
+async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    getting_chat_id = update.message.text
+    if not getting_chat_id[1:].isdigit():
+        response = "ID должен быть числовым значением!"
+        markup = ReplyKeyboardMarkup(arena_keyboard, resize_keyboard=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
+        return ARENA_CHOOSING
+    message = "Запрос на дуэль успешно отправлен"
+    db.add_pending_duel(update.effective_chat.id, 0)
+    markup = ReplyKeyboardMarkup(arena_keyboard, resize_keyboard=True)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    message = f"Игрок с ID {update.effective_chat.id} создал открытую дуэль!"
+    keyboard = [
+        [
+            InlineKeyboardButton("Принять", callback_data="accept")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await context.bot.send_message(chat_id=getting_chat_id, text=message, reply_markup=reply_markup)
+    return ARENA_CHOOSING
 
 
 async def library(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -422,6 +447,10 @@ game_handler = ConversationHandler(
         ],
         GET_USER_TO_DUEL_ID: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_user_duel_id),
+            MessageHandler(filters.Regex("^Назад$"), arena),
+        ],
+        GET_CHAT_ID: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_chat_id),
             MessageHandler(filters.Regex("^Назад$"), arena),
         ],
     },
