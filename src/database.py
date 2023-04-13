@@ -1,12 +1,16 @@
 import sqlite3
 from sqlite3 import Error
 import logging
-from time_control import cur_time, cur_date
+from time_control import cur_time, cur_date, cur_time_for_logger
+import sys
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    filename='../logs/launch_%s.log' % cur_time_for_logger(),
+    encoding='utf-8',
     level=logging.INFO
 )
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # Basic common functions outside of Database class:

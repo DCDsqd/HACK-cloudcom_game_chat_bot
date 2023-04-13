@@ -20,6 +20,7 @@ if __name__ == '__main__':
     token_file.close()
 
     init_all_enchantments()
+
     application.add_handler(CommandHandler('start', start))
     application.add_handler(poll_handler)
     application.add_handler(PollAnswerHandler(receive_poll_answer))

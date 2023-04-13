@@ -5,6 +5,10 @@ def cur_time() -> str:
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
+def cur_time_for_logger() -> str:
+    return datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+
 def cur_date() -> str:
     return datetime.datetime.now().strftime('%Y-%m-%d')
 
