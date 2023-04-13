@@ -5,8 +5,8 @@ from database import *
 # and do not bother actual database with small queries
 # NOTE: This implementation leads to necessary restart if you've
 # made some changes to enchantments in the database
-armor_enchantments_list = []
-weapon_enchantments_list = []
+armor_enchantments_dict = {}
+weapon_enchantments_dict = {}
 
 
 class ArmorEnchantment:
@@ -39,14 +39,43 @@ class WeaponEnchantment:
 def init_all_enchantments():
     all_armor_enchantments_ids = db.get_all_armor_enchantments_ids()
     for cur_id in all_armor_enchantments_ids:
-        armor_enchantments_list.append(ArmorEnchantment(cur_id))
+        armor_enchantments_dict[cur_id] = ArmorEnchantment(cur_id)
     all_weapon_enchantments_ids = db.get_all_weapon_enchantments_ids()
     for cur_id in all_weapon_enchantments_ids:
-        weapon_enchantments_list.append(WeaponEnchantment(cur_id))
+        weapon_enchantments_dict[cur_id] = WeaponEnchantment(cur_id)
     logging.info("Finished initializing global enchantment arrays")
 
 
+def armor_enchants_id_to_objects_list(enchants_ids: list) -> list:
+    result_list = []
+    for i in enchants_ids:
+        result_list.append(armor_enchantments_dict[i])
+    return result_list
+
+
+def weapon_enchants_id_to_objects_list(enchants_ids: list) -> list:
+    result_list = []
+    for i in enchants_ids:
+        result_list.append(weapon_enchantments_dict[i])
+    return result_list
+
+
 class Armor:
-    def __init__(self, id_):
-        self.id = id_
-        self.enchantments_list = []
+    def __init__(self, meta_id_):
+        self.meta_id = meta_id_
+        info_list = db.load_all_item_info_for_battle_from_meta(self.meta_id)
+        self.base_id = info_list[0]
+        self.enchantments_list = armor_enchants_id_to_objects_list(str(info_list[1]).split(','))
+        self.name = info_list[2]
+        self.strength = info_list[3]
+
+
+class Weapon:
+    def __init__(self, meta_id_):
+        self.meta_id = meta_id_
+        info_list = db.load_all_item_info_for_battle_from_meta(self.meta_id)
+        self.base_id = info_list[0]
+        self.enchantments_list = weapon_enchants_id_to_objects_list(str(info_list[1]).split(','))
+        self.name = info_list[2]
+        self.strength = info_list[3]
+

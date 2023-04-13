@@ -399,10 +399,10 @@ class Database:
 
     def finish_poll(self, poll_id) -> None:
         query = f"""
-                        UPDATE polls
-                        SET 'is_ended' = '1'
-                        WHERE poll_id = '{poll_id}';
-                    """
+                    UPDATE polls
+                    SET 'is_ended' = '1'
+                    WHERE poll_id = '{poll_id}';
+                """
         execute_query(self.database_conn, query)
 
     def create_global_event_from_poll(self, poll_id) -> None:
@@ -566,6 +566,31 @@ class Database:
         query = f"SELECT * FROM chats"
         chats = execute_read_query(self.database_conn, query)
         return chats
+
+    def get_user_active_weapon_meta_id(self, user_id) -> int:
+        query = f"SELECT active_weapon_meta_id FROM users;"
+        return execute_read_query(self.database_conn, query)[0][0]
+
+    def get_user_active_armor_meta_id(self, user_id) -> int:
+        query = f"SELECT active_armor_meta_id FROM users;"
+        return execute_read_query(self.database_conn, query)[0][0]
+
+    # Only weapons and armor ids for @meta_id are allowed
+    def load_all_item_info_for_battle_from_meta(self, meta_id) -> list:
+        attach_query = "ATTACH '../db/gamedata.db' AS gamedata;"
+        execute_query(self.database_conn, attach_query)
+
+        query = f"""
+                    SELECT  items_owned.base_item_id,
+                            items_owned.enchantments, 
+                            gamedata.base_items.name,
+                            gamedata.base_items.strength
+                    FROM items_owned
+                    JOIN gamedata.base_items ON items_owned.base_item_id = gamedata.base_items.id
+                    WHERE   items_owned.meta_item_id = '{meta_id}';
+                """
+        res = execute_read_query(self.database_conn, query)
+        return res[0]
 
 
 # Global Database variable
