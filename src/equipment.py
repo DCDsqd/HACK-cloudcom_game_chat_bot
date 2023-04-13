@@ -36,7 +36,8 @@ class WeaponEnchantment:
         self.element_dmg_incr = info_list[7]
 
 
-def init_all_enchantments():
+# Initializes all enchants dictionaries at the start of the program (called in main)
+def init_all_enchantments() -> None:
     all_armor_enchantments_ids = db.get_all_armor_enchantments_ids()
     for cur_id in all_armor_enchantments_ids:
         armor_enchantments_dict[cur_id] = ArmorEnchantment(cur_id)
@@ -46,6 +47,7 @@ def init_all_enchantments():
     logging.info("Finished initializing global enchantment arrays")
 
 
+# Returns list of ArmorEnchantment objects from given list of armor enchants ids
 def armor_enchants_id_to_objects_list(enchants_ids: list) -> list:
     result_list = []
     for i in enchants_ids:
@@ -53,6 +55,7 @@ def armor_enchants_id_to_objects_list(enchants_ids: list) -> list:
     return result_list
 
 
+# Returns list of WeaponEnchantment objects from given list of weapon enchants ids
 def weapon_enchants_id_to_objects_list(enchants_ids: list) -> list:
     result_list = []
     for i in enchants_ids:

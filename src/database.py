@@ -462,13 +462,6 @@ class Database:
             all_ids.append(res[i][0])
         return all_ids
 
-    def add_pending_duel(self, sender_id, receiver_id) -> None:
-        query = f"""
-                    INSERT INTO duels (sender_id, receiver_id, status)
-                    VALUES('{sender_id}', '{receiver_id}', 'pending');
-                """
-        execute_query(self.database_conn, query)
-
     # This functions checks for existing duels and returns whether there could be
     # initialized new duel with given params
     def check_if_could_send_duel(self, sender_id, receiver_id) -> bool:
@@ -496,6 +489,35 @@ class Database:
             if i[0] != 'done':
                 return False
 
+        return True
+
+    def add_pending_duel(self, sender_id, receiver_id) -> None:
+        query = f"""
+                    INSERT INTO duels (sender_id, receiver_id, status)
+                    VALUES('{sender_id}', '{receiver_id}', 'pending');
+                """
+        execute_query(self.database_conn, query)
+
+    def start_duel(self, duel_id) -> None:
+        query = f"""
+                    UPDATE duels
+                    SET status = ongoing,
+                    WHERE id = '{duel_id}';
+                """
+        execute_query(self.database_conn, query)
+
+    # @outcome should be set either to 1 (for sender win) or 2 (for receiver win)
+    def finish_duel(self, duel_id, outcome) -> bool:
+        if outcome != 1 and outcome != 2:
+            logging.warning("Outcome variable in Database::finish_duel function is invalid!")
+            return False
+        query = f"""
+                    UPDATE duels
+                    SET status = done
+                    outcome = '{outcome}'
+                    WHERE id = '{duel_id}';
+                """
+        execute_query(self.database_conn, query)
         return True
 
     def load_armor_enchantments_perks(self, ench_id) -> list:

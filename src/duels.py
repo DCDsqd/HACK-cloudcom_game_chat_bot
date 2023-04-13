@@ -77,3 +77,14 @@ class Duel:
     def process_turn(self, turn: Turn):
         pass # Process turn here
 
+    # Returns current status of the duel:
+    # 0 - if duel is still going on
+    # 1 - if player 1 has won
+    # 2 - if player 2 has won
+    def status(self) -> int:
+        if self.sender_player.is_dead():
+            return 2
+        elif self.receiver_player.is_dead():
+            return 1
+        return 0
+
