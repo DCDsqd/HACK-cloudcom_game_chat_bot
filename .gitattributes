@@ -1,0 +1,5 @@
+*.qss linguist-detectable
+
+*.sh linguist-language=Shell
+*.sql linguist-language=SQL
+*.qss linguist-language=CSS
