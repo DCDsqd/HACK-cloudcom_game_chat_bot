@@ -134,7 +134,8 @@ class Turn:
 class Duel:
     def __init__(self, duel_id_, sender_id_, receiver_id_):
         self.id = duel_id_
-        self.turn = 1
+        self.turn = 1  # 1 for sender turn, 2 for receiver turn
+        self.turn_counter = 0
 
         self.sender_player = PlayerInGame(sender_id_)
         self.receiver_player = PlayerInGame(receiver_id_)
@@ -188,6 +189,9 @@ class Duel:
             pass
         else:
             logging.warning("turn.turn_type which is of TurnType(Enum) type is not equal to any member of enum")
+
+        self.turn_counter += 1
+        self.turn = 3 - self.turn
 
     # Returns current status of the duel:
     # 0 - if duel is still going on
