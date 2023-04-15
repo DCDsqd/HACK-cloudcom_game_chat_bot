@@ -69,9 +69,10 @@ class Defence:
 
 
 class PlayerInGame:
-    def __init__(self, user_id_):
+    def __init__(self, user_id_, beer_buff: bool):
         self.user_id = user_id_
-        self.health = 100
+        self.health = 100 if not beer_buff else 110
+        self.is_bleeding = False
 
         # Armor fields
         self.armor = Armor(db.get_user_active_armor_meta_id(self.user_id))
@@ -123,6 +124,14 @@ class PlayerInGame:
             self.health -= abs(self.armor_state)
             self.armor_state = 0
 
+    # Checks if Player has bleeding effect on him and applies damage if so
+    # Returns True if damage was applied, False otherwise
+    # NOTE: Bleeding effect always applies directly to health ignoring armor
+    def apply_bleeding_damage(self) -> bool:
+        if self.is_bleeding:
+            self.health -= 5
+            return True
+        return False
 
 class Turn:
     def __init__(self, turn_maker_, turn_type_: TurnType, target_):
@@ -137,8 +146,8 @@ class Duel:
         self.turn = 1  # 1 for sender turn, 2 for receiver turn
         self.turn_counter = 0
 
-        self.sender_player = PlayerInGame(sender_id_)
-        self.receiver_player = PlayerInGame(receiver_id_)
+        self.sender_player = PlayerInGame(sender_id_, False)
+        self.receiver_player = PlayerInGame(receiver_id_, False)
 
         self.full_log = "Дуэль началась!"
 
@@ -178,6 +187,8 @@ class Duel:
                               )
 
             defender.apply_damage(defence.combined_damage)
+            if defender.apply_bleeding_damage():
+                self.full_log += f"\nЗащищающийся игрок {defender.user_id} получает 5 урона из-за кровотечения!"
             attacker.health = max(attacker.health + defence.vampirism_cashback, 100)
             attacker.apply_damage(defence.mirror_dmg)
 
