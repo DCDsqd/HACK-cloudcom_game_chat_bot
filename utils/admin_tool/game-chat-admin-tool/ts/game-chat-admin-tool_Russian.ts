@@ -4,17 +4,22 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../ui/mainwindow.ui" line="83"/>
+        <location filename="../ui/mainwindow.ui" line="14"/>
+        <source>Game Bot Admin Centre</source>
+        <translation>Центр Администрации Игрового Бота</translation>
+    </message>
+    <message>
+        <location filename="../ui/mainwindow.ui" line="90"/>
         <source>Add</source>
         <translation>Добавить</translation>
     </message>
     <message>
-        <location filename="../ui/mainwindow.ui" line="96"/>
+        <location filename="../ui/mainwindow.ui" line="103"/>
         <source>Save All</source>
         <translation>Сохранить Все</translation>
     </message>
     <message>
-        <location filename="../ui/mainwindow.ui" line="109"/>
+        <location filename="../ui/mainwindow.ui" line="116"/>
         <source>Reload Data</source>
         <translation>Перевыгрузить События</translation>
     </message>

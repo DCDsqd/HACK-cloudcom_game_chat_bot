@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>../icons/admin_center_icon.png</file>
+        <file>../icons/ru_flag.png</file>
+        <file>../icons/uk_flag.png</file>
+    </qresource>
+</RCC>

@@ -11,7 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string notr="true">AdminCentre</string>
+   <string>Game Bot Admin Centre</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../res/qrc/icons.qrc">
+    <normaloff>:/icons/admin_center_icon.png</normaloff>:/icons/admin_center_icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QStackedWidget" name="mainStackedWidget">
@@ -22,6 +26,9 @@
       <width>1200</width>
       <height>700</height>
      </rect>
+    </property>
+    <property name="currentIndex">
+     <number>1</number>
     </property>
     <widget class="QWidget" name="loginPage">
      <widget class="QTextEdit" name="textEdit">
@@ -123,8 +130,8 @@
         <string notr="true">English</string>
        </property>
        <property name="icon">
-        <iconset resource="../res/qrc/flags.qrc">
-         <normaloff>:/lang_icons/uk.png</normaloff>:/lang_icons/uk.png</iconset>
+        <iconset resource="../res/qrc/icons.qrc">
+         <normaloff>:/icons/uk_flag.png</normaloff>:/icons/uk_flag.png</iconset>
        </property>
       </item>
       <item>
@@ -132,8 +139,8 @@
         <string notr="true">Russian</string>
        </property>
        <property name="icon">
-        <iconset resource="../res/qrc/flags.qrc">
-         <normaloff>:/lang_icons/ru.png</normaloff>:/lang_icons/ru.png</iconset>
+        <iconset resource="../res/qrc/icons.qrc">
+         <normaloff>:/icons/ru_flag.png</normaloff>:/icons/ru_flag.png</iconset>
        </property>
       </item>
      </widget>
@@ -143,7 +150,7 @@
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources>
-  <include location="../res/qrc/flags.qrc"/>
+  <include location="../res/qrc/icons.qrc"/>
  </resources>
  <connections/>
 </ui>

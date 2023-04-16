@@ -4,17 +4,22 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../ui/mainwindow.ui" line="83"/>
+        <location filename="../ui/mainwindow.ui" line="14"/>
+        <source>Game Bot Admin Centre</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../ui/mainwindow.ui" line="90"/>
         <source>Add</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../ui/mainwindow.ui" line="96"/>
+        <location filename="../ui/mainwindow.ui" line="103"/>
         <source>Save All</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../ui/mainwindow.ui" line="109"/>
+        <location filename="../ui/mainwindow.ui" line="116"/>
         <source>Reload Data</source>
         <translation></translation>
     </message>
@@ -42,7 +47,7 @@
         <location filename="../src/mainwindow.cpp" line="151"/>
         <source>Duration
  (mins)</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/mainwindow.cpp" line="155"/>
