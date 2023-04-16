@@ -2,3 +2,4 @@
 
 *.sql linguist-language=PLpgSQL
 *.qss linguist-language=CSS
+*.ui linguist-language=XHTML
