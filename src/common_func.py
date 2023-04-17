@@ -359,19 +359,27 @@ async def send_approve(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     message = update.message
     message_id = message.id
     try:
-        event_id = int(message.text)
-    except ValueError:
-        await update.message.reply_text(f"Требуется ввести ID события. Полученный текст не является ID!",
+        event_id = int(message.caption)
+    except Exception:
+        await update.message.reply_text(f"Требуется ввести ID события и приложить фото!",
                                         reply_markup=markup)
         return EVENT_CHOOSING
     admins = db.get_admins_id()
+    event = db.get_event_by_id(event_id)
+    event_text = f"<b>ID: {event[0][0]}</b>\n"
+    event_text += f"<b>{event[0][1]}</b>\n"
+    event_text += f"<i>{event[0][2]}</i>\n"
+    event_text += f"<u>Начало:</u> {event[0][3]}\n"
+    event_text += f"<u>Длительность:</u> {event[0][4]}\n"
+    event_text += f"<u>Награда (опыт):</u> {event[0][5]}\n"
     for admin in admins:
         await context.bot.send_message(chat_id=admin[0],
-                                       text=f"Пользователь с ID {update.effective_chat.id} выполнил мероприятие.")
-        # Сюда вставим вывод самого мероприятия по event_id
+                                       text=f"Пользователь с ID {update.effective_chat.id} выполнил мероприятие.\n" + event_text, parse_mode='HTML')
         await context.bot.forward_message(admin[0], update.effective_chat.id, message_id)
         await context.bot.send_message(chat_id=admin[0],
                                        text=f"Подтверждаете ли Вы выполнение данного мероприятия?")
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Задание успешно отправленно на проверку!")
+    return EVENT_CHOOSING
 
 
 events_handler = ConversationHandler(
@@ -386,7 +394,7 @@ events_handler = ConversationHandler(
             MessageHandler(filters.TEXT & ~filters.COMMAND, add_participant),
         ],
         EVENT_ID_TO_APPROVE: [
-            MessageHandler(filters.TEXT & ~filters.COMMAND, send_approve),
+            MessageHandler((filters.TEXT | filters.PHOTO) & ~filters.COMMAND, send_approve),
         ],
     },
     fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],

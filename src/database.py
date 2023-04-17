@@ -445,6 +445,12 @@ class Database:
             """
         return execute_read_query(self.database_conn, query)
 
+    def get_event_by_id(self, event_id):
+        query = f"""
+                SELECT * FROM global_events WHERE id = {event_id}
+                """
+        return execute_read_query(self.database_conn, query)
+
     def get_all_global_events(self) -> list:
         query = "SELECT * FROM global_events"
         return execute_read_query(self.database_conn, query)
