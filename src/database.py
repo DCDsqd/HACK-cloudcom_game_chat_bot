@@ -154,18 +154,23 @@ class Database:
     # present), and updates the participants field in the global_events table. The function does not return anything.
     def update_participants_in_global_event(self, global_event_id: int, new_participant_id: int) -> None:
         query = f"""
-                SELECT participants FROM global_events WHERE id='{global_event_id}';
-                """
-        res = execute_read_query(self.database_conn, query)
-        participants_text = res[0][0]
-        if len(participants_text) == 0:
-            participants_text = str(new_participant_id)
-        else:
-            participants_text += ',' + str(new_participant_id)
-        query = f"""
-                UPDATE global_events SET participants='{participants_text}' WHERE id='{global_event_id}';
-                """
+                        INSERT INTO global_events_participants (id, user_id)
+                        SELECT '{global_event_id}', '{new_participant_id}'
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM global_events_participants
+                            WHERE id = '{global_event_id}' AND user_id = '{new_participant_id}'
+                        )
+                    """
         execute_query(self.database_conn, query)
+
+    def get_user_events(self, user_id: int) -> list:
+        query = f"""
+                    SELECT e.* FROM global_events e
+                    JOIN global_events_participants p ON e.id = p.id
+                    WHERE p.user_id = '{user_id}'
+                    ORDER BY e.start_time DESC LIMIT 20
+                    """
+        return execute_read_query(self.database_conn, query)
 
     # This function relies on fact that @text is valid, so that:
     # parse_new_event_info_string(@text) == {True, 'Some message'}
@@ -451,6 +456,10 @@ class Database:
     def check_if_user_is_admin(self, user_id) -> int:
         query = f"SELECT admin FROM users WHERE id={user_id}"
         return execute_read_query(self.database_conn, query)[0][0]
+
+    def get_admins_id(self) -> list:
+        query = "SELECT id FROM users WHERE admin = 1"
+        return execute_read_query(self.database_conn, query)
 
     def get_all_user_ids(self) -> list:
         query = f"""

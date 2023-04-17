@@ -1,5 +1,5 @@
 from database import *
-from telegram import ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
+from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
     CommandHandler,
     ContextTypes,
@@ -9,6 +9,7 @@ from telegram.ext import (
 )
 
 from time_control import ensure_time_format
+from menu_chain import main_menu
 
 ADMIN_CHOOSING, OP, DEL_OP, EVENT_INPUT, WHAT_DEL, EVENT_BY_DATE, EVENT_BY_NAME, GET_EVENT_ID = range(8)
 admin_keyboard = [["Добавить администратора", "Удалить администратора"], ["Добавить событие", "Удалить событие"],
@@ -139,14 +140,6 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     else:
         message = "В доступе отказано!"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-
-
-# This function is used to send a message to the chat indicating that all changes have been applied and the
-# conversation with the user should end. This is typically used when an admin operation has been completed or cancelled.
-async def admin_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    message = "Все изменения применены. Хорошего дня!"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())
-    return ConversationHandler.END
 
 
 # This function is used to send a message to the chat explaining how to format information about a new event and 
@@ -343,5 +336,5 @@ admin_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Назад$"), delete_event),
         ],
     },
-    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), admin_cancel)],
+    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
 )
