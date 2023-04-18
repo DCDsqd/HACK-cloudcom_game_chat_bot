@@ -419,10 +419,10 @@ class Database:
     # the user_id of the user whose experience points need to be updated and the amount of experience points to add. It
     # fetches the current experience points of the user from the database, adds the new experience points to it,
     # and then updates the database with the new experience points.
-    def add_exp(self, user_id, exp) -> None:
+    def add_exp(self, user_id: int, exp: int) -> None:
         query = f"SELECT exp FROM users WHERE id={user_id}"
         db_data = execute_read_query(self.database_conn, query)
-        self.update_users('exp', int(db_data[0][0]) + exp, user_id)
+        self.update_users('exp', int(db_data[0][0]) + int(exp), user_id)
 
     def create_user(self, user_id, username) -> None:
         create_users = f"""
@@ -450,6 +450,22 @@ class Database:
                 SELECT * FROM global_events WHERE id = {event_id}
                 """
         return execute_read_query(self.database_conn, query)
+
+    def complete_task(self, event_id: int) -> None:
+        query = f"""
+                UPDATE global_events SET is_complited = 1 WHERE id = '{event_id}'
+                """
+        execute_query(self.database_conn, query)
+        query = f"""
+                DELETE FROM global_events_participants WHERE id = '{event_id}'
+                """
+        execute_query(self.database_conn, query)
+
+    def is_complited(self, event_id: int) -> bool:
+        query = f"""
+                SELECT is_complited FROM global_events WHERE id = '{event_id}'
+                """
+        return bool(execute_read_query(self.database_conn, query)[0][0])
 
     def get_all_global_events(self) -> list:
         query = "SELECT * FROM global_events"

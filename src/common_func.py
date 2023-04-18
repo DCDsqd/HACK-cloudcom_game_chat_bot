@@ -2,7 +2,8 @@ from database import *
 from customization import regen_avatar
 from menu_chain import main_menu
 import os
-from telegram import Update, ReplyKeyboardRemove, Chat, ReplyKeyboardMarkup
+import re
+from telegram import Update, ReplyKeyboardRemove, Chat, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ContextTypes,
     ConversationHandler,
@@ -372,14 +373,52 @@ async def send_approve(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     event_text += f"<u>Начало:</u> {event[0][3]}\n"
     event_text += f"<u>Длительность:</u> {event[0][4]}\n"
     event_text += f"<u>Награда (опыт):</u> {event[0][5]}\n"
+    keyboard = [
+        [
+            InlineKeyboardButton("✅ Подтвердить", callback_data="accept_event"),
+            InlineKeyboardButton("❌ Отклонить", callback_data="reject_event"),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     for admin in admins:
         await context.bot.send_message(chat_id=admin[0],
-                                       text=f"Пользователь с ID {update.effective_chat.id} выполнил мероприятие.\n" + event_text, parse_mode='HTML')
+                                       text=event_text,
+                                       parse_mode='HTML')
         await context.bot.forward_message(admin[0], update.effective_chat.id, message_id)
         await context.bot.send_message(chat_id=admin[0],
-                                       text=f"Подтверждаете ли Вы выполнение данного мероприятия?")
+                                       text=f"Пользователь с ID {update.effective_chat.id} выполнил мероприятие # {event_id} с наградой {event[0][5]} опыта.\n\nПодтверждаете ли Вы выполнение данного мероприятия?",
+                                       reply_markup=reply_markup)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Задание успешно отправленно на проверку!")
     return EVENT_CHOOSING
+
+
+async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    receiver_id = query.from_user.id
+    sender_id = re.search(r"ID\s+(\d+)", query.message.text).group(1)
+    await query.answer()
+    if query.data == "accept_event":
+        event_id = re.search(r"#\s+(\d+)", query.message.text).group(1)
+        if db.is_complited(event_id):
+            await query.edit_message_text(text=f"Другой администратор уже подтвердил выполнение этого задания!")
+        else:
+            exp = re.search(r"наградой\s+(\d+)", query.message.text).group(1)
+            db.complete_task(event_id)
+            db.add_exp(sender_id, exp)
+            await query.edit_message_text(text=f"Выполнение задания подтверждено! Опыт успешно начислен.")
+            await context.bot.send_message(chat_id=sender_id, text="Администратор подтвердил выполнение задания!")
+    elif query.data == "reject_event":
+        event_id = re.search(r"#\s+(\d+)", query.message.text).group(1)
+        if db.is_complited(event_id):
+            await query.edit_message_text(text=f"Другой администратор уже подтвердил выполнение этого задания!")
+        await query.edit_message_text(text=f"Вы отклонили задание!")
+        await context.bot.send_message(chat_id=sender_id, text="Администратор отклонил выполнение задания!")
+    elif query.data == "accept_duel":
+        # init_duel(Duel(duel_id, sender_id, receiver_id))
+        # Здесь нужно сделать добавление в бд статуса "принято"
+        await query.edit_message_text(text=f"Игрок с ID {receiver_id} принял приглашение на дуэль!")
+    elif query.data == "reject_duel":
+        await query.edit_message_text(text=f"Вы отклонили приглашение на дуэль!")
 
 
 events_handler = ConversationHandler(
