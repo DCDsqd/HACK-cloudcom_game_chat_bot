@@ -1,4 +1,4 @@
 *.qss linguist-detectable
 
-*.sql linguist-language=PLpgSQL
+*.sql linguist-language=SQLPL
 *.qss linguist-language=CSS
