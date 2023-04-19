@@ -105,7 +105,6 @@ class Database:
                 SELECT id FROM {table} WHERE name='{name}';
                 """
         res = execute_read_query(self.gamedata_conn, query)
-        print(type(res[0][0]))
         return res[0][0]
 
     # This function takes a user ID as an argument and returns a boolean indicating whether the user exists in the
@@ -322,11 +321,20 @@ class Database:
         random_small_task = self.get_random_task('small')
         random_medium_task = self.get_random_task('medium')
         random_class_license_task = self.get_random_task('class_license')
+        random_special_task = self.get_random_task('special')
+        random_random_task = self.get_random_task('random')
         query = f"""
                     INSERT INTO user_daily_tasks (user_id,task_id) VALUES
                     ('{user_id}','{random_small_task[0]}'),
                     ('{user_id}','{random_medium_task[0]}'),
                     ('{user_id}','{random_class_license_task[0]}');
+                """
+        execute_query(self.database_conn, query)
+
+        query = f"""
+                    INSERT INTO user_multiplayer_daily_tasks (user_id,task_id) VALUES
+                    ('{user_id}','{random_special_task[0]}'),
+                    ('{user_id}','{random_random_task[0]}');
                 """
         execute_query(self.database_conn, query)
 
@@ -337,21 +345,30 @@ class Database:
                 """
         execute_query(self.database_conn, query)
 
-    def get_cur_user_tasks(self, user_id: int) -> dict:
+    def get_cur_user_tasks(self, user_id: int, is_multiplayer: bool) -> dict:
         attach_query = """ATTACH '../db/gamedata.db' AS gamedata;"""
         execute_query(self.database_conn, attach_query)
-
-        query = f"""
-                    SELECT user_daily_tasks.task_id, gamedata.tasks.type, user_daily_tasks.is_completed
-                    FROM user_daily_tasks
-                    JOIN gamedata.tasks ON gamedata.tasks.id = user_daily_tasks.task_id
-                    WHERE user_daily_tasks.user_id = '{user_id}';
-                """
+        if not is_multiplayer:
+            query = f"""
+                        SELECT user_daily_tasks.task_id, gamedata.tasks.type, user_daily_tasks.is_completed
+                        FROM user_daily_tasks
+                        JOIN gamedata.tasks ON gamedata.tasks.id = user_daily_tasks.task_id
+                        WHERE user_daily_tasks.user_id = '{user_id}';
+                    """
+        else:
+            query = f"""
+                        SELECT user_multiplayer_daily_tasks.task_id, gamedata.tasks.type, user_multiplayer_daily_tasks.is_completed
+                        FROM user_multiplayer_daily_tasks
+                        JOIN gamedata.tasks ON gamedata.tasks.id = user_multiplayer_daily_tasks.task_id
+                        WHERE user_multiplayer_daily_tasks.user_id = '{user_id}';
+                    """
         res = execute_read_query(self.database_conn, query)
 
-        # Expect to return only 3 tasks
-        if len(res) != 3:
-            logging.warning('Query result length is not equal to expected in function get_cur_user_tasks')
+        if not is_multiplayer and len(res) != 3:
+            logging.warning('[Single task] Query result length is not equal to expected in function get_cur_user_tasks')
+        elif is_multiplayer and len(res) != 2:
+            logging.warning(
+                '[Multiplayer task] Query result length is not equal to expected in function get_cur_user_tasks')
 
         tasks_list = {str(task_type): task_id if is_completed == 0 else -1 for task_id, task_type, is_completed in res}
 
@@ -359,10 +376,24 @@ class Database:
 
     def get_task_by_id(self, task_id: int) -> list:
         query = f"""
-                    SELECT * FROM tasks WHERE id = '{task_id}';
+                SELECT * FROM tasks WHERE id = '{task_id}';
                 """
         res = execute_read_query(self.gamedata_conn, query)
         return res[0]
+
+    def add_multiplayer_participants(self, user_id: int, task_id: int, text: str):
+        try:
+            ids = list(map(int, text.split()))
+        except ValueError:
+            return False, "ID должны быть числовым значением"
+        if len(ids) < 3:
+            ids.extend([0] * (3 - len(ids)))
+        query = f"""
+                INSERT INTO multiplayer_task_participants (task_id, user1_id, user2_id, user3_id, user4_id)
+                VALUES ('{task_id}', '{user_id}', '{ids[0]}', '{ids[1]}', '{ids[2]}')
+                """
+        execute_query(self.database_conn, query)
+        return True, "Запросы на участие успешно отправлены"
 
     def get_top_10_players(self) -> list:
         query = """
@@ -445,7 +476,6 @@ class Database:
                 DESC LIMIT 20
             """
         return execute_read_query(self.database_conn, query)
-
 
     def get_event_by_id(self, event_id):
         query = f"""
@@ -540,7 +570,7 @@ class Database:
                 """
         execute_query(self.database_conn, query)
         return True
-    
+
     def get_pending_duel(self, sender_id, receiver_id) -> int:
         query = f"""
                     SELECT id
@@ -550,12 +580,14 @@ class Database:
                 """
         res = execute_read_query(self.database_conn, query)
         if not res:
-            logging.error(f"Trying to initialize duel object while it does not exist in database.duels! Duel sender, receiver = {sender_id}, {receiver_id}")
+            logging.error(
+                f"Trying to initialize duel object while it does not exist in database.duels! Duel sender, receiver = {sender_id}, {receiver_id}")
             return -1
         if len(res) > 1:
-            logging.error(f"Trying to initialize duel object while it exisits more then once in database.duels! Duel sender, receiver = {sender_id}, {receiver_id}")
+            logging.error(
+                f"Trying to initialize duel object while it exisits more then once in database.duels! Duel sender, receiver = {sender_id}, {receiver_id}")
             return -1
-        
+
         return res[0][0]
 
     def load_armor_enchantments_perks(self, ench_id) -> list:

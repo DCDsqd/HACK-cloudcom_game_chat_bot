@@ -15,7 +15,7 @@ from duels import *  # this also imports database
 import random
 
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
-    MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID = range(11)
+    MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_MULTIPLAYER_ID = range(12)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -99,7 +99,7 @@ async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     if db.check_if_need_to_update_daily_tasks(user_id):
         db.regenerate_daily_tasks(user_id)
 
-    tasks = db.get_cur_user_tasks(user_id)
+    tasks = db.get_cur_user_tasks(user_id, False)
     task_labels = {
         'small': "Мелкое поручение",
         'medium': "Среднее поручение",
@@ -136,27 +136,58 @@ async def alone_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 
 async def multiplayer_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    multiplayer_tasks_keyboard = [["Дело особой важности", "Сбор ресурсов"], ["Назад"]]
-    tasks = db.get_tasks(1)
-    special_tasks = [task for task in tasks if task[6] == 'special']
-    random_tasks = [task for task in tasks if task[6] == 'random']
-    special_task = random.choice(special_tasks)
-    random_task = random.choice(random_tasks)
-    message = f"Доступные задания:\n\n" \
-              f"Дело особой важности:\n" \
-              f"Название: {special_task[1]}\n" \
-              f"Описание: {special_task[2]}\n" \
-              f"Сложность: {special_task[3]}\n" \
-              f"Награда опытом: {special_task[4]}\n" \
-              f"Награда предметом: {special_task[5]}\n\n" \
-              f"Сбор ресурсов (АФК):\n" \
-              f"Описание: {random_task[2]}\n" \
-              f"Сложность: {random_task[3]}\n" \
-              f"Награда опытом: {random_task[4]}\n" \
-              f"Награда предметом: {random_task[5]}\n\n"
-    markup = ReplyKeyboardMarkup(multiplayer_tasks_keyboard)
+    user_id = update.message.from_user.id
+    if db.check_if_need_to_update_daily_tasks(user_id):
+        db.regenerate_daily_tasks(user_id)
+
+    tasks = db.get_cur_user_tasks(user_id, True)
+    task_labels = {
+        'special': "Дело особой важности",
+        'random': "Сбор ресурсов"
+    }
+
+    message = f"Доступные ежедневные задания ({cur_date()}):\n\n"
+    no_tasks_available = True
+    for task_id, label in task_labels.items():
+        if tasks[task_id] != -1:
+            task = db.get_task_by_id(tasks[task_id])
+            message += f"{label}:\n" \
+                       f"Название: {task[1]}\n" \
+                       f"Описание: {task[2]}\n" \
+                       f"Сложность: {task[3]}\n" \
+                       f"Награда опытом: {task[4]}\n" \
+                       f"Награда предметом: {task[5]}\n\n"
+            no_tasks_available = False
+
+    if no_tasks_available:
+        message += 'К сожалению, на сегодня у Вас больше нет заданий.\n' \
+                   'Возвращайтесь завтра!'
+    else:
+        message += 'Какое задание хотите взять?'
+
+    all_tasks_labels = [label for task_id, label in task_labels.items() if tasks[task_id] != -1]
+    alone_tasks_keyboard = [all_tasks_labels[:2], all_tasks_labels[2:3], ["Назад"]] if len(all_tasks_labels) >= 2 else [
+        all_tasks_labels, ["Назад"]]
+
+    markup = ReplyKeyboardMarkup(alone_tasks_keyboard)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
     return MULTIPLAYER_TASK_CHOOSING
+
+
+async def get_special_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    friends = db.get_friend_list_ids(update.effective_chat.id)
+    text = "Ваш список друзей:\n"
+    for friend in friends:
+        text += str(friend) + "\n"
+    text += "\nВведите ID людей (от 1 до 3), которых хотите пригласить на задание\nВводите каждый ID с новой строки!"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    return GET_USER_FOR_MULTIPLAYER_ID
+
+
+async def get_ids_for_multiplayer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_ids = update.message.text
+    # Здесь нужно как-то получить id задания и пихнуть в функцию ниже
+    # db.add_multiplayer_participants(update.message.from_user.id, task_id user_ids)
 
 
 async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -427,6 +458,7 @@ game_handler = ConversationHandler(
         ],
         MULTIPLAYER_TASK_CHOOSING: [
             # ADD MORE FUNCTIONS
+            MessageHandler(filters.Regex("^Дело особой важности$"), get_special_task),
             MessageHandler(filters.Regex("^Назад$"), assignments),
         ],
         ARENA_CHOOSING: [
@@ -440,6 +472,10 @@ game_handler = ConversationHandler(
         ],
         GET_CHAT_ID: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_chat_id),
+            MessageHandler(filters.Regex("^Назад$"), arena),
+        ],
+        GET_USER_FOR_MULTIPLAYER_ID: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_ids_for_multiplayer),
             MessageHandler(filters.Regex("^Назад$"), arena),
         ],
     },
