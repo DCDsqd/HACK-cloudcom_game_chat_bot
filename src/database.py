@@ -366,7 +366,7 @@ class Database:
 
     def get_top_10_players(self) -> list:
         query = """
-                    SELECT * FROM users
+                    SELECT personal_username, username, exp FROM users
                     ORDER BY exp
                     DESC LIMIT 10
                 """
@@ -440,10 +440,12 @@ class Database:
     def get_20_closest_global_events(self) -> list:
         query = """
                 SELECT * FROM global_events
+                WHERE is_complited = 0
                 ORDER BY start_time
                 DESC LIMIT 20
             """
         return execute_read_query(self.database_conn, query)
+
 
     def get_event_by_id(self, event_id):
         query = f"""

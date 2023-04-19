@@ -1,3 +1,5 @@
+import logging
+
 from database import *
 from customization import regen_avatar
 from menu_chain import main_menu
@@ -23,6 +25,11 @@ EVENT_INPUT = 0
 TOTAL_VOTER_COUNT = 10
 
 
+# This function takes a ChatMemberUpdated object as input, which represents an update of a member's status in a chat.
+# It extracts whether there was a change in the member's status, and if so, whether the member was added or removed
+# from the chat. It returns a tuple of two boolean values, the first indicating whether the member was in the chat
+# before the update, and the second indicating whether the member is in the chat after the update. If there was no
+# change in status, the function returns None.
 def extract_status_change(chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
     status_change = chat_member_update.difference().get("status")
     old_is_member, new_is_member = chat_member_update.difference().get("is_member", (None, None))
@@ -45,16 +52,18 @@ def extract_status_change(chat_member_update: ChatMemberUpdated) -> Optional[Tup
     return was_member, is_member
 
 
+# This is a function that tracks changes in chats where the bot is a member, specifically when the bot is added or
+# removed from a group. It extracts information about the status change, the user responsible for the change,
+# and the chat in question. Depending on the status change, it adds or deletes the chat ID and title to/from the
+# database, respectively. It also logs the event using the Python logging module.
 async def track_chats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     result = extract_status_change(update.my_chat_member)
     if result is None:
         return
     was_member, is_member = result
 
-    # Let's check who is responsible for the change
     cause_name = update.effective_user.full_name
 
-    # Handle chat types differently:
     chat = update.effective_chat
     if chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
         if not was_member and is_member:
@@ -87,7 +96,7 @@ async def rating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     res = db.get_top_10_players()
     events = "Топ-10 игроков по опыту:\n"
     for row in res:
-        event = f"<b>{row[2]} ({row[1]}) - {row[5]}</b>\n"
+        event = f"<b>{row[0]} ({row[1]}) - {row[2]}</b>\n"
         events += event
     await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
 
@@ -133,8 +142,7 @@ async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     answer = update.poll_answer
     poll_id = answer['poll_id']
-    option_id = answer['option_ids'][0]
-    col = 'for' if option_id == 0 else 'against'
+    col = 'for' if answer['option_ids'][0] == 0 else 'against'
     db.increment_poll_votes(poll_id, col)
     answered_poll = context.bot_data[answer.poll_id]
     try:
@@ -276,12 +284,14 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 EVENT_CHOOSING, GET_EVENT_ID, EVENT_ID_TO_APPROVE = range(3)
 events_keyboard = [['Просмотр событий', 'Принять участие'], ['Подтвердить выполнение'], ['Отмена']]
+back_keyboard = [['Назад']]
+events_markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=False)
+back_markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
 
 
-async def events_func(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def irl_events_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = "Выберите действие"
-    markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=False)
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=events_markup)
     return EVENT_CHOOSING
 
 
@@ -291,7 +301,7 @@ async def events_func(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 # the results and formats each event's data as an HTML string.
 async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     res = db.get_20_closest_global_events()
-    events = "Последние 20 событий:\n\n"
+    events = "Ближайшие 20 событий:\n\n"
     for row in res:
         event = f"<b>{row[1]}</b>\n"
         event += f"<i>{row[2]}</i>\n"
@@ -302,7 +312,8 @@ async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
 
 
-async def get_event_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def send_closest_events_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+
     res = db.get_20_closest_global_events()
     res = sorted(res, key=lambda x: x[3])
     events = "Ближайшие доступные события:\n\n"
@@ -315,31 +326,30 @@ async def get_event_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             event += f"<u>Длительность:</u> {row[4]}\n"
             event += f"<u>Награда (опыт):</u> {row[5]}\n"
             events += event + "\n"
-    events += "\n\n Введите ID события, в котором хотите принять участие"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
+    events += "\nВведите ID события, в котором хотите принять участие"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML',
+                                   reply_markup=back_markup)
     return GET_EVENT_ID
 
 
 async def add_participant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
     try:
         event_id = int(update.message.text)
     except ValueError:
         await update.message.reply_text(f"Требуется ввести ID события. Полученный текст не является ID!",
-                                        reply_markup=markup)
+                                        reply_markup=events_markup)
         return EVENT_CHOOSING
     db.update_participants_in_global_event(event_id, update.message.from_user.id)
     await update.message.reply_text(f"Теперь вы учавствуете в событии с ID {event_id}",
-                                    reply_markup=markup)
+                                    reply_markup=events_markup)
     return EVENT_CHOOSING
 
 
 async def complete_event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
     user_events = db.get_user_events(update.message.from_user.id)
     if len(user_events) == 0:
         await update.message.reply_text(f"Вы не учавствуете ни в одном событии!",
-                                        reply_markup=markup)
+                                        reply_markup=events_markup)
         return EVENT_CHOOSING
     events = "Доступные мероприятия:\n\n"
     for row in user_events:
@@ -351,28 +361,28 @@ async def complete_event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         event += f"<u>Награда (опыт):</u> {row[5]}\n"
         events += event + "\n"
     events += "\nВведите ID мероприятия, выполнение которого хотите подтвердить и приложите фото выполненного задания."
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML')
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=events, parse_mode='HTML',
+                                   reply_markup=back_markup)
     return EVENT_ID_TO_APPROVE
 
 
-async def send_approve(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=True)
+async def send_event_approval_request(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
-    message_id = message.id
     try:
         event_id = int(message.caption)
-    except Exception:
+    except Exception as e:
         await update.message.reply_text(f"Требуется ввести ID события и приложить фото!",
-                                        reply_markup=markup)
+                                        reply_markup=events_markup)
+        logging.info("The user did not attach a photo or did not enter the event ID: " + str(e))
         return EVENT_CHOOSING
     admins = db.get_admins_id()
     event = db.get_event_by_id(event_id)
-    event_text = f"<b>ID: {event[0][0]}</b>\n"
-    event_text += f"<b>{event[0][1]}</b>\n"
-    event_text += f"<i>{event[0][2]}</i>\n"
-    event_text += f"<u>Начало:</u> {event[0][3]}\n"
-    event_text += f"<u>Длительность:</u> {event[0][4]}\n"
-    event_text += f"<u>Награда (опыт):</u> {event[0][5]}\n"
+    event_text = f"<b>ID: {event[0][0]}</b>\n" \
+                 f"<b>{event[0][1]}</b>\n" \
+                 f"<i>{event[0][2]}</i>\n" \
+                 f"<u>Начало:</u> {event[0][3]}\n" \
+                 f"<u>Длительность:</u> {event[0][4]}\n" \
+                 f"<u>Награда (опыт):</u> {event[0][5]}\n"
     keyboard = [
         [
             InlineKeyboardButton("✅ Подтвердить", callback_data="accept_event"),
@@ -384,9 +394,11 @@ async def send_approve(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         await context.bot.send_message(chat_id=admin[0],
                                        text=event_text,
                                        parse_mode='HTML')
-        await context.bot.forward_message(admin[0], update.effective_chat.id, message_id)
+        await context.bot.forward_message(admin[0], update.effective_chat.id, message.id)
         await context.bot.send_message(chat_id=admin[0],
-                                       text=f"Пользователь с ID {update.effective_chat.id} выполнил мероприятие # {event_id} с наградой {event[0][5]} опыта.\n\nПодтверждаете ли Вы выполнение данного мероприятия?",
+                                       text=f"Пользователь с ID {update.effective_chat.id} выполнил мероприятие "
+                                            f"# {event_id} с наградой {event[0][5]} опыта.\n\n"
+                                            f"Подтверждаете ли Вы выполнение данного мероприятия?",
                                        reply_markup=reply_markup)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Задание успешно отправленно на проверку!")
     return EVENT_CHOOSING
@@ -411,8 +423,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         event_id = re.search(r"#\s+(\d+)", query.message.text).group(1)
         if db.is_complited(event_id):
             await query.edit_message_text(text=f"Другой администратор уже подтвердил выполнение этого задания!")
-        await query.edit_message_text(text=f"Вы отклонили задание!")
-        await context.bot.send_message(chat_id=sender_id, text="Администратор отклонил выполнение задания!")
+        else:
+            await query.edit_message_text(text=f"Вы отклонили задание!")
+            await context.bot.send_message(chat_id=sender_id, text="Администратор отклонил выполнение задания!")
     elif query.data == "accept_duel":
         # init_duel(Duel(duel_id, sender_id, receiver_id))
         # Здесь нужно сделать добавление в бд статуса "принято"
@@ -422,18 +435,21 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 events_handler = ConversationHandler(
-    entry_points=[CommandHandler("events", events_func)],
+    entry_points=[CommandHandler("events", irl_events_menu),
+                  MessageHandler(filters.Regex("^События$"), irl_events_menu)],
     states={
         EVENT_CHOOSING: [
             MessageHandler(filters.Regex("^Просмотр событий$"), get_events),
-            MessageHandler(filters.Regex("^Принять участие$"), get_event_id),
+            MessageHandler(filters.Regex("^Принять участие$"), send_closest_events_message),
             MessageHandler(filters.Regex("^Подтвердить выполнение$"), complete_event)
         ],
         GET_EVENT_ID: [
-            MessageHandler(filters.TEXT & ~filters.COMMAND, add_participant),
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), add_participant),
+            MessageHandler(filters.Regex("^Назад$"), irl_events_menu),
         ],
         EVENT_ID_TO_APPROVE: [
-            MessageHandler((filters.TEXT | filters.PHOTO) & ~filters.COMMAND, send_approve),
+            MessageHandler((filters.TEXT | filters.PHOTO) & ~(filters.COMMAND | filters.Regex("^Назад$")), send_event_approval_request),
+            MessageHandler(filters.Regex("^Назад$"), irl_events_menu),
         ],
     },
     fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
