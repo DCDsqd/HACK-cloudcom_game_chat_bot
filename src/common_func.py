@@ -265,7 +265,7 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     user_id = message.from_user.id
     username = message.from_user.username
-    db_data = db.get_user_info()
+    db_data = db.get_user_info(user_id)
     message = "Ваш профиль:\n\n" \
               f"Игровое имя: {db_data[0][0]}\n" \
               f"ID: {user_id}\n" \
