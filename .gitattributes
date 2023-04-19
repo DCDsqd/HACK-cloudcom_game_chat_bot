@@ -2,3 +2,6 @@
 
 *.sql linguist-language=SQLPL
 *.qss linguist-language=CSS
+*.h linguist-language=C++
+*.hpp linguist-language=C++
+*.cpp linguist-language=C++
