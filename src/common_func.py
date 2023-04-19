@@ -1,11 +1,14 @@
-import logging
-
 from database import *
 from customization import regen_avatar
 from menu_chain import main_menu
+from duels import *
+from admin import parse_new_event_info_string
+
 import os
 import re
-from telegram import Update, ReplyKeyboardRemove, Chat, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+import logging
+import threading
+from telegram import Update, ReplyKeyboardRemove, Chat, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember, ChatMemberUpdated
 from telegram.ext import (
     ContextTypes,
     ConversationHandler,
@@ -15,11 +18,7 @@ from telegram.ext import (
 )
 from io import BytesIO
 from typing import Optional, Tuple
-
-from admin import parse_new_event_info_string
 from PIL import Image
-
-from telegram import ChatMember, ChatMemberUpdated
 
 EVENT_INPUT = 0
 TOTAL_VOTER_COUNT = 10
@@ -427,9 +426,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await query.edit_message_text(text=f"Вы отклонили задание!")
             await context.bot.send_message(chat_id=sender_id, text="Администратор отклонил выполнение задания!")
     elif query.data == "accept_duel":
-        # init_duel(Duel(duel_id, sender_id, receiver_id))
-        # Здесь нужно сделать добавление в бд статуса "принято"
+        duel_id = db.get_pending_duel(sender_id, receiver_id)
         await query.edit_message_text(text=f"Игрок с ID {receiver_id} принял приглашение на дуэль!")
+        init_duel(Duel(duel_id, sender_id, receiver_id))
     elif query.data == "reject_duel":
         await query.edit_message_text(text=f"Вы отклонили приглашение на дуэль!")
 

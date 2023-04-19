@@ -145,6 +145,7 @@ class Duel:
         self.id = duel_id_
         self.turn = 1  # 1 for sender turn, 2 for receiver turn
         self.turn_counter = 0
+        self.time_left_to_make_turn = 30  # in seconds
 
         self.sender_player = PlayerInGame(sender_id_, False)
         self.receiver_player = PlayerInGame(receiver_id_, False)
@@ -233,3 +234,13 @@ def kill_duel(duel_id: int) -> None:
     if killed_duel.status() == 0:
         logging.warning("kill_duel() call on ongoing duel with Duel::status() == 0!")
     db.finish_duel(duel_id, killed_duel.status())
+
+# Returns list of Duel objects in which time to make current turn was in fact exceeded
+# To every other element in array applies time decrement
+def decrease_time_to_all_duels() -> list[Duel]:
+    expired_duels = []
+    for duel_id, duel_obj in duels_ongoing_dict.items():
+        duel_obj.time_left_to_make_turn -= 1
+        if duel_obj.time_left_to_make_turn < 1:
+            expired_duels.append(duel_obj)
+    return expired_duels

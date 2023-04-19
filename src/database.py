@@ -540,6 +540,23 @@ class Database:
                 """
         execute_query(self.database_conn, query)
         return True
+    
+    def get_pending_duel(self, sender_id, receiver_id) -> int:
+        query = f"""
+                    SELECT id
+                    WHERE sender_id = '{sender_id}' AND 
+                          receiver_id = '{receiver_id}' AND
+                          status = 'pending';
+                """
+        res = execute_read_query(self.database_conn, query)
+        if not res:
+            logging.error(f"Trying to initialize duel object while it does not exist in database.duels! Duel sender, receiver = {sender_id}, {receiver_id}")
+            return -1
+        if len(res) > 1:
+            logging.error(f"Trying to initialize duel object while it exisits more then once in database.duels! Duel sender, receiver = {sender_id}, {receiver_id}")
+            return -1
+        
+        return res[0][0]
 
     def load_armor_enchantments_perks(self, ench_id) -> list:
         query = f"""
