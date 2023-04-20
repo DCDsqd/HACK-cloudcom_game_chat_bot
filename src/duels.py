@@ -12,6 +12,39 @@ class TurnType(Enum):
     CONSUME = 3
 
 
+class MagicAction:
+    def __init__(self,
+                 target_nick,  # '1' for every teammate, '-1' for every enemy
+                 armor_repair,
+                 health_heal,
+                 stun,
+                 miss_chance,
+                 no_damage):
+        self.target_nick = target_nick
+        self.armor_repair = armor_repair
+        self.health_heal = health_heal
+        self.stun = stun
+        self.miss_chance = miss_chance
+        self.no_damage = no_damage
+
+
+def switch_magic_action_name_to_action_obj(magic_action_target: str, magic_action_name: str) -> MagicAction:
+    if magic_action_name == 'Каменная броня':
+        return MagicAction(magic_action_target, 40, 0, 0, 0, 0)
+    elif magic_action_name == 'Первородная благодетель':
+        return MagicAction(magic_action_target, 0, 60, 0, 0, 0)
+    elif magic_action_name == 'Плотная кожа':
+        return MagicAction(magic_action_target, 0, 35, 0, 0, 0)
+    elif magic_action_name == 'Проводник':
+        return MagicAction(magic_action_target, 0, 0, 1, 0, 0)
+    elif magic_action_name == 'Проницатель':
+        return MagicAction(magic_action_target, 0, 0, 0, 1, 0)
+    elif magic_action_name == 'Мраморное касание':
+        return MagicAction(magic_action_target, 0, 0, 1, 0, 1)
+    else:
+        logging.error("switch_magic_action_name_to_action_obj() function got unknown magic_action_name!")
+
+
 class Attack:
     def __init__(self,
                  weapon,
@@ -216,10 +249,18 @@ class PlayerInGame:
 
 
 class Turn:
-    def __init__(self, turn_maker_, turn_type_: TurnType, target_):
+    def __init__(self, turn_maker_, turn_type_: TurnType, target_, magic_action_name='', magic_action_target=''):
+        if magic_action_target == '' and turn_type_ == TurnType.MAGIC_ATTACK:
+            magic_action_target = db.get_user_nick(turn_maker_)
+
         self.turn_maker = turn_maker_
         self.turn_type = turn_type_
         self.target = target_
+
+        # Magic attack field, None if turn_type != MAGIC_ATTACK
+        self.magic_action = None
+        if self.turn_type != TurnType.MAGIC_ATTACK:
+            self.magic_action = switch_magic_action_name_to_action_obj(magic_action_target, magic_action_name)
 
 
 class Duel:
@@ -276,7 +317,7 @@ class Duel:
                                 turn.turn_maker = {turn.turn_maker}, turn.target = {turn.target}""")
             pass
 
-        if turn.turn_type == TurnType.PHYSICAL_ATTACK:
+        if turn.turn_type == TurnType.PHYSICAL_ATTACK or turn.turn_type == TurnType.MAGIC_ATTACK:
             attack = Attack(attacker.weapon,
                             0,
                             turn.turn_type,
@@ -325,8 +366,6 @@ class Duel:
                                             Броня: {attacker.armor_state}.
                                         """))
 
-        elif turn.turn_type == TurnType.MAGIC_ATTACK:
-            pass
         elif turn.turn_type == TurnType.CONSUME:
             pass
         else:
@@ -334,7 +373,7 @@ class Duel:
 
         self.turn_counter += 1
         if not defender.is_stuned:
-            self.turn = 3 - self.turn
+            self.turn = 3 - self.turn  # Turn switch
         else:
             self.full_log.append(('c', f"""
                                             Игрок {defender.user_nick} пропускает свой ход, из-за того, 
