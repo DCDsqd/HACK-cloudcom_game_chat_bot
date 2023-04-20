@@ -468,6 +468,10 @@ class Database:
         query = f"SELECT personal_username, game_class, exp, game_subclass FROM users WHERE id={user_id}"
         return execute_read_query(self.database_conn, query)
 
+    def get_user_nick(self, user_id) -> str:
+        query = f"SELECT personal_username FROM users WHERE id={user_id}"
+        return execute_read_query(self.database_conn, query)[0][0]
+
     def get_20_closest_global_events(self) -> list:
         query = """
                 SELECT * FROM global_events

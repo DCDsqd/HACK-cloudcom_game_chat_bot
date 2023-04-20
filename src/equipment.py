@@ -81,4 +81,4 @@ class Weapon:
         self.enchantments_list = weapon_enchants_id_to_objects_list(str(info_list[1]).split(','))
         self.name = info_list[2]
         self.strength = info_list[3]
-
+        self.element_strength = 0  # TODO: Fill this

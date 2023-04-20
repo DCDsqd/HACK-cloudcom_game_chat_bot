@@ -12,7 +12,8 @@ class TurnType(Enum):
 
 class Attack:
     def __init__(self,
-                 base_attack_strength,
+                 weapon,
+                 magic_dmg,
                  turn_type: TurnType,
                  physical_dmg_incr,
                  stun_chance,
@@ -20,18 +21,70 @@ class Attack:
                  bleeding_chance,
                  armor_ignore_chance,
                  vampirism_perc,
-                 element_dmg_incr
+                 element_dmg_incr,
+                 full_log: list
                  ):
         self.physical_dmg = round(
-            base_attack_strength.strength + base_attack_strength.strength * physical_dmg_incr / 100) if \
+            weapon.strength + weapon.strength * physical_dmg_incr / 100) if \
             turn_type == TurnType.PHYSICAL_ATTACK else 0
+        full_log.append(('d',
+                         f"Урон физической атаки = {self.physical_dmg} ({weapon.strength} + {physical_dmg_incr / 100}%"))
+
         self.element_dmg = 0  # TODO: Figure out how to fill this field
-        self.magic_dmg = base_attack_strength.strength if turn_type == TurnType.MAGIC_ATTACK else 0
-        self.is_stun = 1 if random.randint(1, 100) <= stun_chance else 0
-        self.is_crit = 1 if random.randint(1, 100) <= crit_chance else 0
-        self.is_bleeding = 1 if random.randint(1, 100) <= bleeding_chance else 0
-        self.has_ignored_armor = 1 if random.randint(1, 100) <= armor_ignore_chance else 0
+        full_log.append(('d',
+                         f"Дополнительный урон стихий = {self.element_dmg} ({weapon.element_strength} + {element_dmg_incr / 100}%"))
+
+        self.magic_dmg = magic_dmg if turn_type == TurnType.MAGIC_ATTACK else 0
+        full_log.append(('d',
+                         f"Магический урон = {self.magic_dmg}"))
+
+        self.is_stun = 0
+        if random.randint(1, 100) <= stun_chance:
+            full_log.append(('d',
+                             f"Атака является станом! Шанс стана был = {stun_chance / 100}%"))
+            full_log.append(('c',
+                             f"Атакующий игрок наносит стан сопернику!"))
+            self.is_stun = 1
+        else:
+            full_log.append(('d',
+                             f"Атака не является станом. Шанс стана был = {stun_chance / 100}%"))
+
+        self.is_crit = 0
+        if turn_type == TurnType.PHYSICAL_ATTACK and random.randint(1, 100) <= crit_chance:
+            full_log.append(('d',
+                             f"Атака является критом! Шанс крита был = {crit_chance / 100}%"))
+            full_log.append(('c',
+                             f"Атакующий игрок наносит критическую атаку по сопернику!"))
+            self.is_crit = 1
+        else:
+            full_log.append(('d',
+                             f"Атака не является критом. Шанс крита был = {crit_chance / 100}%"))
+
+        self.is_bleeding = 0
+        if random.randint(1, 100) <= bleeding_chance:
+            full_log.append(('d',
+                             f"Атака вызвала кровотечение! Шанс кровотечения был = {bleeding_chance / 100}%"))
+            full_log.append(('c',
+                             f"Атакующий игрок вызывает кровотечение у соперника!"))
+            self.is_bleeding = 1
+        else:
+            full_log.append(('d',
+                             f"Атака не вызвала кровотечения. Шанс кровотечения был = {bleeding_chance / 100}%"))
+
+        self.has_ignored_armor = 0
+        if random.randint(1, 100) <= armor_ignore_chance:
+            full_log.append(('d',
+                             f"Атака игнорирует вражескую броню! Шанс игнора брони был = {armor_ignore_chance / 100}%"))
+            full_log.append(('c',
+                             f"Атакующий игрок за счет своих способностей игнорирует вражескую броню!"))
+            self.has_ignored_armor = 1
+        else:
+            full_log.append(('d',
+                             f"Атака не игнорирует вражескую броню. Шанс игнора брони был = {armor_ignore_chance / 100}%"))
+
         self.vampirism_perc = vampirism_perc
+        full_log.append(('d',
+                         f"Процент вамперизма атаки = {vampirism_perc}"))
 
 
 class Defence:
@@ -42,15 +95,22 @@ class Defence:
                  magic_damage_decr,
                  element_damage_decr,
                  no_damage_chance,
-                 mirror_damage_perc
+                 mirror_damage_perc,
+                 full_log: list
                  ):
         self.physical_dmg = attack.physical_dmg
         self.element_dmg = attack.element_dmg
         self.magic_dmg = attack.magic_dmg
         self.is_crit = attack.is_crit
         # Critical attack increases physical damage by 1.5 times
+        physical_damage_crit_mult = 1.5
         if self.is_crit:
-            self.physical_dmg = round(self.physical_dmg * 1.5)
+            self.physical_dmg = round(self.physical_dmg * physical_damage_crit_mult)
+            full_log.append(('d',
+                             f"""
+                                Так как атака является критической, физический урон увеличен в {physical_damage_crit_mult} раз.
+                                Новое значение физического урона = {self.physical_dmg}.
+                             """))
         self.is_stun = attack.is_stun
         self.is_bleeding = attack.is_bleeding
         if armor_state > 0 and not self.is_stun and not attack.has_ignored_armor:
@@ -58,10 +118,22 @@ class Defence:
                 self.physical_dmg = 0
                 self.element_dmg = 0
                 self.magic_dmg = 0
+                full_log.append(('c', f"""
+                                      Защищающийся игрок полностью игнорирует входящий урон за счет своих способностей!
+                                      """))
             else:
                 self.physical_dmg -= round(attack.physical_dmg * physical_damage_decr / 100)
+                full_log.append(('d',
+                                 f"Урон физической атаки после защиты = {self.physical_dmg} ({attack.physical_dmg} - {physical_damage_decr / 100}%"))
+
                 self.element_dmg -= round(attack.element_dmg * element_damage_decr / 100)
+                full_log.append(('d',
+                                 f"Доп урон стихий после защиты = {self.element_dmg} ({attack.element_dmg} - {element_damage_decr / 100}%"))
+
                 self.magic_dmg -= round(attack.magic_dmg * magic_damage_decr / 100)
+                full_log.append(('d',
+                                 f"Урон магической атаки после защиты = {self.magic_dmg} ({attack.magic_dmg} - {magic_damage_decr / 100}%"))
+
         weapon_damage = self.physical_dmg + self.element_dmg
         self.combined_damage = weapon_damage + self.magic_dmg
         self.vampirism_cashback = round(weapon_damage * attack.vampirism_perc / 100)
@@ -69,9 +141,13 @@ class Defence:
 
 
 class PlayerInGame:
-    def __init__(self, user_id_, beer_buff: bool):
+    def __init__(self, user_id_, beer_buff: bool, full_log: list):
         self.user_id = user_id_
-        self.health = 100 if not beer_buff else 110
+        self.user_nick = db.get_user_nick(self.user_id)
+        self.health = 100
+        if beer_buff:
+            self.health += 10
+            full_log.append(('c', f"Игрок {self.user_nick} получает бафф в 10 очков здоровья от выпитого пива перед боем!"))
         self.is_bleeding = False
 
         # Armor fields
@@ -83,6 +159,7 @@ class PlayerInGame:
         self.element_damage_decr = 0
         self.no_damage_chance = 0
         self.apply_armor_bonuses()
+        full_log.append(('d', f"Броня игрока {self.user_nick} = {self.armor.name}"))
 
         # Weapon fields
         self.weapon = Weapon(db.get_user_active_weapon_meta_id(self.user_id))
@@ -94,6 +171,7 @@ class PlayerInGame:
         self.vampirism_perc = 0
         self.element_dmg_incr = 0
         self.apply_weapon_bonuses()
+        full_log.append(('d', f"Оружие игрока {self.user_nick} = {self.weapon.name}"))
 
     def is_dead(self) -> bool:
         return self.health <= 0
@@ -126,9 +204,10 @@ class PlayerInGame:
     # Checks if Player has bleeding effect on him and applies damage if so
     # Returns True if damage was applied, False otherwise
     # NOTE: Bleeding effect always applies directly to health ignoring armor
-    def apply_bleeding_damage(self) -> bool:
+    def apply_bleeding_damage(self, full_log: list) -> bool:
         if self.is_bleeding:
             self.health -= 5
+            full_log.append(('c', f"Игрок {self.user_nick} получает урон от активного кровотечения! Здоровье: {self.health}"))
             return True
         return False
 
@@ -142,20 +221,48 @@ class Turn:
 
 class Duel:
     def __init__(self, duel_id_, sender_id_, receiver_id_):
+
+        # This is a list that hold all messages that were generated through-out the duel
+        # First argument is responsible for type of the message
+        # It could be:
+        # - 'c' = critical message, that'll be displayed to the user
+        # - 'd' = debug message, that won't be visible to user, but could be used to fully understand what's going on
+        # Second argument is the actual message
+        # This list is being passed through lots of functions to insert messages
+        self.full_log = []
+
+        self.full_log.append(('d', f"""
+                                        Конструктор дуэли начал работу. 
+                                        Sender_id = {sender_id_},
+                                        Receiver_id = {receiver_id_},
+                                        Duel_id = {duel_id_}
+                                    """))
+
         self.id = duel_id_
         self.turn = 1  # 1 for sender turn, 2 for receiver turn
         self.turn_counter = 0
         self.time_left_to_make_turn = 30  # in seconds
 
-        self.sender_player = PlayerInGame(sender_id_, False)
-        self.receiver_player = PlayerInGame(receiver_id_, False)
+        self.sender_player = PlayerInGame(sender_id_, False, self.full_log)
+        self.receiver_player = PlayerInGame(receiver_id_, False, self.full_log)
 
-        self.full_log = "Дуэль началась!"
+        self.full_log.append(('c', "Дуэль началась!"))
+        self.full_log.append(('d', f"""
+                                        Конструктор дуэли завершил работу. 
+                                        Sender_id = {self.sender_player.user_id},
+                                        Receiver_id = {self.receiver_player.user_id},
+                                        Duel_id = {self.id}
+                                    """))
 
     def process_turn(self, turn: Turn) -> None:
 
         attacker = self.sender_player if turn.target == self.receiver_player.user_id else self.receiver_player
         defender = self.sender_player if turn.turn_maker == self.receiver_player.user_id else self.receiver_player
+
+        self.full_log.append(('d', f"""
+                                    Новый ход. Нападает - {attacker.user_nick}, защищается - {defender.user_nick}. 
+                                    Turn type = {turn.turn_type.name}.
+                            """))
 
         if turn.target != defender.user_id:
             logging.warning(f"""turn.target != defender.user_id in duel during process_turn() call, 
@@ -167,7 +274,8 @@ class Duel:
             pass
 
         if turn.turn_type == TurnType.PHYSICAL_ATTACK:
-            attack = Attack(attacker.weapon.strength,
+            attack = Attack(attacker.weapon,
+                            0,
                             turn.turn_type,
                             attacker.physical_dmg_incr,
                             attacker.stun_chance,
@@ -175,7 +283,8 @@ class Duel:
                             attacker.bleeding_chance,
                             attacker.armor_ignore_chance,
                             attacker.vampirism_perc,
-                            attacker.element_dmg_incr
+                            attacker.element_dmg_incr,
+                            self.full_log
                             )
 
             defence = Defence(attack,
@@ -184,19 +293,37 @@ class Duel:
                               defender.magic_damage_decr,
                               defender.element_damage_decr,
                               defender.no_damage_chance,
-                              defender.mirror_dmg_perc
+                              defender.mirror_dmg_perc,
+                              self.full_log
                               )
 
             defender.apply_damage(defence.combined_damage)
-            if defender.apply_bleeding_damage():
-                self.full_log += f"\nЗащищающийся игрок {defender.user_id} получает 5 урона из-за кровотечения!"
-            attacker.health = max(attacker.health + defence.vampirism_cashback, 100)
-            attacker.apply_damage(defence.mirror_dmg)
+            self.full_log.append(('c', f"""
+                                            Игрок {defender.user_nick} получает {defence.combined_damage} урона! 
+                                            Здоровье: {defender.health}. 
+                                            Броня: {defender.armor_state}.
+                                        """))
 
-            # TODO: Apply bleeding effect here smh
+            defender.apply_bleeding_damage(self.full_log)
+
+            attacker.health = max(attacker.health + defence.vampirism_cashback, 100)
+            self.full_log.append(('c', f"""
+                                            Игрок {attacker.user_nick} получает {defence.vampirism_cashback} здоровья 
+                                            от нанесенного урона за счёт своих способностей!
+                                            Здоровье: {attacker.health}. 
+                                            Броня: {attacker.armor_state}.
+                                        """))
+
+            attacker.apply_damage(defence.mirror_dmg)
+            self.full_log.append(('c', f"""
+                                            Игрок {attacker.user_nick} получает {defence.mirror_dmg} обратного урона 
+                                            за счёт способностей оппонента!
+                                            Здоровье: {attacker.health}. 
+                                            Броня: {attacker.armor_state}.
+                                        """))
 
         elif turn.turn_type == TurnType.MAGIC_ATTACK:
-            pass  #
+            pass
         elif turn.turn_type == TurnType.CONSUME:
             pass
         else:
@@ -204,6 +331,9 @@ class Duel:
 
         self.turn_counter += 1
         self.turn = 3 - self.turn
+        self.full_log.append(('d', f"""
+                                        Смена хода. self.turn = {self.turn}
+                                    """))
 
     # Returns current status of the duel:
     # 0 - if duel is still going on
