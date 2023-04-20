@@ -472,6 +472,28 @@ async def help_me(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
 
 
+def start_duels_checking_coroutine():
+    threading_event_duels = threading.Event()
+    manage_expired_duels(threading_event_duels)
+    logging.info("Duels checking coroutine started")
+
+
+def manage_expired_duels(threading_event_duels) -> None:
+    # logging.info("Entered duels checking coroutine")
+    expired_duels_list = decrease_time_to_all_duels()
+    if expired_duels_list:
+        info = "Found expired duels with ids = "
+        for duel in expired_duels_list:
+            info += str(duel.id)
+            info += ";"
+        logging.info(info)
+
+    # Здесь нужно будет обработать список дуэлей, в которых текущий игрок не успел сделать ход (т.е. анлаки)
+    if not threading_event_duels.is_set():
+        # Call the function again in 1 second
+        threading.Timer(1, manage_expired_duels, [threading_event_duels]).start()
+
+
 # Требуемая функция на этапе разработки, потом нужно будет убрать
 async def del_keyboard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_message(chat_id=update.effective_chat.id, text='Клавиатура удалена!',
