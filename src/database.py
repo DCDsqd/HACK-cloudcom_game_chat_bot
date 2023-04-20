@@ -534,7 +534,7 @@ class Database:
                           sender_id='{receiver_id}'    OR
                           receiver_id='{receiver_id}'  OR
                           receiver_id='{sender_id}')   AND
-                          status = 'ongoing'
+                          status != 'finished'
                 """
         res = execute_read_query(self.database_conn, query)
 
@@ -551,8 +551,8 @@ class Database:
 
     def start_duel(self, duel_id) -> None:
         query = f"""
-                    UPDATE duels
-                    SET status = ongoing,
+                    UPDATE duels 
+                    SET status = 'ongoing' 
                     WHERE id = '{duel_id}';
                 """
         execute_query(self.database_conn, query)
@@ -573,9 +573,9 @@ class Database:
 
     def get_pending_duel(self, sender_id, receiver_id) -> int:
         query = f"""
-                    SELECT id
+                    SELECT id FROM duels 
                     WHERE sender_id = '{sender_id}' AND 
-                          receiver_id = '{receiver_id}' AND
+                          receiver_id = '{receiver_id}' AND 
                           status = 'pending';
                 """
         res = execute_read_query(self.database_conn, query)
@@ -660,11 +660,17 @@ class Database:
         return chats
 
     def get_user_active_weapon_meta_id(self, user_id) -> int:
-        query = f"SELECT active_weapon_meta_id FROM users;"
+        query = f"""
+                    SELECT active_weapon_meta_id FROM users 
+                    WHERE id = '{user_id}';
+                """
         return execute_read_query(self.database_conn, query)[0][0]
 
     def get_user_active_armor_meta_id(self, user_id) -> int:
-        query = f"SELECT active_armor_meta_id FROM users;"
+        query = f"""
+                    SELECT active_armor_meta_id FROM users 
+                    WHERE id = '{user_id}';
+                """
         return execute_read_query(self.database_conn, query)[0][0]
 
     # Only weapons and armor ids for @meta_id are allowed

@@ -77,7 +77,6 @@ class PlayerInGame:
         # Armor fields
         self.armor = Armor(db.get_user_active_armor_meta_id(self.user_id))
         self.armor_state = self.armor.strength
-        self.apply_armor_bonuses()
         self.mirror_dmg_perc = 0
         self.physical_damage_decr = 0
         self.magic_damage_decr = 0
@@ -110,7 +109,7 @@ class PlayerInGame:
 
     def apply_weapon_bonuses(self) -> None:
         for ench in self.weapon.enchantments_list:
-            self.physical_dmg_incr += ench.physical_damage_incr
+            self.physical_dmg_incr += ench.physical_dmg_incr
             self.stun_chance += ench.stun_chance
             self.crit_chance += ench.crit_chance
             self.bleeding_chance += ench.bleeding_chance
@@ -132,6 +131,7 @@ class PlayerInGame:
             self.health -= 5
             return True
         return False
+
 
 class Turn:
     def __init__(self, turn_maker_, turn_type_: TurnType, target_):
@@ -234,6 +234,7 @@ def kill_duel(duel_id: int) -> None:
     if killed_duel.status() == 0:
         logging.warning("kill_duel() call on ongoing duel with Duel::status() == 0!")
     db.finish_duel(duel_id, killed_duel.status())
+
 
 # Returns list of Duel objects in which time to make current turn was in fact exceeded
 # To every other element in array applies time decrement

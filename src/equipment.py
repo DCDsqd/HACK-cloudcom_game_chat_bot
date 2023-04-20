@@ -14,7 +14,7 @@ class ArmorEnchantment:
         self.id = id_
         info_list = db.load_armor_enchantments_perks(self.id)
         self.name = info_list[0]
-        self.mirror_dmg = info_list[1]
+        self.mirror_dmg_perc = info_list[1]
         self.physical_damage_decr = info_list[2]
         self.magic_damage_decr = info_list[3]
         self.element_damage_decr = info_list[4]
@@ -32,7 +32,7 @@ class WeaponEnchantment:
         self.crit_chance = info_list[3]
         self.bleeding_chance = info_list[4]
         self.armor_ignore_chance = info_list[5]
-        self.vampirism = info_list[6]
+        self.vampirism_perc = info_list[6]
         self.element_dmg_incr = info_list[7]
 
 
@@ -51,7 +51,7 @@ def init_all_enchantments() -> None:
 def armor_enchants_id_to_objects_list(enchants_ids: list) -> list:
     result_list = []
     for i in enchants_ids:
-        result_list.append(armor_enchantments_dict[i])
+        result_list.append(armor_enchantments_dict[int(i)])
     return result_list
 
 
@@ -59,7 +59,7 @@ def armor_enchants_id_to_objects_list(enchants_ids: list) -> list:
 def weapon_enchants_id_to_objects_list(enchants_ids: list) -> list:
     result_list = []
     for i in enchants_ids:
-        result_list.append(weapon_enchantments_dict[i])
+        result_list.append(weapon_enchantments_dict[int(i)])
     return result_list
 
 

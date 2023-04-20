@@ -427,8 +427,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await context.bot.send_message(chat_id=sender_id, text="Администратор отклонил выполнение задания!")
     elif query.data == "accept_duel":
         duel_id = db.get_pending_duel(sender_id, receiver_id)
-        await query.edit_message_text(text=f"Игрок с ID {receiver_id} принял приглашение на дуэль!")
-        init_duel(Duel(duel_id, sender_id, receiver_id))
+        if duel_id == -1:  # Duel was not found or other error occurred during db query execution, check logs
+            await query.edit_message_text(text=f"Что-то пошло не так. Попробуйте еще раз.")
+        else:
+            await query.edit_message_text(text=f"Игрок с ID {receiver_id} принял приглашение на дуэль!")
+            new_duel_obj = Duel(duel_id, sender_id, receiver_id)
+            init_duel(new_duel_obj)
+            logging.info(f"Started duel between {sender_id} and {receiver_id}, duel id = {duel_id}")
     elif query.data == "reject_duel":
         await query.edit_message_text(text=f"Вы отклонили приглашение на дуэль!")
 
