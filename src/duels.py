@@ -151,6 +151,7 @@ class PlayerInGame:
             self.health += 10
             full_log.append(('c', f"Игрок {self.user_nick} получает бафф в 10 очков здоровья от выпитого пива перед боем!"))
         self.is_bleeding = False
+        self.is_stuned = False
 
         # Armor fields
         self.armor = Armor(db.get_user_active_armor_meta_id(self.user_id))
@@ -332,7 +333,13 @@ class Duel:
             logging.warning("turn.turn_type which is of TurnType(Enum) type is not equal to any member of enum")
 
         self.turn_counter += 1
-        self.turn = 3 - self.turn
+        if not defender.is_stuned:
+            self.turn = 3 - self.turn
+        else:
+            self.full_log.append(('c', f"""
+                                            Игрок {defender.user_nick} пропускает свой ход, из-за того, 
+                                            что находится в стане!
+                                        """))
         self.full_log.append(('d', f"""
                                         Смена хода. self.turn = {self.turn}
                                     """))
