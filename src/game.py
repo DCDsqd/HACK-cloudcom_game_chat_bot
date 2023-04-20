@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -8,6 +9,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+import telegram.error
 
 from common_func import is_available, merge_photos
 from menu_chain import main_menu
@@ -139,8 +141,7 @@ async def multiplayer_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     user_id = update.message.from_user.id
     if db.check_if_need_to_update_daily_tasks(user_id):
         db.regenerate_daily_tasks(user_id)
-
-    tasks = db.get_cur_user_tasks(user_id, True)
+    context.user_data['multiplayer_task_id'] = db.get_cur_user_tasks(user_id, True)
     task_labels = {
         'special': "Дело особой важности",
         'random': "Сбор ресурсов"
@@ -149,8 +150,8 @@ async def multiplayer_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     message = f"Доступные ежедневные задания ({cur_date()}):\n\n"
     no_tasks_available = True
     for task_id, label in task_labels.items():
-        if tasks[task_id] != -1:
-            task = db.get_task_by_id(tasks[task_id])
+        if context.user_data['multiplayer_task_id'][task_id] != -1:
+            task = db.get_task_by_id(context.user_data['multiplayer_task_id'][task_id])
             message += f"{label}:\n" \
                        f"Название: {task[1]}\n" \
                        f"Описание: {task[2]}\n" \
@@ -165,7 +166,8 @@ async def multiplayer_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     else:
         message += 'Какое задание хотите взять?'
 
-    all_tasks_labels = [label for task_id, label in task_labels.items() if tasks[task_id] != -1]
+    all_tasks_labels = [label for task_id, label in task_labels.items() if
+                        context.user_data['multiplayer_task_id'][task_id] != -1]
     alone_tasks_keyboard = [all_tasks_labels[:2], all_tasks_labels[2:3], ["Назад"]] if len(all_tasks_labels) >= 2 else [
         all_tasks_labels, ["Назад"]]
 
@@ -179,15 +181,39 @@ async def get_special_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     text = "Ваш список друзей:\n"
     for friend in friends:
         text += str(friend) + "\n"
-    text += "\nВведите ID людей (от 1 до 3), которых хотите пригласить на задание\nВводите каждый ID с новой строки!"
+    text += f"\nВведите ID людей (от 1 до 3), которых хотите пригласить\nВводите каждый ID с " \
+            f"новой строки!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
     return GET_USER_FOR_MULTIPLAYER_ID
 
 
 async def get_ids_for_multiplayer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_ids = update.message.text
-    # Здесь нужно как-то получить id задания и пихнуть в функцию ниже
-    # db.add_multiplayer_participants(update.message.from_user.id, task_id user_ids)
+    task_id = context.user_data['multiplayer_task_id']['special']
+    result = db.add_multiplayer_participants(update.message.from_user.id, task_id, user_ids)
+    if not result[0]:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=result[1])
+        return MULTIPLAYER_TASK_CHOOSING
+    keyboard = [
+        [
+            InlineKeyboardButton("Принять", callback_data="accept_multiplayer_task"),
+            InlineKeyboardButton("Отклонить", callback_data="reject_multiplayer_task"),
+        ]
+    ]
+    user_ids = list(map(int, user_ids.split()))
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    for user in user_ids:
+        try:
+            await context.bot.send_message(chat_id=user,
+                                           text=f"Пользователь с ID {update.effective_chat.id} пригласил Вас на "
+                                                f"совместное задание.\n\n"
+                                                f"Подтверждаете ли Вы своё участие?",
+                                           reply_markup=reply_markup)
+        except telegram.error.BadRequest as e:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text="Один или несколько пользователей не существует!")
+            logging.error(e)
+            return MULTIPLAYER_TASK_CHOOSING
 
 
 async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -476,7 +502,7 @@ game_handler = ConversationHandler(
         ],
         GET_USER_FOR_MULTIPLAYER_ID: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_ids_for_multiplayer),
-            MessageHandler(filters.Regex("^Назад$"), arena),
+            MessageHandler(filters.Regex("^Назад$"), assignments),
         ],
     },
     fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],

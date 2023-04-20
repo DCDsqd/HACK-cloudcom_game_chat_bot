@@ -408,6 +408,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     receiver_id = query.from_user.id
     sender_id = re.search(r"ID\s+(\d+)", query.message.text).group(1)
     await query.answer()
+    if query.data == "accept_multiplayer_task":
+        await query.edit_message_text(text=f"Вы приняли приглашение на задание")
+        # Здесь добавить в бд, что пользователь принял приглашение
+    elif query.data == "reject_multiplayer_task":
+        await query.edit_message_text(text=f"Вы отклонили приглашение на задание")
+        # Здесь наверное можно удалить просто из multiplayer_task_participants всю строку
     if query.data == "accept_event":
         event_id = re.search(r"#\s+(\d+)", query.message.text).group(1)
         if db.is_complited(event_id):

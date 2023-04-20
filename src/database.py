@@ -363,15 +363,12 @@ class Database:
                         WHERE user_multiplayer_daily_tasks.user_id = '{user_id}';
                     """
         res = execute_read_query(self.database_conn, query)
-
         if not is_multiplayer and len(res) != 3:
             logging.warning('[Single task] Query result length is not equal to expected in function get_cur_user_tasks')
         elif is_multiplayer and len(res) != 2:
             logging.warning(
                 '[Multiplayer task] Query result length is not equal to expected in function get_cur_user_tasks')
-
         tasks_list = {str(task_type): task_id if is_completed == 0 else -1 for task_id, task_type, is_completed in res}
-
         return tasks_list
 
     def get_task_by_id(self, task_id: int) -> list:
@@ -386,11 +383,23 @@ class Database:
             ids = list(map(int, text.split()))
         except ValueError:
             return False, "ID должны быть числовым значением"
+        if len(ids) != len(set(ids)):
+            return False, "Вы ввели два одинаковых пользователя"
+        if user_id in ids:
+            return False, "Вы не можете пригласить самого себя"
         if len(ids) < 3:
             ids.extend([0] * (3 - len(ids)))
+        is_accepted = []
+        for i in ids:
+            if i == 0:
+                is_accepted.append(1)
+            else:
+                is_accepted.append(0)
         query = f"""
-                INSERT INTO multiplayer_task_participants (task_id, user1_id, user2_id, user3_id, user4_id)
-                VALUES ('{task_id}', '{user_id}', '{ids[0]}', '{ids[1]}', '{ids[2]}')
+                INSERT INTO multiplayer_task_participants (task_id, user1_id, user2_id, user3_id, user4_id, 
+                is_user2_accepted, is_user3_accepted, is_user4_accepted)
+                VALUES ('{task_id}', '{user_id}', '{ids[0]}', '{ids[1]}', '{ids[2]}', 
+                '{is_accepted[0]}', '{is_accepted[1]}', '{is_accepted[2]}')
                 """
         execute_query(self.database_conn, query)
         return True, "Запросы на участие успешно отправлены"
