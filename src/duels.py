@@ -159,7 +159,7 @@ class PlayerInGame:
         self.element_damage_decr = 0
         self.no_damage_chance = 0
         self.apply_armor_bonuses()
-        full_log.append(('d', f"Броня игрока {self.user_nick} = {self.armor.name}"))
+        full_log.append(('с', f"Игрок {self.user_nick} выбрал для защиты {self.armor.name}!"))
 
         # Weapon fields
         self.weapon = Weapon(db.get_user_active_weapon_meta_id(self.user_id))
@@ -171,7 +171,7 @@ class PlayerInGame:
         self.vampirism_perc = 0
         self.element_dmg_incr = 0
         self.apply_weapon_bonuses()
-        full_log.append(('d', f"Оружие игрока {self.user_nick} = {self.weapon.name}"))
+        full_log.append(('c', f"Игрок {self.user_nick} будет атаковать с помощью {self.weapon.name}!"))
 
     def is_dead(self) -> bool:
         return self.health <= 0
