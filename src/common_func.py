@@ -409,9 +409,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     sender_id = re.search(r"ID\s+(\d+)", query.message.text).group(1)
     await query.answer()
     if query.data == "accept_multiplayer_task":
-        await query.edit_message_text(text=f"Вы приняли приглашение на задание")
-        db.user_multiplayer_accept_task(sender_id, receiver_id)
-        await context.bot.send_message(chat_id=sender_id, text=f"Игрок с ID {receiver_id} принял Ваше приглашение!")
+        try:
+            db.user_multiplayer_accept_task(sender_id, receiver_id)
+            await query.edit_message_text(text=f"Вы приняли приглашение на задание")
+            await context.bot.send_message(chat_id=sender_id, text=f"Игрок с ID {receiver_id} принял Ваше приглашение!")
+        except Exception:
+            await query.edit_message_text(text=f"К сожалению, задание было отменено.")
     elif query.data == "reject_multiplayer_task":
         await query.edit_message_text(text=f"Вы отклонили приглашение на задание")
         db.delete_multiplayer_task_participants(sender_id)

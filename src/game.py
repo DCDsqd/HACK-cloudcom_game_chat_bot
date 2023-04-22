@@ -17,7 +17,8 @@ from duels import *  # this also imports database
 import random
 
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
-    MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_MULTIPLAYER_ID = range(12)
+    MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_SPECIAL_MULTIPLAYER_ID, \
+    GET_USER_FOR_RANDOM_MULTIPLAYER_ID = range(13)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -191,10 +192,21 @@ async def get_special_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     text += f"\nВведите ID людей (от 1 до 3), которых хотите пригласить\nВводите каждый ID с " \
             f"новой строки!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
-    return GET_USER_FOR_MULTIPLAYER_ID
+    return GET_USER_FOR_SPECIAL_MULTIPLAYER_ID
 
 
-async def get_ids_for_multiplayer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_random_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    friends = db.get_friend_list_ids(update.effective_chat.id)
+    text = "Ваш список друзей:\n"
+    for friend in friends:
+        text += str(friend) + "\n"
+    text += f"\nВведите ID людей (от 1 до 3), которых хотите пригласить\nВводите каждый ID с " \
+            f"новой строки!"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    return GET_USER_FOR_RANDOM_MULTIPLAYER_ID
+
+
+async def get_ids_for_special_multiplayer_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_ids = update.message.text
     task_id = context.user_data['multiplayer_task_id']['special']
     result = db.add_multiplayer_participants(update.message.from_user.id, task_id, user_ids)
@@ -219,11 +231,44 @@ async def get_ids_for_multiplayer(update: Update, context: ContextTypes.DEFAULT_
         except telegram.error.BadRequest as e:
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text="Один или несколько пользователей не существует!")
-            logging.error(e)
             db.delete_multiplayer_task_participants(update.effective_chat.id)
             return MULTIPLAYER_TASK_CHOOSING
     markup = ReplyKeyboardMarkup(count_keyboard, one_time_keyboard=True)
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Приглашения успешно отправлены!", reply_markup=markup)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Приглашения успешно отправлены!",
+                                   reply_markup=markup)
+    return TASKS
+
+
+async def get_ids_for_random_multiplayer_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_ids = update.message.text
+    task_id = context.user_data['multiplayer_task_id']['random']
+    result = db.add_multiplayer_participants(update.message.from_user.id, task_id, user_ids)
+    if not result[0]:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=result[1])
+        return MULTIPLAYER_TASK_CHOOSING
+    keyboard = [
+        [
+            InlineKeyboardButton("Принять", callback_data="accept_multiplayer_task"),
+            InlineKeyboardButton("Отклонить", callback_data="reject_multiplayer_task"),
+        ]
+    ]
+    user_ids = list(map(int, user_ids.split()))
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    for user in user_ids:
+        try:
+            await context.bot.send_message(chat_id=user,
+                                           text=f"Пользователь с ID {update.effective_chat.id} пригласил Вас на "
+                                                f"совместное задание.\n\n"
+                                                f"Подтверждаете ли Вы своё участие?",
+                                           reply_markup=reply_markup)
+        except telegram.error.BadRequest as e:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text="Один или несколько пользователей не существует!")
+            db.delete_multiplayer_task_participants(update.effective_chat.id)
+            return MULTIPLAYER_TASK_CHOOSING
+    markup = ReplyKeyboardMarkup(count_keyboard, one_time_keyboard=True)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Приглашения успешно отправлены!",
+                                   reply_markup=markup)
     return TASKS
 
 
@@ -494,8 +539,8 @@ game_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Назад$"), assignments),
         ],
         MULTIPLAYER_TASK_CHOOSING: [
-            # ADD MORE FUNCTIONS
             MessageHandler(filters.Regex("^Дело особой важности$"), get_special_task),
+            MessageHandler(filters.Regex("^Сбор ресурсов$"), get_random_task),
             MessageHandler(filters.Regex("^Назад$"), assignments),
         ],
         ARENA_CHOOSING: [
@@ -511,8 +556,14 @@ game_handler = ConversationHandler(
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_chat_id),
             MessageHandler(filters.Regex("^Назад$"), arena),
         ],
-        GET_USER_FOR_MULTIPLAYER_ID: [
-            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_ids_for_multiplayer),
+        GET_USER_FOR_SPECIAL_MULTIPLAYER_ID: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")),
+                           get_ids_for_special_multiplayer_task),
+            MessageHandler(filters.Regex("^Назад$"), assignments),
+        ],
+        GET_USER_FOR_RANDOM_MULTIPLAYER_ID: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")),
+                           get_ids_for_random_multiplayer_task),
             MessageHandler(filters.Regex("^Назад$"), assignments),
         ],
     },
