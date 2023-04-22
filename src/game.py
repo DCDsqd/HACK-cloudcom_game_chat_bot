@@ -84,12 +84,14 @@ async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     return WHERE_CHOOSING
 
 
+count_keyboard = [["В одиночку", "С друзьями"], ["Назад"]]
+
+
 async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = 'Вы подходите к небольшому зданию с вывеской "Дом поручений". ' \
               'При входе Вы замечаете, что на стенах висят доски объявлений с различными заданиями.\n' \
               'Может и получится найти, что-то, что Вам по душе...\n\n' \
               'В одиночку или с друзьями?'
-    count_keyboard = [["В одиночку", "С друзьями"], ["Назад"]]
     markup = ReplyKeyboardMarkup(count_keyboard, one_time_keyboard=True)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message,
                                    reply_markup=markup)
@@ -141,6 +143,11 @@ async def multiplayer_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     user_id = update.message.from_user.id
     if db.check_if_need_to_update_daily_tasks(user_id):
         db.regenerate_daily_tasks(user_id)
+
+    if db.check_if_request_already_exists_in_multiplayer(user_id):
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Вы уже отправили запрос на Выполнение заданий с друзьями!")
+        return TASKS
     context.user_data['multiplayer_task_id'] = db.get_cur_user_tasks(user_id, True)
     task_labels = {
         'special': "Дело особой важности",
@@ -213,7 +220,11 @@ async def get_ids_for_multiplayer(update: Update, context: ContextTypes.DEFAULT_
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text="Один или несколько пользователей не существует!")
             logging.error(e)
+            db.delete_multiplayer_task_participants(update.effective_chat.id)
             return MULTIPLAYER_TASK_CHOOSING
+    markup = ReplyKeyboardMarkup(count_keyboard, one_time_keyboard=True)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Приглашения успешно отправлены!", reply_markup=markup)
+    return TASKS
 
 
 async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:

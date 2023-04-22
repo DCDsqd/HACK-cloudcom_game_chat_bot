@@ -316,7 +316,11 @@ class Database:
                     user_id = '{user_id}';
                 """
         execute_query(self.database_conn, query)
-
+        query = f"""
+                    DELETE FROM user_multiplayer_daily_tasks WHERE  
+                    user_id = '{user_id}';
+                """
+        execute_query(self.database_conn, query)
         # Add new random tasks
         random_small_task = self.get_random_task('small')
         random_medium_task = self.get_random_task('medium')
@@ -342,6 +346,34 @@ class Database:
         query = f"""
                     INSERT OR REPLACE INTO user_daily_tasks_updated (user_id, last_update)
                     VALUES ('{user_id}', '{cur_date()}');
+                """
+        execute_query(self.database_conn, query)
+
+    def user_multiplayer_accept_task(self, sender_id: int, receiver_id: int) -> None:
+        query = f"""
+                SELECT user2_id, user3_id, user4_id FROM multiplayer_task_participants WHERE user1_id = {sender_id}
+                """
+        res = execute_read_query(self.database_conn, query)[0]
+        for i in range(len(res)):
+            if res[i] == receiver_id:
+                query = f"""
+                        UPDATE multiplayer_task_participants SET is_user{i + 2}_accepted = 1 WHERE user1_id = {sender_id}
+                        """
+                execute_query(self.database_conn, query)
+                break
+
+    def check_if_request_already_exists_in_multiplayer(self, user_id: int) -> bool:
+        query = f"""
+                SELECT id FROM multiplayer_task_participants WHERE user1_id = {user_id}
+                """
+        res = execute_read_query(self.database_conn, query)
+        if not len(res):
+            return False
+        return True
+
+    def delete_multiplayer_task_participants(self, sender_id: int) -> None:
+        query = f"""
+                DELETE FROM multiplayer_task_participants WHERE user1_id = {sender_id}
                 """
         execute_query(self.database_conn, query)
 
