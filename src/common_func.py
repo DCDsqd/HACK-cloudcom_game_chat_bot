@@ -1,6 +1,6 @@
 from database import *
 from customization import regen_avatar
-from menu_chain import main_menu
+from menu_chain import main_menu, menu_markup
 from duels import *
 from admin import parse_new_event_info_string
 
@@ -464,15 +464,50 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await context.bot.send_message(chat_id=update.message.from_user.id,
-                                   text=f"Вы провели физическую атаку!",
-                                   reply_markup=ReplyKeyboardRemove())
     duel_id = context.bot_data['duel_id']
     opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
+    print(f"opponent_id = {opponent_id}")
     duels_ongoing_dict[duel_id].process_turn(Turn(update.message.from_user.id, TurnType.PHYSICAL_ATTACK, opponent_id))
+    await context.bot.send_message(chat_id=update.message.from_user.id,
+                                   text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                   reply_markup=ReplyKeyboardRemove())
     await context.bot.send_message(chat_id=opponent_id,
-                                   text=f"По Вам профели физическую атаку.",
+                                   text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
                                    reply_markup=attacks_markup)
+
+    opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
+    me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
+
+    if opponent.is_dead() and me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=menu_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=menu_markup)
+
+        kill_duel(duel_id)
+
+    elif opponent.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Оппонент сдох",
+                                       reply_markup=menu_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Ты сдох собака",
+                                       reply_markup=menu_markup)
+
+        kill_duel(duel_id)
+
+    elif me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Ты сдох собака",
+                                       reply_markup=menu_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Оппонент сдох",
+                                       reply_markup=menu_markup)
+
+        kill_duel(duel_id)
+
     return ConversationHandler.END
 
 
@@ -533,7 +568,7 @@ def manage_expired_duels(threading_event_duels) -> None:
         for duel in expired_duels_list:
             info += str(duel.id)
             info += ";"
-        logging.info(info)
+        #logging.info(info)
 
     # Здесь нужно будет обработать список дуэлей, в которых текущий игрок не успел сделать ход (т.е. анлаки)
     if not threading_event_duels.is_set():

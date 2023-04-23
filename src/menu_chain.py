@@ -6,10 +6,10 @@ from telegram.ext import (
 
 menu_keyboard = [['Кастомизация', 'Игра'], ['Друзья', 'События']]
 
+menu_markup = ReplyKeyboardMarkup(menu_keyboard, one_time_keyboard=True)
+
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = " Вы вернулись в главное меню!"
-    markup = ReplyKeyboardMarkup(menu_keyboard, one_time_keyboard=True)
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=menu_markup)
     return ConversationHandler.END
-
