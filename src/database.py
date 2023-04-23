@@ -576,8 +576,8 @@ class Database:
         query = f"""
                     SELECT id FROM duels
                     WHERE (sender_id='{sender_id}'     OR 
-                          sender_id='{receiver_id}'    OR
-                          receiver_id='{receiver_id}'  OR
+                          sender_id='{receiver_id}')    AND
+                          (receiver_id='{receiver_id}'  OR
                           receiver_id='{sender_id}')   AND
                           status != 'finished'
                 """
@@ -585,6 +585,17 @@ class Database:
 
         if not res:
             return True
+
+        query = f"""
+                    SELECT id FROM duels
+                    WHERE ((sender_id='{sender_id}'     OR 
+                          sender_id='{receiver_id}')    AND
+                          status == 'ongoing')          OR
+                          ((receiver_id='{sender_id}'   OR
+                          receiver_id='{receiver_id}')  AND
+                          status == 'ongoing');
+                """
+        res = execute_read_query(self.database_conn, query)
         return False
 
     def add_pending_duel(self, sender_id, receiver_id) -> None:
