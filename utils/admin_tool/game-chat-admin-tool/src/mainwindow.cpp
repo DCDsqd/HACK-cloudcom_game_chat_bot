@@ -13,6 +13,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->mainStackedWidget->setCurrentIndex(1);
     ui->scrollAreaWidgetContents->setLayout(ui->eventsLayout);
 
+    ui->langBox->setStyleSheet(QssHelper::ReadRelativeQSS("qss_example.qss"));
+    ui->langBox->ensurePolished();
+
     loadEventsFromDb();
 }
 
