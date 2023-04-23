@@ -3,7 +3,10 @@
 QString QssHelper::ReadQSS(QString file_path)
 {
     QFile file(file_path);
-    QString qss = file.readAll();
+    if(!file.open(QIODevice::ReadOnly)) {
+        qDebug() << file.errorString();
+    }
+    QString qss = QLatin1String(file.readAll());
     file.close();
     return qss;
 }

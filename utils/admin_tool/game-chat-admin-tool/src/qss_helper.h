@@ -3,8 +3,9 @@
 
 #include <QString>
 #include <QFile>
+#include <QDebug>
 
-#define DEFAULT_QSS_RESOURCE_PATH "qrc:/../qss/"
+#define DEFAULT_QSS_RESOURCE_PATH "../game-chat-admin-tool/res/qss/"
 
 class QssHelper
 {
