@@ -204,8 +204,22 @@ async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return EVENT_INPUT
 
 
+async def (update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+
 poll_handler = ConversationHandler(
     entry_points=[CommandHandler("poll", add_event)],
+    states={
+        EVENT_INPUT: [
+            MessageHandler(
+                filters.TEXT & ~filters.COMMAND, poll),
+        ]
+    },
+    fallbacks=[],
+)
+
+duels_handler = ConversationHandler(
+    entry_points=[MessageHandler(filters.Regex("^Физическая атака$ | ^Использовать способность$ | ^Использовать предмет"), )],
     states={
         EVENT_INPUT: [
             MessageHandler(
@@ -403,7 +417,7 @@ async def send_event_approval_request(update: Update, context: ContextTypes.DEFA
     return EVENT_CHOOSING
 
 
-async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     receiver_id = query.from_user.id
     sender_id = re.search(r"ID\s+(\d+)", query.message.text).group(1)
@@ -447,6 +461,11 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             new_duel_obj = Duel(duel_id, sender_id, receiver_id)
             init_duel(new_duel_obj)
             logging.info(f"Started duel between {sender_id} and {receiver_id}, duel id = {duel_id}")
+            await context.bot.send_message(chat_id=sender_id, text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас Ваш ход!",
+                                           reply_markup=ReplyKeyboardRemove())
+            await context.bot.send_message(chat_id=receiver_id, text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас ход оппонента!",
+                                           reply_markup=ReplyKeyboardRemove())
+            return ConversationHandler.END
     elif query.data == "reject_duel":
         await query.edit_message_text(text=f"Вы отклонили приглашение на дуэль!")
 

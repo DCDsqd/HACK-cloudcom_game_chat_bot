@@ -1,4 +1,3 @@
-from database import *
 from equipment import *
 
 from enum import Enum
