@@ -575,10 +575,10 @@ class Database:
     def check_if_could_send_duel(self, sender_id, receiver_id) -> bool:
         query = f"""
                     SELECT id FROM duels
-                    WHERE (sender_id='{sender_id}'     OR 
+                    WHERE (sender_id='{sender_id}'      OR 
                           sender_id='{receiver_id}')    AND
                           (receiver_id='{receiver_id}'  OR
-                          receiver_id='{sender_id}')   AND
+                          receiver_id='{sender_id}')    AND
                           status != 'finished'
                 """
         res = execute_read_query(self.database_conn, query)
