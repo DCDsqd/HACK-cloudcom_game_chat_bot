@@ -307,13 +307,15 @@ class Duel:
                                     Turn type = {turn.turn_type.name}.
                             """))
 
-        if turn.target != defender.user_id:
+        if int(turn.target) != int(defender.user_id):
             logging.warning(f"""turn.target != defender.user_id in duel during process_turn() call, 
-                                turn.turn_maker = {turn.turn_maker}, turn.target = {turn.target}""")
+                                turn.turn_maker = {turn.turn_maker} (attacker={attacker.user_id}), 
+                                turn.target = {turn.target} (defender={defender.user_id})""")
             pass
-        if turn.turn_maker != attacker.user_id:
+        if int(turn.turn_maker) != int(attacker.user_id):
             logging.warning(f"""turn.turn_maker != attacker.user_id in duel during process_turn() call, 
-                                turn.turn_maker = {turn.turn_maker}, turn.target = {turn.target}""")
+                                turn.turn_maker = {turn.turn_maker}, (attacker={attacker.user_id}), 
+                                turn.target = {turn.target} (defender={defender.user_id})""")
             pass
 
         if turn.turn_type == TurnType.PHYSICAL_ATTACK or turn.turn_type == TurnType.MAGIC_ATTACK:

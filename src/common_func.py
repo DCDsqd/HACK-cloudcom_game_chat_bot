@@ -8,7 +8,8 @@ import os
 import re
 import logging
 import threading
-from telegram import Update, ReplyKeyboardRemove, Chat, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember, ChatMemberUpdated
+from telegram import Update, ReplyKeyboardRemove, Chat, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup, \
+    ChatMember, ChatMemberUpdated
 from telegram.ext import (
     ContextTypes,
     ConversationHandler,
@@ -204,22 +205,8 @@ async def add_event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return EVENT_INPUT
 
 
-async def (update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-
 poll_handler = ConversationHandler(
     entry_points=[CommandHandler("poll", add_event)],
-    states={
-        EVENT_INPUT: [
-            MessageHandler(
-                filters.TEXT & ~filters.COMMAND, poll),
-        ]
-    },
-    fallbacks=[],
-)
-
-duels_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex("^Физическая атака$ | ^Использовать способность$ | ^Использовать предмет"), )],
     states={
         EVENT_INPUT: [
             MessageHandler(
@@ -326,7 +313,6 @@ async def get_events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 
 async def send_closest_events_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-
     res = db.get_20_closest_global_events()
     res = sorted(res, key=lambda x: x[3])
     events = "Ближайшие доступные события:\n\n"
@@ -417,6 +403,10 @@ async def send_event_approval_request(update: Update, context: ContextTypes.DEFA
     return EVENT_CHOOSING
 
 
+attacks_keyboard = [['Физическая атака', 'Использовать способность', 'Использовать предмет']]
+attacks_markup = ReplyKeyboardMarkup(attacks_keyboard, one_time_keyboard=False)
+
+
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     receiver_id = query.from_user.id
@@ -461,14 +451,38 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             new_duel_obj = Duel(duel_id, sender_id, receiver_id)
             init_duel(new_duel_obj)
             logging.info(f"Started duel between {sender_id} and {receiver_id}, duel id = {duel_id}")
-            await context.bot.send_message(chat_id=sender_id, text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас Ваш ход!",
-                                           reply_markup=ReplyKeyboardRemove())
-            await context.bot.send_message(chat_id=receiver_id, text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас ход оппонента!",
+            context.bot_data['duel_id'] = duel_id
+            await context.bot.send_message(chat_id=sender_id,
+                                           text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас Ваш ход!",
+                                           reply_markup=attacks_markup)
+            await context.bot.send_message(chat_id=receiver_id,
+                                           text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас ход оппонента!",
                                            reply_markup=ReplyKeyboardRemove())
             return ConversationHandler.END
     elif query.data == "reject_duel":
         await query.edit_message_text(text=f"Вы отклонили приглашение на дуэль!")
 
+
+async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await context.bot.send_message(chat_id=update.message.from_user.id,
+                                   text=f"Вы провели физическую атаку!",
+                                   reply_markup=ReplyKeyboardRemove())
+    duel_id = context.bot_data['duel_id']
+    opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
+    duels_ongoing_dict[duel_id].process_turn(Turn(update.message.from_user.id, TurnType.PHYSICAL_ATTACK, opponent_id))
+    await context.bot.send_message(chat_id=opponent_id,
+                                   text=f"По Вам профели физическую атаку.",
+                                   reply_markup=attacks_markup)
+    return ConversationHandler.END
+
+
+physic_attack_handler = ConversationHandler(
+    entry_points=[MessageHandler(filters.Regex("^Физическая атака$"), physic_attack)],
+    states={
+
+    },
+    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
+)
 
 events_handler = ConversationHandler(
     entry_points=[CommandHandler("events", irl_events_menu),
@@ -484,7 +498,8 @@ events_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Назад$"), irl_events_menu),
         ],
         EVENT_ID_TO_APPROVE: [
-            MessageHandler((filters.TEXT | filters.PHOTO) & ~(filters.COMMAND | filters.Regex("^Назад$")), send_event_approval_request),
+            MessageHandler((filters.TEXT | filters.PHOTO) & ~(filters.COMMAND | filters.Regex("^Назад$")),
+                           send_event_approval_request),
             MessageHandler(filters.Regex("^Назад$"), irl_events_menu),
         ],
     },

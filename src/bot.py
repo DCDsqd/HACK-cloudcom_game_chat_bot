@@ -7,7 +7,7 @@ from telegram.ext import (
 from telegram.ext import ChatMemberHandler
 
 from common_func import start, profile, help_me, del_keyboard, \
-    events_handler, receive_poll_answer, poll_handler, rating, track_chats, buttons, start_duels_checking_coroutine
+    events_handler, receive_poll_answer, poll_handler, rating, track_chats, buttons, start_duels_checking_coroutine, physic_attack_handler
 from friends import friends_handler
 from customization import custom_name_handler, avatar_handler
 from admin import admin_handler
@@ -33,6 +33,7 @@ if __name__ == '__main__':
     application.add_handler(avatar_handler)
     application.add_handler(custom_name_handler)
     application.add_handler(events_handler)
+    application.add_handler(physic_attack_handler)
     application.add_handler(game_handler)
     application.add_handler(friends_handler)
     application.run_polling()

@@ -453,6 +453,15 @@ class Database:
                 """
         execute_query(self.database_conn, query)
 
+    def get_duel_opponent(self, duel_id, player_id):
+        query = f"""
+                SELECT sender_id, receiver_id FROM duels WHERE id = {duel_id}
+                """
+        res = execute_read_query(self.database_conn, query)
+        if player_id == res[0][0]:
+            return res[0][1]
+        return res[0][0]
+
     def create_poll_from_text(self, poll_id, text) -> None:
         fields = text.split('\n')
         name, descr, start_time, duration, exp_reward = fields[:5]
