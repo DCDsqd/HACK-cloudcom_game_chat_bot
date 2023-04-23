@@ -247,7 +247,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     await context.bot.send_message(chat_id=user_id,
                                    text="Добро пожаловать в Team Builder Bot! Введите /help, чтобы просмотреть "
-                                        "доступные команды.")
+                                        "доступные команды.",
+                                   reply_markup=menu_markup)
     await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
     message = update.message
     user = message.from_user
