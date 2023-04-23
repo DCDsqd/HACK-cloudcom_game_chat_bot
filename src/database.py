@@ -629,7 +629,7 @@ class Database:
             return False
         query = f"""
                     UPDATE duels
-                    SET status = done
+                    SET status = 'finished',
                     outcome = '{outcome}'
                     WHERE id = '{duel_id}';
                 """
