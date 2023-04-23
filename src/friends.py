@@ -14,7 +14,7 @@ FRIENDS_CHOOSING, ADD_FRIEND_REQUEST, DELETE_FRIEND_REQUEST, ACCEPT_AND_DENY, AC
     DENY = range(7)
 back_keyboard = [['Назад']]
 friends_keyboard = [['Посмотреть список друзей'], ['Добавить друга', 'Удалить друга'],
-                    ['Входящие запросы', 'Исходящие запросы'], ['Отмена']]
+                    ['Входящие запросы', 'Исходящие запросы'], ['Назад']]
 accept_deny_keyboard = [['Принять запрос', 'Отклонить запрос'], ['Назад']]
 cancel_request_keyboard = [['Отменить запрос'], ['Назад']]
 
@@ -221,5 +221,5 @@ friends_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Отменить запрос$"), deny_friend),
         ],
     },
-    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
 )

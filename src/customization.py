@@ -21,7 +21,7 @@ CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = r
 # account. The available options are "Изменить имя" (change name), "Изменить аватар" (change avatar), and "Отмена" (
 # cancel). After sending the message, the function returns the next state of the conversation (CHOOSING).
 async def custom(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
+    reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Назад"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(
         "Что бы Вы хотели изменить?",
@@ -43,7 +43,7 @@ async def custom_name_choice(update: Update, context: ContextTypes.DEFAULT_TYPE)
 # This function handles the user input for their new custom name, and updates it in the database. It then sends a
 # message confirming the change and prompts the user to choose what to change next.
 async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
+    reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Назад"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     text = update.message.text
     context.user_data["name"] = text
@@ -208,7 +208,7 @@ async def received_body_choice(update: Update, context: ContextTypes.DEFAULT_TYP
 # This function displays a reply keyboard with the options "Изменить имя", "Изменить аватара", and "Отмена". It is
 # part of a larger conversation handler for managing user profile settings.
 async def enter_change(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Отмена"]]
+    reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Назад"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(
         "Что бы Вы хотели изменить?",
@@ -226,10 +226,10 @@ custom_name_handler = ConversationHandler(
         ],
         TYPING_REPLY: [
             MessageHandler(
-                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Отмена$")), received_name, )
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), received_name, )
         ],
     },
-    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
 )
 
 avatar_handler = ConversationHandler(

@@ -43,7 +43,7 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                               "🏹 Лучник — высокий контроль, атака ниже среднего, низкая защита. Носит лук (вау).\n" \
                               "🗡 Охотник — высокая атака, защита ниже среднего, носит клинок.\n\n" \
                               "Что выберете?"
-        class_keyboard = [["Рыцарь", "Маг", "Лучник", "Охотник"], ["Отмена"]]
+        class_keyboard = [["Рыцарь", "Маг", "Лучник", "Охотник"], ["Назад"]]
         markup = ReplyKeyboardMarkup(class_keyboard, one_time_keyboard=True)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=classes_description, reply_markup=markup)
         return CLASS_CHOOSING
@@ -58,7 +58,7 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             residue_of_buildings.append(all_buildings[i][1])
 
         where_keyboard.append(residue_of_buildings)
-        where_keyboard.append(["Отмена"])
+        where_keyboard.append(["Назад"])
         markup = ReplyKeyboardMarkup(where_keyboard, one_time_keyboard=True)
         message = 'С возвращением! Куда отправимся?'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
@@ -78,7 +78,7 @@ async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())
     where_keyboard = [["Дом поручений", "Храм Хроноса", "Лаборатория"],
                       ["Дом гильдий", 'Кузница', 'Рынок'],
-                      ['Арена', 'Великая библиотека', 'Зал легионеров'], ["Отмена"]]
+                      ['Арена', 'Великая библиотека', 'Зал легионеров'], ["Назад"]]
     markup = ReplyKeyboardMarkup(where_keyboard, one_time_keyboard=True)
     message = 'Куда отправимся?'
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
@@ -567,5 +567,5 @@ game_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Назад$"), assignments),
         ],
     },
-    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
 )

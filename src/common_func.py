@@ -111,6 +111,7 @@ async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
     is_ok, msg = parse_new_event_info_string(text)
     if is_ok:
+        context.bot_data["new_event_info"] = text
         questions = ["Да", "Нет"]
         message = await context.bot.send_poll(
             update.effective_chat.id,
@@ -166,6 +167,7 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
             logging.info(f"[{poll_id}] Голосование окончено. Мероприятие НЕ принято!")
         else:
             logging.info(f"[{poll_id}] Голосование окончено. Мероприятие принято и добавлено в БД!")
+            db.save_new_event_info_string_to_db(context.bot_data["new_event_info"])
 
 
 # This is function, that checks if the chat is a group or supergroup and sends a message with instructions on how to
@@ -283,7 +285,7 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 EVENT_CHOOSING, GET_EVENT_ID, EVENT_ID_TO_APPROVE = range(3)
-events_keyboard = [['Просмотр событий', 'Принять участие'], ['Подтвердить выполнение'], ['Отмена']]
+events_keyboard = [['Просмотр событий', 'Принять участие'], ['Подтвердить выполнение'], ['Назад']]
 back_keyboard = [['Назад']]
 events_markup = ReplyKeyboardMarkup(events_keyboard, one_time_keyboard=False)
 back_markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
@@ -481,43 +483,35 @@ async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     if opponent.is_dead() and me.is_dead():
         await context.bot.send_message(chat_id=update.message.from_user.id,
                                        text="Ничья! Вы убили друг друга...",
-                                       reply_markup=menu_markup)
+                                       reply_markup=back_markup)
         await context.bot.send_message(chat_id=opponent_id,
                                        text="Ничья! Вы убили друг друга...",
-                                       reply_markup=menu_markup)
+                                       reply_markup=back_markup)
 
         kill_duel(duel_id)
 
     elif opponent.is_dead():
         await context.bot.send_message(chat_id=update.message.from_user.id,
                                        text="Оппонент сдох",
-                                       reply_markup=menu_markup)
+                                       reply_markup=back_markup)
         await context.bot.send_message(chat_id=opponent_id,
                                        text="Ты сдох собака",
-                                       reply_markup=menu_markup)
+                                       reply_markup=back_markup)
 
         kill_duel(duel_id)
 
     elif me.is_dead():
         await context.bot.send_message(chat_id=update.message.from_user.id,
                                        text="Ты сдох собака",
-                                       reply_markup=menu_markup)
+                                       reply_markup=back_markup)
         await context.bot.send_message(chat_id=opponent_id,
                                        text="Оппонент сдох",
-                                       reply_markup=menu_markup)
+                                       reply_markup=back_markup)
 
         kill_duel(duel_id)
 
     return ConversationHandler.END
 
-
-physic_attack_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex("^Физическая атака$"), physic_attack)],
-    states={
-
-    },
-    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
-)
 
 events_handler = ConversationHandler(
     entry_points=[CommandHandler("events", irl_events_menu),
@@ -538,7 +532,7 @@ events_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Назад$"), irl_events_menu),
         ],
     },
-    fallbacks=[MessageHandler(filters.Regex("^Отмена$"), main_menu)],
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
 )
 
 
@@ -568,7 +562,7 @@ def manage_expired_duels(threading_event_duels) -> None:
         for duel in expired_duels_list:
             info += str(duel.id)
             info += ";"
-        #logging.info(info)
+        # logging.info(info)
 
     # Здесь нужно будет обработать список дуэлей, в которых текущий игрок не успел сделать ход (т.е. анлаки)
     if not threading_event_duels.is_set():
