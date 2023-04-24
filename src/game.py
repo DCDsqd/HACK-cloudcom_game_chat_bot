@@ -18,7 +18,7 @@ import random
 
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
     MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_SPECIAL_MULTIPLAYER_ID, \
-    GET_USER_FOR_RANDOM_MULTIPLAYER_ID = range(13)
+    GET_USER_FOR_RANDOM_MULTIPLAYER_ID, INVENTORY_CHOOSING = range(14)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -493,15 +493,32 @@ async def library(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         pass  # Здесь можно будет за деньги покупать абилки
 
 
-async def hall_of_legionnaires(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if not is_available(update.message.from_user.id, 16000):
-        message = 'Вы приходите в зал легионеров, но стражник не позволяет Вам войти внутрь.\nОн объясняет, что в зале ' \
-                  'собираются только настоящие воины, которые прошли определенные испытания и доказали свою боевую ' \
-                  'готовность.\nВозможно, Вам еще не хватает опыта и навыков в бою, чтобы присоединиться к легионерам.'
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-    else:
-        pass  # Здесь можно будет брать задания легиона (Возможно стоит перенести это в дом поручений)
+async def inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    keyboard = [['Посмотреть инвентарь'], ['Назад']]
+    markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    message = "Выберите действие:"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    return INVENTORY_CHOOSING
 
+
+async def show_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    items = db.get_users_items(update.effective_chat.id)
+    text = "В вашем инвенторе имеются:\n\n"
+    for item in items:
+        text += item + '\n'
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+
+
+inventory_handler = ConversationHandler(
+    entry_points=[CommandHandler("inventory", inventory),
+                  MessageHandler(filters.Regex("^Инвентарь$"), inventory)],
+    states={
+        INVENTORY_CHOOSING: [
+            MessageHandler(filters.Regex("^Посмотреть инвентарь$"), show_inventory),
+        ],
+    },
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
+)
 
 game_handler = ConversationHandler(
     entry_points=[CommandHandler("game", game),
@@ -519,7 +536,6 @@ game_handler = ConversationHandler(
             # MessageHandler(filters.Regex("^Рынок$"), market),
             MessageHandler(filters.Regex("^Арена$"), arena),
             # MessageHandler(filters.Regex("^Великая библиотека$"), library),
-            # MessageHandler(filters.Regex("^Зал легионеров$"), hall_of_legionnaires),
         ],
         CHRONOS_CHOOSING: [
             MessageHandler(filters.Regex("^Улучшить персонажа$"), upgrade_champ),

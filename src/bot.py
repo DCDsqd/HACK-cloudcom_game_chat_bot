@@ -14,7 +14,7 @@ from common_func import start, profile, help_me, \
 from friends import friends_handler
 from customization import custom_name_handler, avatar_handler
 from admin import admin_handler
-from game import game_handler
+from game import game_handler, inventory_handler
 from equipment import init_all_enchantments
 from menu_chain import main_menu
 
@@ -40,5 +40,6 @@ if __name__ == '__main__':
     application.add_handler(events_handler)
     application.add_handler(game_handler)
     application.add_handler(friends_handler)
+    application.add_handler(inventory_handler)
     application.add_handler(MessageHandler(filters.Regex("^Назад$"), main_menu))
     application.run_polling()

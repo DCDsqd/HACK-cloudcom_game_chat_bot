@@ -762,6 +762,21 @@ class Database:
         res = execute_read_query(self.database_conn, query)
         return res[0]
 
+    def get_users_items(self, user_id):
+        query = f"""
+                SELECT base_item_id FROM items_owned WHERE owner_id = {user_id}
+                """
+        items = execute_read_query(self.database_conn, query)
+        result = []
+        for item in items:
+            base_item_id = item[0]
+            query = f"""
+                    SELECT name FROM base_items WHERE id = {base_item_id}
+                    """
+            base_item_name = execute_read_query(self.gamedata_conn, query)[0][0]
+            result.append(base_item_name)
+        return result
+
     def get_ability_main_info(self, ability_id) -> list:
         query = f"""
                     SELECT name, buff, dmg_perc, area, target

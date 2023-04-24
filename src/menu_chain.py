@@ -4,7 +4,7 @@ from telegram.ext import (
     ConversationHandler,
 )
 
-menu_keyboard = [['Кастомизация', 'Игра'], ['Друзья', 'События']]
+menu_keyboard = [['Кастомизация', 'Игра'], ['Друзья', 'События'], ['Инвентарь']]
 
 menu_markup = ReplyKeyboardMarkup(menu_keyboard, one_time_keyboard=True)
 
