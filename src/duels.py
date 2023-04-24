@@ -11,6 +11,12 @@ class TurnType(Enum):
     CONSUME = 3
 
 
+class Ability:
+    def __init__(self, abil_id):
+        self.id = abil_id
+
+
+
 class MagicAction:
     def __init__(self,
                  target_nick,  # '1' for every teammate, '-1' for every enemy

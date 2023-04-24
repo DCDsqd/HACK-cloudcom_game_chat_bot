@@ -77,8 +77,8 @@ async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
               " и стать одним из лучших в нашей империи. Желаем Вам удачи!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())
     where_keyboard = [["Дом поручений", "Храм Хроноса", "Лаборатория"],
-                      ["Дом гильдий", 'Кузница', 'Рынок'],
-                      ['Арена', 'Великая библиотека', 'Зал легионеров'], ["Назад"]]
+                      ["Дом гильдий", 'Кузница', 'Арена'],
+                      ["Назад"]]
     markup = ReplyKeyboardMarkup(where_keyboard, one_time_keyboard=True)
     message = 'Куда отправимся?'
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)

@@ -755,6 +755,12 @@ class Database:
         res = execute_read_query(self.database_conn, query)
         return res[0]
 
+    def get_ability_main_info(self, ability_id):
+        query = f"""
+                    SELECT name, buff, dmg_perc, element, area, target
+                    WHERE id = {ability_id}
+                """
+
 
 # Global Database variable
 db = Database()
