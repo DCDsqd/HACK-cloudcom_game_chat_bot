@@ -833,6 +833,12 @@ class Database:
                 """
         return execute_read_query(self.gamedata_conn, query)[0][0]
 
+    def get_ability_id_from_name(self, ability_name) -> int:
+        query = f"""
+                    SELECT id FROM abilities WHERE name = '{ability_name}';
+                """
+        return execute_read_query(self.gamedata_conn, query)[0][0]
+
 
 # Global Database variable
 db = Database()

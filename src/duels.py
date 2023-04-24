@@ -21,7 +21,7 @@ class Ability:
         self.dmg_perc = ability_info[2]
         self.is_area = ability_info[3]
         self.target_type = ability_info[4]
-        buff_info = db.get_buff_info(self.buff_id)
+        buff_info = db.get_buff_info(self.buff_id) if self.buff_id != 0 else [0, 0, 0, 0, 0]
         self.buff_name = buff_info[0]
         self.is_stun = buff_info[1]
         self.dmg = abs(buff_info[2])
@@ -169,6 +169,7 @@ class AbilityAttack:
                  cur_turn: int
                  ):
         self.ability_used_name = ability_obj.name
+        self.ability_id = db.get_ability_id_from_name(self.ability_used_name)
         self.buff_used_name = ability_obj.buff_name
         full_log.append(('d',
                          f"Используется способность = {self.ability_used_name}!",
@@ -415,6 +416,11 @@ class Duel:
 
             if ability_attack.is_stun == 1:
                 defender.is_stuned = True
+
+            if self.turn == 1:  # Sender turn
+                self.possible_abilities_sender.remove(int(ability_attack.ability_id))
+            else:
+                self.possible_abilities_receiver.remove(int(ability_attack.ability_id))
 
         elif turn.turn_type == TurnType.CONSUME:
             pass

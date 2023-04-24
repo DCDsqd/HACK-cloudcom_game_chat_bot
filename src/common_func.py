@@ -458,7 +458,8 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             new_duel_obj = Duel(duel_id, sender_id, receiver_id)
             init_duel(new_duel_obj)
             logging.info(f"Started duel between {sender_id} and {receiver_id}, duel id = {duel_id}")
-            context.bot_data['duel_id'] = duel_id
+            context.bot_data['duel_id' + str(sender_id)] = duel_id
+            context.bot_data['duel_id' + str(receiver_id)] = duel_id
             await context.bot.send_message(chat_id=sender_id,
                                            text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас Ваш ход!",
                                            reply_markup=attacks_markup)
@@ -471,7 +472,8 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             new_duel_obj = Duel(duel_id, sender_id, receiver_id)
             init_duel(new_duel_obj)
             logging.info(f"Started duel between {sender_id} and {receiver_id}, duel id = {duel_id}")
-            context.bot_data['duel_id'] = duel_id
+            context.bot_data['duel_id' + str(sender_id)] = duel_id
+            context.bot_data['duel_id' + str(receiver_id)] = duel_id
             await context.bot.send_message(chat_id=sender_id,
                                            text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас Ваш ход!",
                                            reply_markup=attacks_markup)
@@ -484,9 +486,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    duel_id = context.bot_data['duel_id']
+    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
     opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
-    print(f"opponent_id = {opponent_id}")
+    # print(f"opponent_id = {opponent_id}")
     duels_ongoing_dict[duel_id].process_turn(Turn(update.message.from_user.id, TurnType.PHYSICAL_ATTACK, opponent_id))
     await context.bot.send_message(chat_id=update.message.from_user.id,
                                    text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
@@ -535,7 +537,7 @@ ABILITY_CHOOSING, AHFWU = range(2)
 
 
 async def magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    duel_id = context.bot_data['duel_id']
+    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
     abilities = duels_ongoing_dict[duel_id].get_possible_abilities(update.message.from_user.id)
     abilities_id_and_name = []
     for a in abilities:
@@ -556,7 +558,52 @@ async def magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
 async def receive_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     ability_name = update.message.text
-    
+    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
+    ability_id = db.get_ability_id_from_name(ability_name)
+    opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
+    duels_ongoing_dict[duel_id].process_turn(Turn(update.message.from_user.id, TurnType.MAGIC_ATTACK, opponent_id, Ability(ability_id, opponent_id)))
+
+    opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
+    me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
+
+    await context.bot.send_message(chat_id=update.message.from_user.id,
+                                   text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                   reply_markup=ReplyKeyboardRemove())
+    await context.bot.send_message(chat_id=opponent_id,
+                                   text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                   reply_markup=attacks_markup)
+
+    if opponent.is_dead() and me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    elif opponent.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Оппонент пал! Вы победили!",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    elif me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Оппонент пал! Вы победили!",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    return ConversationHandler.END
 
 
 magic_handler = ConversationHandler(
