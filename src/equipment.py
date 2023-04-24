@@ -82,3 +82,11 @@ class Weapon:
         self.name = info_list[2]
         self.strength = info_list[3]
         self.element_strength = 0  # TODO: Fill this
+
+
+def switch_equip_type_to_russian(eq_type: str) -> str:
+    if eq_type == 'armor':
+        return 'Броня'
+    elif eq_type == 'weapon':
+        return 'Оружие'
+    return ''

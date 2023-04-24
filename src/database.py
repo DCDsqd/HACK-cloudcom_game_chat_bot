@@ -780,21 +780,21 @@ class Database:
 
     def get_users_items(self, user_id):
         query = f"""
-                    SELECT base_item_id, echantments FROM items_owned WHERE owner_id = {user_id}
+                    SELECT base_item_id, enchantments FROM items_owned WHERE owner_id = {user_id};
                 """
         items = execute_read_query(self.database_conn, query)
         result = []
-        for item in items:
-            base_item_id = item[0]
-            meta_item_enchs = item[1]
+        for i in range(len(items)):
+            base_item_id = items[i][0]
+            meta_item_enchs = items[i][1]
             query = f"""
                         SELECT name, type, strength, rarity FROM base_items WHERE id = {base_item_id}
                     """
             base_query_res = execute_read_query(self.gamedata_conn, query)[0]
             base_item_name = base_query_res[0]
             base_item_type = base_query_res[1]
-            base_item_strength = base_query_res[1]
-            base_item_rarity = base_query_res[1]
+            base_item_strength = base_query_res[2]
+            base_item_rarity = base_query_res[3]
             result.append([base_item_name, meta_item_enchs, base_item_type, base_item_strength, base_item_rarity])
         return result
 

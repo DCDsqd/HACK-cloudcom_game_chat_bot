@@ -14,6 +14,7 @@ import telegram.error
 from common_func import is_available, merge_photos
 from menu_chain import main_menu
 from duels import *  # this also imports database
+from equipment import switch_equip_type_to_russian
 import random
 
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
@@ -505,14 +506,14 @@ async def show_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     items = db.get_users_items(update.effective_chat.id)
     text = "В вашем инвенторе имеются:\n\n\n"
     for item in items:
-        text += item[0] + f"({item[2]}). Сила: {item[3]}.\n"
+        text += item[0] + f" ({switch_equip_type_to_russian(str(item[2]))}). Сила: {item[3]}.\n"
         if item[1] == "":
-            text += " Зачарований нет.\n"
+            text += "Зачарований нет.\n"
         else:
-            text += " Зачарования: "
+            text += "Зачарования: "
             ench_names = []
             for ench in item[1].split(','):
-                ench_name = db.get_ench_name_by_id(ench)
+                ench_name = db.get_ench_name_by_id(ench, item[2])
                 ench_names.append(ench_name)
             ench_str = ", ".join(ench_names)
             text += ench_str
