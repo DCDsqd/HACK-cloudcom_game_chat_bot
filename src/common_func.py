@@ -446,9 +446,26 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text(text=f"Вы отклонили задание!")
             await context.bot.send_message(chat_id=sender_id, text="Администратор отклонил выполнение задания!")
     elif query.data == "accept_duel":
+        if int(sender_id) == int(receiver_id):
+            await context.bot.send_message(chat_id=sender_id,
+                                           text=f"Вы не можете вызвать на дуэль самого себя!")
+            return ConversationHandler.END
         duel_id = db.get_pending_duel(sender_id, receiver_id)
         if duel_id == -1:  # Duel was not found or other error occurred during db query execution, check logs
-            await query.edit_message_text(text=f"Что-то пошло не так. Попробуйте еще раз.")
+            db.add_participant_to_open_duel(sender_id, receiver_id)
+            await query.edit_message_text(text=f"Игрок с ID {receiver_id} принял приглашение на дуэль!")
+            duel_id = db.get_pending_duel(sender_id, receiver_id)
+            new_duel_obj = Duel(duel_id, sender_id, receiver_id)
+            init_duel(new_duel_obj)
+            logging.info(f"Started duel between {sender_id} and {receiver_id}, duel id = {duel_id}")
+            context.bot_data['duel_id'] = duel_id
+            await context.bot.send_message(chat_id=sender_id,
+                                           text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас Ваш ход!",
+                                           reply_markup=attacks_markup)
+            await context.bot.send_message(chat_id=receiver_id,
+                                           text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас ход оппонента!",
+                                           reply_markup=ReplyKeyboardRemove())
+            return ConversationHandler.END
         else:
             await query.edit_message_text(text=f"Игрок с ID {receiver_id} принял приглашение на дуэль!")
             new_duel_obj = Duel(duel_id, sender_id, receiver_id)

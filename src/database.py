@@ -607,6 +607,12 @@ class Database:
         res = execute_read_query(self.database_conn, query)
         return False
 
+    def add_participant_to_open_duel(self, sender_id: int, receiver_id: int):
+        query = f"""
+                UPDATE duels SET receiver_id = {receiver_id} WHERE sender_id = {sender_id}
+                """
+        execute_query(self.database_conn, query)
+
     def add_pending_duel(self, sender_id, receiver_id) -> None:
         query = f"""
                     INSERT INTO duels (sender_id, receiver_id, status)
@@ -755,10 +761,19 @@ class Database:
         res = execute_read_query(self.database_conn, query)
         return res[0]
 
-    def get_ability_main_info(self, ability_id):
+    def get_ability_main_info(self, ability_id) -> list:
         query = f"""
-                    SELECT name, buff, dmg_perc, element, area, target
+                    SELECT name, buff, dmg_perc, area, target
+                    FROM abilities
                     WHERE id = {ability_id};
+                """
+        return execute_read_query(self.gamedata_conn, query)[0]
+
+    def get_buff_info(self, buff_id) -> list:
+        query = f"""
+                    SELECT name, stun, dmg, time, defence, miss
+                    FROM buffs
+                    WHERE id = {buff_id};
                 """
         return execute_read_query(self.gamedata_conn, query)[0]
 

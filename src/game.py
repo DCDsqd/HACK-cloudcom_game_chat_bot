@@ -429,6 +429,11 @@ async def get_user_duel_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         markup = ReplyKeyboardMarkup(arena_keyboard, resize_keyboard=True)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
         return ARENA_CHOOSING
+    if int(getting_user_id) == update.message.from_user.id:
+        response = "Вы не можете отправить запрос самому себе!"
+        markup = ReplyKeyboardMarkup(arena_keyboard, resize_keyboard=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
+        return ARENA_CHOOSING
     db.add_pending_duel(update.message.from_user.id, getting_user_id)
     message = "Запрос на дуэль успешно отправлен"
     markup = ReplyKeyboardMarkup(arena_keyboard, resize_keyboard=True)
