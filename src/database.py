@@ -777,6 +777,37 @@ class Database:
                 """
         return execute_read_query(self.gamedata_conn, query)[0]
 
+    def get_top_arena(self) -> str:
+        query = f"""
+                    SELECT *
+                    FROM duels
+                    WHERE status = "finished"
+                """
+        all_duels = execute_read_query(self.database_conn, query)
+        print(all_duels)
+        top = {};
+        for i in all_duels:
+            lose_id = ''
+            win_id = ''
+            if(i[4] == 1):
+                win_id = i[1]
+                lose_id = i[2]
+            else:
+                win_id = i[2]
+                lose_id = i[1]
+            if not (win_id in top):
+                top[win_id] = 0
+            if not (lose_id in top):
+                top[lose_id] = 0
+            top[win_id] -= 1
+            top[lose_id] += 2
+        top = sorted(top.items(), key=lambda item: item[1])
+        res = 'Топ арены: \n'
+        num = 1
+        for i in top:
+            res += str(num)+'.Игрок с id: ' + str(i[0]) + ' со счётом' + str(i[1]) + '\n'
+            num+=1
+        return res
 
 # Global Database variable
 db = Database()
