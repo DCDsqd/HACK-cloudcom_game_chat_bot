@@ -470,7 +470,7 @@ async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     message = f"Игрок с ID {update.effective_chat.id} создал открытую дуэль!"
     keyboard = [
         [
-            InlineKeyboardButton("Принять", callback_data="accept")
+            InlineKeyboardButton("Принять", callback_data="accept_duel")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
