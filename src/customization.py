@@ -1,5 +1,6 @@
 from database import *
 import os
+import io
 from telegram import ReplyKeyboardMarkup, Update, InputMediaPhoto
 from telegram.ext import (
     CommandHandler,
@@ -109,8 +110,15 @@ def get_reply_keyboard(list_of_all) -> list:
 async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     all_hair = db.select_all_body_parts_by_type('hair')
     reply_keyboard = get_reply_keyboard(all_hair)
-    hair_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/hair/{hair[1]}.png'), 'rb')) for hair in
-                 all_hair]
+    hair_list = []
+    for hair in all_hair:
+        with Image.open(os.path.abspath(f'../res/avatars/hair/{hair[1]}.png')) as img:
+            new_size = (img.size[0] * 5, img.size[1] * 5)
+            resized_img = img.resize(new_size, resample=Image.NEAREST)
+        with io.BytesIO() as buffer:
+            resized_img.save(buffer, format="PNG")
+            buffer.seek(0)
+            hair_list.append(InputMediaPhoto(buffer))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     with open(os.path.abspath(f'../res/avatars/hair/{all_hair[0][1]}.png'), 'rb'):
         await update.message.reply_text(
@@ -125,8 +133,15 @@ async def custom_avatar_hair(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     all_face = db.select_all_body_parts_by_type('face')
     reply_keyboard = get_reply_keyboard(all_face)
-    face_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/face/{face[1]}.png'), 'rb')) for face in
-                 all_face]
+    face_list = []
+    for face in all_face:
+        with Image.open(os.path.abspath(f'../res/avatars/face/{face[1]}.png')) as img:
+            new_size = (img.size[0] * 5, img.size[1] * 5)
+            resized_img = img.resize(new_size, resample=Image.NEAREST)
+        with io.BytesIO() as buffer:
+            resized_img.save(buffer, format="PNG")
+            buffer.seek(0)
+            face_list.append(InputMediaPhoto(buffer))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     with open(os.path.abspath(f'../res/avatars/face/{all_face[0][1]}.png'), 'rb'):
         await update.message.reply_text(
@@ -141,8 +156,15 @@ async def custom_avatar_face(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def custom_avatar_body(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     all_shoulders = db.select_all_body_parts_by_type('shoulders')
     reply_keyboard = get_reply_keyboard(all_shoulders)
-    shoulders_list = [InputMediaPhoto(open(os.path.abspath(f'../res/avatars/body/{shoulder[1]}.png'), 'rb')) for
-                      shoulder in all_shoulders]
+    shoulders_list = []
+    for shoulder in all_shoulders:
+        with Image.open(os.path.abspath(f'../res/avatars/body/{shoulder[1]}.png')) as img:
+            new_size = (img.size[0] * 5, img.size[1] * 5)
+            resized_img = img.resize(new_size, resample=Image.NEAREST)
+        with io.BytesIO() as buffer:
+            resized_img.save(buffer, format="PNG")
+            buffer.seek(0)
+            shoulders_list.append(InputMediaPhoto(buffer))
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     with open(os.path.abspath(f'../res/avatars/body/{all_shoulders[0][1]}.png'), 'rb'):
         await update.message.reply_text(
