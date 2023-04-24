@@ -4,9 +4,9 @@ from telegram.ext import (
     ConversationHandler,
 )
 
-menu_keyboard = [['Кастомизация', 'Игра'], ['Друзья', 'События'], ['Инвентарь']]
+menu_keyboard = [['Кастомизация', 'Игра'], ['Друзья', 'События'], ['Инвентарь', 'Рейтинг']]
 
-menu_markup = ReplyKeyboardMarkup(menu_keyboard, one_time_keyboard=True)
+menu_markup = ReplyKeyboardMarkup(menu_keyboard, one_time_keyboard=False)
 
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:

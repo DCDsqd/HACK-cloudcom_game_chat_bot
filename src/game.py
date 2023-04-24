@@ -503,9 +503,20 @@ async def inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def show_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     items = db.get_users_items(update.effective_chat.id)
-    text = "В вашем инвенторе имеются:\n\n"
+    text = "В вашем инвенторе имеются:\n\n\n"
     for item in items:
-        text += item + '\n'
+        text += item[0] + f"({item[2]}). Сила: {item[3]}.\n"
+        if item[1] == "":
+            text += " Зачарований нет.\n"
+        else:
+            text += " Зачарования: "
+            ench_names = []
+            for ench in item[1].split(','):
+                ench_name = db.get_ench_name_by_id(ench)
+                ench_names.append(ench_name)
+            ench_str = ", ".join(ench_names)
+            text += ench_str
+            text += "\n\n"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 
