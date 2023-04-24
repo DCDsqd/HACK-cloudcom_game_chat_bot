@@ -37,7 +37,7 @@ async def get_friends_list(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
     else:
         for i in range(len(friend_list)):
-            response += str(friend_list[i]) + "\n"
+            response += f"{db.get_user_nick(friend_list[i])} - {str(friend_list[i])}\n"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
 

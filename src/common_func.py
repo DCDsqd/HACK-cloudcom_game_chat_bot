@@ -586,9 +586,3 @@ def manage_expired_duels(threading_event_duels) -> None:
     if not threading_event_duels.is_set():
         # Call the function again in 1 second
         threading.Timer(1, manage_expired_duels, [threading_event_duels]).start()
-
-
-# Требуемая функция на этапе разработки, потом нужно будет убрать
-async def del_keyboard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await context.bot.send_message(chat_id=update.effective_chat.id, text='Клавиатура удалена!',
-                                   reply_markup=ReplyKeyboardRemove())
