@@ -561,17 +561,30 @@ async def receive_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYP
     duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
     ability_id = db.get_ability_id_from_name(ability_name)
     opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
-    duels_ongoing_dict[duel_id].process_turn(Turn(update.message.from_user.id, TurnType.MAGIC_ATTACK, opponent_id, Ability(ability_id, opponent_id)))
 
     opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
     me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
 
-    await context.bot.send_message(chat_id=update.message.from_user.id,
-                                   text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                   reply_markup=ReplyKeyboardRemove())
-    await context.bot.send_message(chat_id=opponent_id,
-                                   text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                   reply_markup=attacks_markup)
+    duels_ongoing_dict[duel_id].process_turn(Turn(update.message.from_user.id, TurnType.MAGIC_ATTACK, opponent_id, Ability(ability_id, opponent_id)))
+
+    if opponent.is_stuned:
+        opponent.is_stuned = False
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
+    else:
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
 
     if opponent.is_dead() and me.is_dead():
         await context.bot.send_message(chat_id=update.message.from_user.id,
