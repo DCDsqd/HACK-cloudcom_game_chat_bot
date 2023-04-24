@@ -762,19 +762,40 @@ class Database:
         res = execute_read_query(self.database_conn, query)
         return res[0]
 
+    def get_ench_name_by_id(self, ench_id, ench_type: str) -> str:
+        query = ""
+        if ench_type == 'armor':
+            query = f"""
+                        SELECT name FROM enchantments_armor WHERE id = '{ench_id}';
+                    """
+        elif ench_type == 'weapon':
+            query = f"""
+                        SELECT name FROM enchantments_weapon WHERE id = '{ench_id}';
+                    """
+        else:
+            logging.error("Got wrong ench_type in get_ench_name_by_id()!")
+            return "UNKNOWN_ENCHANTMENT"
+
+        return str(execute_read_query(self.gamedata_conn, query)[0][0])
+
     def get_users_items(self, user_id):
         query = f"""
-                SELECT base_item_id FROM items_owned WHERE owner_id = {user_id}
+                    SELECT base_item_id, echantments FROM items_owned WHERE owner_id = {user_id}
                 """
         items = execute_read_query(self.database_conn, query)
         result = []
         for item in items:
             base_item_id = item[0]
+            meta_item_enchs = item[1]
             query = f"""
-                    SELECT name FROM base_items WHERE id = {base_item_id}
+                        SELECT name, type, strength, rarity FROM base_items WHERE id = {base_item_id}
                     """
-            base_item_name = execute_read_query(self.gamedata_conn, query)[0][0]
-            result.append(base_item_name)
+            base_query_res = execute_read_query(self.gamedata_conn, query)[0]
+            base_item_name = base_query_res[0]
+            base_item_type = base_query_res[1]
+            base_item_strength = base_query_res[1]
+            base_item_rarity = base_query_res[1]
+            result.append([base_item_name, meta_item_enchs, base_item_type, base_item_strength, base_item_rarity])
         return result
 
     def get_ability_main_info(self, ability_id) -> list:
