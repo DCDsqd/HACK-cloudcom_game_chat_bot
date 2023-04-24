@@ -519,10 +519,10 @@ game_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Лаборатория$"), lab),
             MessageHandler(filters.Regex("^Дом гильдий$"), guild_house),
             MessageHandler(filters.Regex("^Кузница$"), forge),
-            MessageHandler(filters.Regex("^Рынок$"), market),
+            # MessageHandler(filters.Regex("^Рынок$"), market),
             MessageHandler(filters.Regex("^Арена$"), arena),
-            MessageHandler(filters.Regex("^Великая библиотека$"), library),
-            MessageHandler(filters.Regex("^Зал легионеров$"), hall_of_legionnaires),
+            # MessageHandler(filters.Regex("^Великая библиотека$"), library),
+            # MessageHandler(filters.Regex("^Зал легионеров$"), hall_of_legionnaires),
         ],
         CHRONOS_CHOOSING: [
             MessageHandler(filters.Regex("^Улучшить персонажа$"), upgrade_champ),
