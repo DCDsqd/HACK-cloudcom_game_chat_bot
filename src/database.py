@@ -758,8 +758,9 @@ class Database:
     def get_ability_main_info(self, ability_id):
         query = f"""
                     SELECT name, buff, dmg_perc, element, area, target
-                    WHERE id = {ability_id}
+                    WHERE id = {ability_id};
                 """
+        return execute_read_query(self.gamedata_conn, query)[0]
 
 
 # Global Database variable
