@@ -510,26 +510,65 @@ async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
     elif opponent.is_dead():
         await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text="Оппонент сдох",
+                                       text="Оппонент пал! Вы победили!",
                                        reply_markup=back_markup)
         await context.bot.send_message(chat_id=opponent_id,
-                                       text="Ты сдох собака",
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
                                        reply_markup=back_markup)
 
         kill_duel(duel_id)
 
     elif me.is_dead():
         await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text="Ты сдох собака",
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
                                        reply_markup=back_markup)
         await context.bot.send_message(chat_id=opponent_id,
-                                       text="Оппонент сдох",
+                                       text="Оппонент пал! Вы победили!",
                                        reply_markup=back_markup)
 
         kill_duel(duel_id)
 
     return ConversationHandler.END
 
+
+ABILITY_CHOOSING, AHFWU = range(2)
+
+
+async def magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    duel_id = context.bot_data['duel_id']
+    abilities = duels_ongoing_dict[duel_id].get_possible_abilities(update.message.from_user.id)
+    abilities_id_and_name = []
+    for a in abilities:
+        abilities_id_and_name.append((a, db.get_ability_name(a)))
+    keyboard = []
+    i = 0
+    while i < len(abilities_id_and_name):
+        if i % 3 == 0:
+            keyboard.append([])
+        keyboard[len(keyboard) - 1].append(abilities_id_and_name[i][1])
+        i += 1
+    magic_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False)
+    await context.bot.send_message(chat_id=update.message.from_user.id,
+                                   text=f"Выберите способность из доступных: ",
+                                   reply_markup=magic_markup)
+    return ABILITY_CHOOSING
+
+
+async def receive_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    ability_name = update.message.text
+    
+
+
+magic_handler = ConversationHandler(
+    entry_points=[MessageHandler(filters.Regex("^Использовать способность$"), magic_attack)],
+    states={
+        ABILITY_CHOOSING: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), receive_magic_attack, )
+        ]
+    },
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
+)
 
 events_handler = ConversationHandler(
     entry_points=[CommandHandler("events", irl_events_menu),

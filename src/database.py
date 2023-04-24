@@ -785,11 +785,11 @@ class Database:
                 """
         all_duels = execute_read_query(self.database_conn, query)
         print(all_duels)
-        top = {};
+        top = {}
         for i in all_duels:
             lose_id = ''
             win_id = ''
-            if(i[4] == 1):
+            if i[4] == 1:
                 win_id = i[1]
                 lose_id = i[2]
             else:
@@ -806,8 +806,34 @@ class Database:
         num = 1
         for i in top:
             res += str(num)+'.Игрок с id: ' + str(i[0]) + ' со счётом' + str(i[1]) + '\n'
-            num+=1
+            num += 1
         return res
+
+    def get_all_abilities_ids_for_class(self, class_id: str):
+        if class_id != "Маг" and class_id != "Лучник" and class_id != "Рыцарь" and class_id != "Охотник":
+            logging.error(f"In get_all_abilities_ids_for_class() got unknown class_id = {class_id}")
+        query = f"""
+                    SELECT id FROM abilities WHERE class = '{class_id}'
+                """
+        res = execute_read_query(self.gamedata_conn, query)
+        ans = []
+        for r in res:
+            ans.append(r[0])
+        return ans
+
+    def get_player_class_by_id(self, user_id):
+        query = f"""
+                    SELECT game_class FROM users WHERE id = '{user_id}';
+                """
+        return execute_read_query(self.database_conn, query)[0][0]
+
+    def get_ability_name(self, ability_id) -> str:
+        query = f"""
+                    SELECT name FROM abilities WHERE id = '{ability_id}';
+                """
+        return execute_read_query(self.gamedata_conn, query)[0][0]
+
 
 # Global Database variable
 db = Database()
+

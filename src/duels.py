@@ -24,7 +24,7 @@ class Ability:
         buff_info = db.get_buff_info(self.buff_id)
         self.buff_name = buff_info[0]
         self.is_stun = buff_info[1]
-        self.dmg = buff_info[2]
+        self.dmg = abs(buff_info[2])
         # self.defence_perc = buff_info[3]
         # self.miss_perc = buff_info[4]
 
@@ -276,7 +276,7 @@ class Turn:
         self.turn_maker = turn_maker_
         self.turn_type = turn_type_
         self.target = target_
-        self.ability_ability_obj = ability_obj
+        self.ability_obj = ability_obj
         self.consumable_ibj = consumable_obj
 
 
@@ -306,6 +306,9 @@ class Duel:
 
         self.sender_player = PlayerInGame(sender_id_, False, self.full_log, self.turn_counter)
         self.receiver_player = PlayerInGame(receiver_id_, False, self.full_log, self.turn_counter)
+
+        self.possible_abilities_sender = db.get_all_abilities_ids_for_class(db.get_player_class_by_id(self.sender_player.user_id))
+        self.possible_abilities_receiver = db.get_all_abilities_ids_for_class(db.get_player_class_by_id(self.receiver_player.user_id))
 
         logging.info(f"Started duel between (from duel constructor) {self.sender_player.user_id} and {self.receiver_player.user_id}, duel id = {self.id}")
 
@@ -338,7 +341,7 @@ class Duel:
                                 turn.target = {turn.target} (defender={defender.user_id})""")
             pass
 
-        if turn.turn_type == TurnType.PHYSICAL_ATTACK or turn.turn_type == TurnType.MAGIC_ATTACK:
+        if turn.turn_type == TurnType.PHYSICAL_ATTACK:
             attack = Attack(attacker.weapon,
                             0,
                             turn.turn_type,
@@ -389,6 +392,30 @@ class Duel:
                                             Броня: {attacker.armor_state}.
                                         """, self.turn_counter))
 
+        elif turn.turn_type == TurnType.MAGIC_ATTACK:
+            ability_attack = AbilityAttack(attacker.weapon.strength, turn.ability_obj, self.full_log, self.turn)
+            self.full_log.append(('c', f"""
+                                            Игрок {attacker.user_nick} применяет способность 
+                                            {ability_attack.ability_used_name}!
+                                        """, self.turn_counter))
+            
+            if int(ability_attack.target) == int(attacker.user_id):
+                attacker.health = min(100, attacker.health + (attacker.health * ability_attack.heal_perc / 100))
+                self.full_log.append(('c', f"""
+                                                Игрок {attacker.user_nick} увеличивает свое здоровье на {ability_attack.heal_perc}%!
+                                                Новый показатель здоровья: {attacker.health}
+                                            """, self.turn_counter))
+            else:
+                defender.apply_damage(ability_attack.total_damage)
+                self.full_log.append(('c', f"""
+                                                Игрок {defender.user_nick} получает {ability_attack.total_damage} урона! 
+                                                Здоровье: {defender.health}. 
+                                                Броня: {defender.armor_state}.
+                                            """, self.turn_counter))
+
+            if ability_attack.is_stun == 1:
+                defender.is_stuned = True
+
         elif turn.turn_type == TurnType.CONSUME:
             pass
         else:
@@ -437,6 +464,11 @@ class Duel:
         if int(self.sender_player.user_id) == int(player_id):
             return self.sender_player
         return self.receiver_player
+
+    def get_possible_abilities(self, player_id):
+        if int(player_id) == int(self.sender_player.user_id):
+            return self.possible_abilities_sender
+        return self.possible_abilities_receiver
 
 
 # Global dictionary to hold all ongoing duels in memory
