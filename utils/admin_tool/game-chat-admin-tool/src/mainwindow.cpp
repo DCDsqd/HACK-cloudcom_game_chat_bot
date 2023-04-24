@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->mainStackedWidget->setCurrentIndex(1);
     ui->scrollAreaWidgetContents->setLayout(ui->eventsLayout);
 
-    ui->langBox->setStyleSheet(QssHelper::ReadRelativeQSS("qss_example.qss"));
+    ui->langBox->setStyleSheet(QssHelper::ReadRelativeQSS("languages_combo_box.qss"));
     ui->langBox->ensurePolished();
 
     loadEventsFromDb();
@@ -73,6 +73,8 @@ void MainWindow::addEventToLayout(const QString &name,
         GridLayoutUtil::removeRow(ui->eventsLayout, cur_next_row);
         //deleteRowFromLayout(cur_next_row);
     });
+    event_delete->setStyleSheet(QssHelper::ReadRelativeQSS("evil_push_button.qss"));
+    event_delete->ensurePolished();
 
     // Adding events to grid layout
     ui->eventsLayout->addWidget(event_name, cur_next_row, E_NAME, Qt::AlignCenter);
@@ -114,8 +116,6 @@ void MainWindow::deleteRowFromLayout(size_t row)
             delete tmp_widget_holder_for_cmp;
             if(it != current_translatable_widgets->end()){
                 current_translatable_widgets->erase(it);
-            }
-            else{
                 qDebug() << "Was not able to find widget that needs to be deleted in current_translatable_widgets, "
                             "itemWidget = " << itemWidget;
             }

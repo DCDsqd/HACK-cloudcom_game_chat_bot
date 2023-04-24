@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
-        <file>../qss/qss_example.qss</file>
+        <file>../qss/languages_combo_box.qss</file>
+        <file>../qss/evil_push_button.qss</file>
     </qresource>
 </RCC>
