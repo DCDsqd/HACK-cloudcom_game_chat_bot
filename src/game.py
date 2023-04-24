@@ -26,11 +26,8 @@ POLL_INPUT = range(1)
 
 
 async def game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    con = create_connection('../db/database.db')
     user_id = update.message.from_user.id
-    request = f"SELECT game_class FROM users WHERE id={user_id}"
-    user_class = execute_read_query(con, request)
-    con.close()
+    user_class = db.get_player_class_by_id(user_id)
     if user_class[0][0] is None or user_class[0][0] == '':
         await context.bot.send_photo(chat_id=update.effective_chat.id,
                                      photo=open(os.path.abspath('../res/locations/gate.png'), 'rb'),
