@@ -14,7 +14,12 @@ class TurnType(Enum):
 class Ability:
     def __init__(self, abil_id):
         self.id = abil_id
-
+        ability_info = db.get_ability_main_info(abil_id)
+        self.name = ability_info[0]
+        self.buff_id = ability_info[1]
+        self.dmg_perc = ability_info[2]
+        self.is_area = ability_info[3]
+        self.target_type = ability_info[4]
 
 
 class MagicAction:
