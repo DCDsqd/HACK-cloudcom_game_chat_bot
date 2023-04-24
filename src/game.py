@@ -94,6 +94,8 @@ async def assignments(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
               'Может и получится найти, что-то, что Вам по душе...\n\n' \
               'В одиночку или с друзьями?'
     markup = ReplyKeyboardMarkup(count_keyboard, one_time_keyboard=True)
+    await context.bot.send_photo(chat_id=update.effective_chat.id,
+                                 photo=merge_photos('RequestHome', update.effective_chat.id))
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message,
                                    reply_markup=markup)
     return TASKS
