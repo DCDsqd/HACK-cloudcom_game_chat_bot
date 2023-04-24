@@ -12,13 +12,14 @@ class Mob:
         self.is_bleeding = False
         self.is_stunned = False
 
-    def apply_physical_attack(self, attack: Attack, full_log: list, cur_turn: int) -> None:
-        full_damage = attack.physical_dmg
-        if attack.is_crit:
-            full_damage *= 1.5
+    def apply_physical_attack(self, attack: Attack, full_damage: int, full_log: list, cur_turn: int) -> None:
         self.is_bleeding = attack.is_bleeding
         self.is_stunned = attack.is_stun
         self.apply_raw_damage(full_damage, attack.has_ignored_armor)
+
+    def apply_magic_attack(self, ability_attack: AbilityAttack):
+        self.is_stunned = ability_attack.is_stun
+        self.apply_raw_damage(ability_attack.total_damage, False)
 
     def apply_raw_damage(self, damage: int, armor_ignored: bool) -> None:
         if armor_ignored:
@@ -56,6 +57,7 @@ class SoloDange:
         self.full_log.append(('c', mobs_info_log_text, self.turn_counter))
         self.turn = -1  # -1 is for player move, all the following numbers for mobs where self.turn is idx in mobs_list
         self.player_in_game = PlayerInGame(self.player_id, False, self.full_log, self.turn_counter)
+        self.possible_abilities_player = db.get_all_abilities_ids_for_class(db.get_player_class_by_id(self.player_in_game.user_id))
 
     def process_player_turn(self, turn: Turn) -> None:
         self.full_log.append(('d', f"""
@@ -77,62 +79,66 @@ class SoloDange:
                             self.turn_counter
                             )
 
-            defender.apply_damage(defence.combined_damage)
+            full_damage = attack.physical_dmg
+            if attack.is_crit:
+                full_damage *= 1.5
+            self.mobs_list[turn.target].apply_physical_attack(attack, full_damage, self.full_log, self.turn_counter)
             self.full_log.append(('c', f"""
-                                            Игрок {defender.user_nick} получает {defence.combined_damage} урона! 
-                                            Здоровье: {defender.health}. 
-                                            Броня: {defender.armor_state}.
+                                            Моб {self.mobs_list[turn.target].name} получает {full_damage} урона! 
+                                            Здоровье: {self.mobs_list[turn.target].health}. 
+                                            Броня: {self.mobs_list[turn.target].armor_state}.
                                         """, self.turn_counter))
+            final_vampirism_cashback = 0
+            if attack.vampirism_perc != 0:
+                final_vampirism_cashback = round(full_damage / 100 * attack.vampirism_perc)
 
-            defender.apply_bleeding_damage(self.full_log, self.turn_counter)
-
-            attacker.health = min(attacker.health + defence.vampirism_cashback, 100)
-            self.full_log.append(('c', f"""
-                                            Игрок {attacker.user_nick} получает {defence.vampirism_cashback} здоровья 
-                                            от нанесенного урона за счёт своих способностей!
-                                            Здоровье: {attacker.health}. 
-                                            Броня: {attacker.armor_state}.
-                                        """, self.turn_counter))
-
-            attacker.apply_damage(defence.mirror_dmg)
-            self.full_log.append(('c', f"""
-                                            Игрок {attacker.user_nick} получает {defence.mirror_dmg} обратного урона 
-                                            за счёт способностей оппонента!
-                                            Здоровье: {attacker.health}. 
-                                            Броня: {attacker.armor_state}.
-                                        """, self.turn_counter))
+            self.player_in_game.health = min(self.player_in_game.health + final_vampirism_cashback, 100)
 
         elif turn.turn_type == TurnType.MAGIC_ATTACK:
-            ability_attack = AbilityAttack(attacker.weapon.strength, turn.ability_obj, self.full_log, self.turn)
+            ability_attack = AbilityAttack(self.player_in_game.weapon.strength, turn.ability_obj, self.full_log, self.turn)
             self.full_log.append(('c', f"""
-                                            Игрок {attacker.user_nick} применяет способность 
+                                            Игрок {self.player_in_game.user_nick} применяет способность 
                                             {ability_attack.ability_used_name}!
                                         """, self.turn_counter))
 
-            if int(ability_attack.target) == int(attacker.user_id):
-                attacker.health = min(100, attacker.health + (attacker.health * ability_attack.heal_perc / 100))
+            if int(ability_attack.target) == int(self.player_in_game.user_id):
+                self.player_in_game.health = min(100, self.player_in_game.health + (self.player_in_game.health * ability_attack.heal_perc / 100))
                 self.full_log.append(('c', f"""
-                                                Игрок {attacker.user_nick} увеличивает свое здоровье на {ability_attack.heal_perc}%!
-                                                Новый показатель здоровья: {attacker.health}
+                                                Игрок {self.player_in_game.user_nick} увеличивает свое здоровье на {ability_attack.heal_perc}%!
+                                                Новый показатель здоровья: {self.player_in_game.health}
                                             """, self.turn_counter))
             else:
-                defender.apply_damage(ability_attack.total_damage)
-                self.full_log.append(('c', f"""
-                                                Игрок {defender.user_nick} получает {ability_attack.total_damage} урона! 
-                                                Здоровье: {defender.health}. 
-                                                Броня: {defender.armor_state}.
-                                            """, self.turn_counter))
+                if ability_attack.is_area:
+                    for mob in self.mobs_list:
+                        mob.apply_magic_attack(
+                            AbilityAttack(self.player_in_game.weapon.strength, turn.ability_obj, self.full_log, self.turn))
+                        self.full_log.append(('c', f"""
+                                                    Моб {mob.name} получает {ability_attack.total_damage} урона! 
+                                                    Здоровье: {mob.health}. 
+                                                    Броня: {mob.armor_state}.
+                                                """, self.turn_counter))
+                else:
+                    self.mobs_list[turn.target].apply_magic_attack(AbilityAttack(self.player_in_game.weapon.strength, turn.ability_obj, self.full_log, self.turn))
+                    self.full_log.append(('c', f"""
+                                                    Моб {self.mobs_list[turn.target].name} получает {ability_attack.total_damage} урона! 
+                                                    Здоровье: {self.mobs_list[turn.target].health}. 
+                                                    Броня: {self.mobs_list[turn.target].armor_state}.
+                                                """, self.turn_counter))
 
-            if ability_attack.is_stun == 1:
-                defender.is_stuned = True
-
-            if self.turn == 1:  # Sender turn
-                self.possible_abilities_sender.remove(int(ability_attack.ability_id))
-            else:
-                self.possible_abilities_receiver.remove(int(ability_attack.ability_id))
+            self.possible_abilities_player.remove(int(ability_attack.ability_id))
 
         elif turn.turn_type == TurnType.CONSUME:
             pass
+
+        for i in range(len(self.mobs_list)):
+            if self.mobs_list[i].is_dead():
+                self.mobs_list.remove(self.mobs_list[i])
+                i -= 1
+
+        self.turn_counter += 1
+        self.turn += 1
+        if self.turn >= len(self.mobs_list):
+            self.turn = -1
 
     # Returns current status of the duel:
     # 0 - if duel is still going on
