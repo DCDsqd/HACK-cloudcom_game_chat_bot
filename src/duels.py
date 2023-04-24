@@ -270,7 +270,6 @@ class PlayerInGame:
             return True
         return False
 
-
 class Turn:
     def __init__(self, turn_maker_, turn_type_: TurnType, target_, ability_obj: Ability = None, consumable_obj=None):
         self.turn_maker = turn_maker_
