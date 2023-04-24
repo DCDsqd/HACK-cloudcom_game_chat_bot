@@ -12,47 +12,21 @@ class TurnType(Enum):
 
 
 class Ability:
-    def __init__(self, abil_id):
+    def __init__(self, abil_id, target: int):
         self.id = abil_id
+        self.target = target
         ability_info = db.get_ability_main_info(abil_id)
         self.name = ability_info[0]
         self.buff_id = ability_info[1]
         self.dmg_perc = ability_info[2]
         self.is_area = ability_info[3]
         self.target_type = ability_info[4]
-
-
-class MagicAction:
-    def __init__(self,
-                 target_nick,  # '1' for every teammate, '-1' for every enemy
-                 armor_repair,
-                 health_heal,
-                 stun,
-                 miss_chance,
-                 no_damage):
-        self.target_nick = target_nick
-        self.armor_repair = armor_repair
-        self.health_heal = health_heal
-        self.stun = stun
-        self.miss_chance = miss_chance
-        self.no_damage = no_damage
-
-
-def switch_magic_action_name_to_action_obj(magic_action_target: str, magic_action_name: str) -> MagicAction:
-    if magic_action_name == 'Каменная броня':
-        return MagicAction(magic_action_target, 40, 0, 0, 0, 0)
-    elif magic_action_name == 'Первородная благодетель':
-        return MagicAction(magic_action_target, 0, 60, 0, 0, 0)
-    elif magic_action_name == 'Плотная кожа':
-        return MagicAction(magic_action_target, 0, 35, 0, 0, 0)
-    elif magic_action_name == 'Проводник':
-        return MagicAction(magic_action_target, 0, 0, 1, 0, 0)
-    elif magic_action_name == 'Проницатель':
-        return MagicAction(magic_action_target, 0, 0, 0, 1, 0)
-    elif magic_action_name == 'Мраморное касание':
-        return MagicAction(magic_action_target, 0, 0, 1, 0, 1)
-    else:
-        logging.error("switch_magic_action_name_to_action_obj() function got unknown magic_action_name!")
+        buff_info = db.get_buff_info(self.buff_id)
+        self.buff_name = buff_info[0]
+        self.is_stun = buff_info[1]
+        self.dmg = buff_info[2]
+        # self.defence_perc = buff_info[3]
+        # self.miss_perc = buff_info[4]
 
 
 class Attack:
@@ -187,6 +161,40 @@ class Defence:
         self.mirror_dmg = round(self.combined_damage * mirror_damage_perc / 100)
 
 
+class AbilityAttack:
+    def __init__(self,
+                 regular_weapon_dmg: int,
+                 ability_obj: Ability,
+                 full_log: list,
+                 cur_turn: int
+                 ):
+        self.ability_used_name = ability_obj.name
+        self.buff_used_name = ability_obj.buff_name
+        full_log.append(('d',
+                         f"Используется способность = {self.ability_used_name}!",
+                         cur_turn))
+        full_log.append(('d',
+                         f"Используется бафф = {self.buff_used_name}!",
+                         cur_turn))
+
+        self.dmg_perc = 0
+        self.heal_perc = 0
+        if ability_obj.dmg_perc >= 0:
+            self.dmg_perc = ability_obj.dmg_perc
+        else:
+            self.heal_perc = abs(ability_obj.dmg_perc)
+
+        self.total_damage = regular_weapon_dmg + (regular_weapon_dmg * self.dmg_perc/100) + ability_obj.dmg
+        full_log.append(('d',
+                         f"Полный урон от абилки = {self.total_damage} ((обычный урон от оружия [{regular_weapon_dmg}] + {self.dmg_perc}%) + дополнительный урон [{ability_obj.dmg}])",
+                         cur_turn))
+
+        self.is_area = ability_obj.is_area
+        self.is_stun = ability_obj.is_stun
+        self.target = ability_obj.target
+        self.target_type = ability_obj.target_type
+
+
 class PlayerInGame:
     def __init__(self, user_id_, beer_buff: bool, full_log: list, cur_turn: int):
         self.user_id = user_id_
@@ -264,18 +272,12 @@ class PlayerInGame:
 
 
 class Turn:
-    def __init__(self, turn_maker_, turn_type_: TurnType, target_, magic_action_name='', magic_action_target=''):
-        if magic_action_target == '' and turn_type_ == TurnType.MAGIC_ATTACK:
-            magic_action_target = db.get_user_nick(turn_maker_)
-
+    def __init__(self, turn_maker_, turn_type_: TurnType, target_, ability_obj: Ability = None, consumable_obj=None):
         self.turn_maker = turn_maker_
         self.turn_type = turn_type_
         self.target = target_
-
-        # Magic attack field, None if turn_type != MAGIC_ATTACK
-        self.magic_action = None
-        if self.turn_type != TurnType.MAGIC_ATTACK:
-            self.magic_action = switch_magic_action_name_to_action_obj(magic_action_target, magic_action_name)
+        self.ability_ability_obj = ability_obj
+        self.consumable_ibj = consumable_obj
 
 
 class Duel:
