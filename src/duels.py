@@ -2,7 +2,6 @@ from equipment import *
 
 from enum import Enum
 import random
-import threading
 
 
 class TurnType(Enum):
@@ -441,8 +440,8 @@ class Duel:
 
     # Returns current status of the duel:
     # 0 - if duel is still going on
-    # 1 - if player 1 has won
-    # 2 - if player 2 has won
+    # 1 - if player 1 had won
+    # 2 - if player 2 had won
     def status(self) -> int:
         if self.sender_player.is_dead():
             return 2

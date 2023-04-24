@@ -839,6 +839,27 @@ class Database:
                 """
         return execute_read_query(self.gamedata_conn, query)[0][0]
 
+    def get_dange_main_info(self, dange_id):
+        query = f"""
+                    SELECT name, fights, filename FROM danges WHERE id = '{dange_id}';
+                """
+        return execute_read_query(self.gamedata_conn, query)[0][0]
+
+    def get_all_mobs_ids_on_dange(self, dange_id):
+        query = f"""
+                    SELECT enemy_id FROM danges_enemies WHERE dange_id = '{dange_id}';
+                """
+        res = []
+        for i in execute_read_query(self.gamedata_conn, query):
+            res.append(i[0])
+        return res
+
+    def get_mob_main_info(self, mob_id):
+        query = f"""
+                    SELECT name, health, attack, defence FROM enemies WHERE id = '{mob_id}';
+                """
+        return execute_read_query(self.gamedata_conn, query)[0][0]
+
 
 # Global Database variable
 db = Database()
