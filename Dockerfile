@@ -7,7 +7,17 @@ COPY requirements.txt .
 # установка зависимостей
 RUN pip install -r requirements.txt
 # копирование содержимого локальной директории src в рабочую директорию
-COPY src/ .
+COPY ./src ./src
+# копирование необходимых файлов
+COPY ./db ./db
+COPY ./res ./res
+COPY ./scripts ./scripts
+COPY ./sql ./sql
+COPY ./tokens ./tokens
+COPY ./utils ./utils
+
+# создание директорий
+RUN mkdir ./logs
+
 # команда, выполняемая при запуске контейнера
-CMD [ "python", "./admin.py", "./bot.py", "./common_func.py", "./customization.py", "./database.py", "./duels.py", "./equipment.py", "./friends.py", "./game.py", "./menu_chain.py", "./time_control.py" ]
-COPY . .
+CMD [ "python", "src/bot.py"]
