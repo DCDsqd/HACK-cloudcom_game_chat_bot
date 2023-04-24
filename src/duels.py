@@ -253,12 +253,12 @@ class PlayerInGame:
 
     def apply_damage(self, damage: int) -> None:
         self.armor_state -= damage
-        print(f"in apply damage now armor state = {self.armor_state}, damage {damage}")
-        print(f"in apply damage health had= {self.health}")
+        # print(f"in apply damage now armor state = {self.armor_state}, damage {damage}")
+        # print(f"in apply damage health had= {self.health}")
         if self.armor_state < 0:
             self.health -= abs(self.armor_state)
             self.armor_state = 0
-        print(f"in apply damage now health = {self.health}")
+        # print(f"in apply damage now health = {self.health}")
 
     # Checks if Player has bleeding effect on him and applies damage if so
     # Returns True if damage was applied, False otherwise
