@@ -607,6 +607,12 @@ class Database:
         res = execute_read_query(self.database_conn, query)
         return False
 
+    def add_participant_to_open_duel(self, sender_id: int, receiver_id: int):
+        query = f"""
+                UPDATE duels SET receiver_id = {receiver_id} WHERE sender_id = {sender_id}
+                """
+        execute_query(self.database_conn, query)
+
     def add_pending_duel(self, sender_id, receiver_id) -> None:
         query = f"""
                     INSERT INTO duels (sender_id, receiver_id, status)
