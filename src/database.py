@@ -828,6 +828,8 @@ class Database:
     def get_inventory_by_user_id(self, user_id):
         query = f"SELECT res_id, count FROM res_owned WHERE user_id = {user_id} AND count > 0 ORDER BY count DESC"
         res_ids_old = execute_read_query(self.database_conn, query)
+        if len(res_ids_old) == 0:
+            return "Ваш рюкзак пуст..."
         res_ids = [item[0] for item in res_ids_old]
         res_count = [item[1] for item in res_ids_old]
         case_query = ' '.join([f"WHEN {id} THEN {index}" for index, id in enumerate(res_ids)])
