@@ -19,7 +19,7 @@ import random
 
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
     MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_SPECIAL_MULTIPLAYER_ID, \
-    GET_USER_FOR_RANDOM_MULTIPLAYER_ID, INVENTORY_CHOOSING = range(14)
+    GET_USER_FOR_RANDOM_MULTIPLAYER_ID, INVENTORY_CHOOSING, LAB_CHOOSING, GETTING_ITEM_ID = range(16)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -351,7 +351,54 @@ async def lab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     else:
         await context.bot.send_photo(chat_id=update.effective_chat.id,
                                      photo=merge_photos('Lab', update.effective_chat.id))
-        pass  # Здесь можно будет крафтить расходники
+        message = "Что Вы хотите сделать?"
+        lab_keyboard = [["Создать расходники", "Посмотреть ресурсы"], ['Назад']]
+        markup = ReplyKeyboardMarkup(lab_keyboard, one_time_keyboard=False)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+        return LAB_CHOOSING
+
+
+async def craft_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:  # TODO Заменить крафты в бд
+    message = "На стене Вы видите рецепты расходников:\n\n" \
+              "1. Граната: камень + металл\n" \
+              "2. Микстура Ивлева: подорожник + яркосвет\n" \
+              "3. Регенеративный эликсир: подорожник + Святая вода\n" \
+              "4. Божественный эликсир: Святая вода + яркосвет\n" \
+              "5. Ветряное зелье: перья + грибы\n" \
+              "6. Огненная банка: золото + металл\n" \
+              "7. Зелье металлической кожи - металл + подорожник\n" \
+              "8. Склянка ледяной души: хладовик + древесина\n" \
+              "9. Микстура грибного смещения: грибы + Святая вода\n" \
+              "10. Жидкость ослепительного проклятия: перья + яркосвет\n\n" \
+              "Вы вошли в решим создания. Чтобы выйти из него, нажмите 'Назад'\n" \
+              "Введите номер расходного предмета, чтобы создать его"
+    markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    return GETTING_ITEM_ID
+
+
+async def craft(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    item_number = update.message.text
+    back_markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
+    if not item_number.isdigit():
+        message = "Введённый Вами текст не является числом!"
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=back_markup)
+        return GETTING_ITEM_ID
+    if int(item_number) == 69:
+        message = "Бордель в настоящее время закрыт, приносим свои извенения"
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=back_markup)
+        return GETTING_ITEM_ID
+    elif int(item_number) > 10 or int(item_number) < 1:
+        message = "Такого предмета не существует!"
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=back_markup)
+        return GETTING_ITEM_ID
+    result = db.craft_item(update.message.from_user.id, item_number)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=result, reply_markup=back_markup)
+
+
+async def show_items(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    text = db.get_inventory_by_user_id(update.message.from_user.id)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 
 async def guild_house(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -375,19 +422,6 @@ async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await context.bot.send_photo(chat_id=update.effective_chat.id,
                                      photo=merge_photos('AnvilHouse', update.effective_chat.id))
         pass  # Здесь можно будет крафтить броню и оружие
-
-
-async def market(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if not is_available(update.message.from_user.id, 4000):
-        message = 'Вы приходите на рынок, но продавцы не проявляют к Вам интереса.\n' \
-                  'Возможно, Ваш опыт в покупке товаров на рынке еще недостаточен, и Вы не знаете, ' \
-                  'как правильно торговаться или выбирать качественные товары.\n' \
-                  'Вам стоит набраться опыта и знаний, чтобы стать более уверенным и компетентным покупателем.'
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-    else:
-        await context.bot.send_photo(chat_id=update.effective_chat.id,
-                                     photo=merge_photos('Market', update.effective_chat.id))
-        pass  # Здесь можно будет покупать товары
 
 
 arena_keyboard = [['Вызвать на дуэль', 'Создать открытую дуэль'], ['Назад']]
@@ -483,17 +517,6 @@ async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     return ARENA_CHOOSING
 
 
-async def library(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if not is_available(update.message.from_user.id, 8000):
-        message = 'Вы подходите к великой библиотеке, но библиотекарь отказывается выдать Вам книгу, на которую Вы ' \
-                  'хотели бы посмотреть.\nОн объясняет, что для того чтобы обращаться с такими ценностями, как книги, ' \
-                  'необходимо обладать определенным уровнем знаний и образования.\nВозможно, Вам еще нужно изучить ' \
-                  'некоторые основы науки, чтобы получить доступ к определенным книгам в библиотеке.'
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-    else:
-        pass  # Здесь можно будет за деньги покупать абилки
-
-
 async def inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = [['Посмотреть инвентарь'], ['Назад']]
     markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
@@ -545,9 +568,7 @@ game_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Лаборатория$"), lab),
             MessageHandler(filters.Regex("^Дом гильдий$"), guild_house),
             MessageHandler(filters.Regex("^Кузница$"), forge),
-            # MessageHandler(filters.Regex("^Рынок$"), market),
             MessageHandler(filters.Regex("^Арена$"), arena),
-            # MessageHandler(filters.Regex("^Великая библиотека$"), library),
         ],
         CHRONOS_CHOOSING: [
             MessageHandler(filters.Regex("^Улучшить персонажа$"), upgrade_champ),
@@ -597,6 +618,15 @@ game_handler = ConversationHandler(
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")),
                            get_ids_for_random_multiplayer_task),
             MessageHandler(filters.Regex("^Назад$"), assignments),
+        ],
+        LAB_CHOOSING: [
+            MessageHandler(filters.Regex("^Создать расходники$"), craft_choosing),
+            MessageHandler(filters.Regex("^Посмотреть ресурсы$"), show_items),
+            MessageHandler(filters.Regex("^Назад$"), game),
+        ],
+        GETTING_ITEM_ID: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), craft),
+            MessageHandler(filters.Regex("^Назад$"), lab),
         ],
     },
     fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],

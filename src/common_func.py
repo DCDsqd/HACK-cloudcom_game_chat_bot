@@ -565,7 +565,8 @@ async def receive_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYP
     opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
     me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
 
-    duels_ongoing_dict[duel_id].process_turn(Turn(update.message.from_user.id, TurnType.MAGIC_ATTACK, opponent_id, Ability(ability_id, opponent_id)))
+    duels_ongoing_dict[duel_id].process_turn(
+        Turn(update.message.from_user.id, TurnType.MAGIC_ATTACK, opponent_id, Ability(ability_id, opponent_id)))
 
     if opponent.is_stuned:
         opponent.is_stuned = False
@@ -685,3 +686,8 @@ def manage_expired_duels(threading_event_duels) -> None:
     if not threading_event_duels.is_set():
         # Call the function again in 1 second
         threading.Timer(1, manage_expired_duels, [threading_event_duels]).start()
+
+
+async def del_keyboard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    message = "Клавиатура удалена!"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=ReplyKeyboardRemove())

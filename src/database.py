@@ -798,6 +798,47 @@ class Database:
             result.append([base_item_name, meta_item_enchs, base_item_type, base_item_strength, base_item_rarity])
         return result
 
+    def craft_item(self, user_id, item_id):
+        query = f"SELECT res1_id, res2_id FROM craft_consumable WHERE cons_id = {item_id}"
+        res_ids = execute_read_query(self.gamedata_conn, query)[0]
+        query = f"""
+                SELECT COUNT(*) FROM res_owned
+                WHERE user_id = {user_id} AND res_id IN ({res_ids[0]}, {res_ids[1]}) AND count > 0
+            """
+        if_can_craft = execute_read_query(self.database_conn, query)[0][0]
+        if if_can_craft != 2:
+            return "У Вас недостаточно ресурсов для создания этого предмета!"
+        query = f"""
+                UPDATE res_owned
+                SET count = count - 1
+                WHERE user_id = {user_id} and (res_id = {res_ids[0]} or res_id = {res_ids[1]})
+                """
+        execute_query(self.database_conn, query)
+        query = f"""
+                INSERT OR REPLACE INTO consumable_owned (user_id, consum_id, count)
+                VALUES (
+                    {user_id},
+                    {item_id},
+                    COALESCE((SELECT count + 1 FROM consumable_owned WHERE user_id = {user_id} AND consum_id = {item_id}), 1)
+                );
+                """
+        execute_query(self.database_conn, query)
+        return f"Вы успешно создали предмет №{item_id}"
+
+    def get_inventory_by_user_id(self, user_id):
+        query = f"SELECT res_id, count FROM res_owned WHERE user_id = {user_id} AND count > 0 ORDER BY count DESC"
+        res_ids_old = execute_read_query(self.database_conn, query)
+        res_ids = [item[0] for item in res_ids_old]
+        res_count = [item[1] for item in res_ids_old]
+        case_query = ' '.join([f"WHEN {id} THEN {index}" for index, id in enumerate(res_ids)])
+        query = f"SELECT Name FROM res WHERE id IN ({','.join(str(id) for id in res_ids)}) ORDER BY CASE id {case_query} END"
+        names = execute_read_query(self.gamedata_conn, query)
+        names = [name[0] for name in names]
+        text = "Вот что Вы нашли в рюкзаке:\n\n"
+        items = [f"{names[i]} - {res_count[i]} шт." for i in range(len(names))]
+        text += "\n".join(items)
+        return text
+
     def get_ability_main_info(self, ability_id) -> list:
         query = f"""
                     SELECT name, buff, dmg_perc, area, target

@@ -10,7 +10,7 @@ from telegram.ext import ChatMemberHandler
 
 from common_func import start, profile, help_me, \
     events_handler, receive_poll_answer, poll_handler, rating, track_chats, buttons, start_duels_checking_coroutine, \
-    physic_attack, magic_handler
+    physic_attack, magic_handler, del_keyboard
 from friends import friends_handler
 from customization import custom_name_handler, avatar_handler
 from admin import admin_handler
@@ -28,6 +28,7 @@ if __name__ == '__main__':
     application.add_handler(poll_handler)
     application.add_handler(PollAnswerHandler(receive_poll_answer))
     application.add_handler(CommandHandler('help', help_me))
+    application.add_handler(CommandHandler('del', del_keyboard))
     application.add_handler(CommandHandler('rating', rating))
     application.add_handler(MessageHandler(filters.Regex("^Рейтинг$"), rating))
     application.add_handler(CommandHandler('profile', profile))
