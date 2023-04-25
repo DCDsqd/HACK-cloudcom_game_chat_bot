@@ -32,6 +32,7 @@ if __name__ == '__main__':
     application.add_handler(CommandHandler('rating', rating))
     application.add_handler(MessageHandler(filters.Regex("^Рейтинг$"), rating))
     application.add_handler(CommandHandler('profile', profile))
+    application.add_handler(MessageHandler(filters.Regex("^Профиль$"), profile))
     application.add_handler(ChatMemberHandler(track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
     application.add_handler(MessageHandler(filters.Regex("^Физическая атака$"), physic_attack))
     application.add_handler(CallbackQueryHandler(buttons))
