@@ -682,10 +682,23 @@ def manage_expired_duels(threading_event_duels) -> None:
             info += ";"
         # logging.info(info)
 
-    # Здесь нужно будет обработать список дуэлей, в которых текущий игрок не успел сделать ход (т.е. анлаки)
+    for cur_duel in expired_duels_list:
+        notify_expired_duel(cur_duel.get_attacker_player_in_game().user_id,
+                            cur_duel.get_defender_player_in_game().user_id)  # TODO: more args here!!! (?)
+        cur_duel.force_switch_turn()
+
     if not threading_event_duels.is_set():
         # Call the function again in 1 second
         threading.Timer(1, manage_expired_duels, [threading_event_duels]).start()
+
+
+async def notify_expired_duel(user_id: int, opponent_id: int, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await context.bot.send_message(chat_id=user_id,
+                                   text="Вы не успели совершить ход! Он будет передан сопернику.",
+                                   reply_markup=ReplyKeyboardRemove())
+    await context.bot.send_message(chat_id=opponent_id,
+                                   text="Соперник не успел совершить свой ход! Он передан Вам!",
+                                   reply_markup=attacks_markup)
 
 
 async def del_keyboard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

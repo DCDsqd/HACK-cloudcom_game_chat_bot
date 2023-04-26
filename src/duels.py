@@ -270,6 +270,7 @@ class PlayerInGame:
             return True
         return False
 
+
 class Turn:
     def __init__(self, turn_maker_, turn_type_: TurnType, target_, ability_obj: Ability = None, consumable_obj=None):
         self.turn_maker = turn_maker_
@@ -425,14 +426,17 @@ class Duel:
         else:
             logging.warning("turn.turn_type which is of TurnType(Enum) type is not equal to any member of enum")
 
-        self.turn_counter += 1
         if not defender.is_stuned:
-            self.turn = 3 - self.turn  # Turn switch
+            # Turn switch
+            self.force_switch_turn()
         else:
             self.full_log.append(('c', f"""
                                             Игрок {defender.user_nick} пропускает свой ход, из-за того, 
                                             что находится в стане!
                                         """, self.turn_counter))
+            # Turn switch (renew)
+            self.force_renew_turn()
+
         self.full_log.append(('d', f"""
                                         Смена хода. self.turn = {self.turn}
                                     """, self.turn_counter))
@@ -473,6 +477,22 @@ class Duel:
         if int(player_id) == int(self.sender_player.user_id):
             return self.possible_abilities_sender
         return self.possible_abilities_receiver
+
+    def force_switch_turn(self):
+        self.turn = 3 - self.turn
+        self.turn_counter += 1
+        self.time_left_to_make_turn = 30
+
+    def force_renew_turn(self, add_to_turn_counter: bool = True):
+        if add_to_turn_counter:
+            self.turn_counter += 1
+        self.time_left_to_make_turn = 30
+
+    def get_attacker_player_in_game(self) -> PlayerInGame:
+        return self.sender_player if self.turn == 1 else self.receiver_player
+
+    def get_defender_player_in_game(self) -> PlayerInGame:
+        return self.sender_player if self.turn == 2 else self.receiver_player
 
 
 # Global dictionary to hold all ongoing duels in memory
