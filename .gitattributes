@@ -1,4 +1,5 @@
 *.qss linguist-detectable
 
+*.sql linguist-language=SQLPL
 *.qss linguist-language=CSS
 *.h linguist-language=C++
