@@ -401,6 +401,8 @@ class Duel:
                 tmp_list[0] = 'd'
                 self.full_log[-1] = tuple(tmp_list)
 
+            defender.is_stuned = defence.is_stun
+
         elif turn.turn_type == TurnType.MAGIC_ATTACK:
             ability_attack = AbilityAttack(attacker.weapon.strength, turn.ability_obj, self.full_log, self.turn)
             self.full_log.append(('c', f"""
