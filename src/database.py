@@ -841,6 +841,32 @@ class Database:
         text += "\n".join(items)
         return text
 
+    def add_guild_request(self, user_id: int, res_string: str):
+        res_data = res_string.split()
+        if len(res_data) != 2:
+            return "Вы неверно ввели запрос!"
+        if not res_data[0].isdigit() or not res_data[1].isdigit():
+            return "Одно из введённых значений не является числом!"
+        if int(res_data[0]) > 10 or int(res_data[0]) < 1:
+            return "Таких ресурсов не существует!"
+        if int(res_data[1]) > 10:
+            return "Не жадничай! Запросить можно не более 10 ресурсов!"
+        query = f"SELECT sender_id, res_id, is_got FROM guild_house WHERE sender_id = {user_id} AND res_id = {res_data[0]} AND is_got = 0"
+        res = execute_read_query(self.database_conn, query)
+        if len(res) != 0:
+            return "Вы уже запросили этот ресурс!"
+        query = f"""
+                INSERT INTO guild_house (sender_id, res_id, count)
+                VALUES ({user_id}, {res_data[0]}, {res_data[1]})
+                """
+        execute_query(self.database_conn, query)
+        return "Вы успешно создали запрос!"
+
+    def get_guild_requests(self):
+        query = "SELECT sender_id, res_id, count FROM guild_house WHERE is_got = 0 ORDER BY count LIMIT 20"
+        requests = execute_read_query(self.database_conn, query)
+        print(requests)
+
     def get_ability_main_info(self, ability_id) -> list:
         query = f"""
                     SELECT name, buff, dmg_perc, area, target
