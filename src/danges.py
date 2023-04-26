@@ -155,7 +155,7 @@ class SoloDange:
         ans_logs = ""
         for (log_type, log, log_turn) in self.full_log:
             if log_type == 'c':
-                ans_logs += log
+                ans_logs += log.strip()
                 ans_logs += "\n"
         ans_logs = re.sub(' {2,}', ' ', ans_logs)
         ans_logs = re.sub('\t ', '\n\n', ans_logs)
@@ -167,7 +167,7 @@ class SoloDange:
         ans_logs = ""
         for (log_type, log, log_turn) in self.full_log:
             if log_type == 'c' and log_turn == self.turn_counter - 1:
-                ans_logs += log
+                ans_logs += log.strip()
                 ans_logs += "\n"
         ans_logs = re.sub(' {2,}', ' ', ans_logs)
         ans_logs = re.sub('\t ', '\n\n', ans_logs)
