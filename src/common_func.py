@@ -461,10 +461,10 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.bot_data['duel_id' + str(sender_id)] = duel_id
             context.bot_data['duel_id' + str(receiver_id)] = duel_id
             await context.bot.send_message(chat_id=sender_id,
-                                           text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас Ваш ход!",
+                                           text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас Ваш ход! Не забывайте, что на каждый ход отведено не более 30 секунд!",
                                            reply_markup=attacks_markup)
             await context.bot.send_message(chat_id=receiver_id,
-                                           text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас ход оппонента!",
+                                           text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас ход оппонента! Не забывайте, что на каждый ход отведено не более 30 секунд!",
                                            reply_markup=ReplyKeyboardRemove())
             return ConversationHandler.END
         else:
@@ -675,16 +675,16 @@ def start_duels_checking_coroutine():
 def manage_expired_duels(threading_event_duels) -> None:
     # logging.info("Entered duels checking coroutine")
     expired_duels_list = decrease_time_to_all_duels()
-    if expired_duels_list:
-        info = "Found expired duels with ids = "
-        for duel in expired_duels_list:
-            info += str(duel.id)
-            info += ";"
-        # logging.info(info)
+    # if expired_duels_list:
+    #     info = "Found expired duels with ids = "
+    #     for duel in expired_duels_list:
+    #         info += str(duel.id)
+    #         info += ";"
+    #     logging.info(info)
 
     for cur_duel in expired_duels_list:
         notify_expired_duel(cur_duel.get_attacker_player_in_game().user_id,
-                            cur_duel.get_defender_player_in_game().user_id)  # TODO: more args here!!! (?)
+                            cur_duel.get_defender_player_in_game().user_id)  # TODO: more args here!!!
         cur_duel.force_switch_turn()
 
     if not threading_event_duels.is_set():
