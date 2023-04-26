@@ -12,7 +12,9 @@
  * possible. So the rowCount() and columnCount() will always stay the same,
  * but the contents of the row, column or cell will be removed.
  */
-class GridLayoutUtil {
+
+class GridLayoutUtil 
+{
 
 public:
 
