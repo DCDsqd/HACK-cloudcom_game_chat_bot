@@ -913,7 +913,6 @@ class Database:
         execute_query(self.database_conn, query)
         return "Вы успешно отправили ресурсы!"
 
-
     def get_ability_main_info(self, ability_id) -> list:
         query = f"""
                     SELECT name, buff, dmg_perc, area, target
@@ -1001,9 +1000,24 @@ class Database:
 
     def get_consumable_main_info(self, consumable_id: int) -> list:
         query = f"""
-                    SELECT name, buff, dmg, area, target FROM consumable WHERE id = '{consumable_id}';
+                    SELECT name, buff, area, target FROM consumable WHERE id = '{consumable_id}';
                 """
         return execute_read_query(self.gamedata_conn, query)[0]
+
+    def get_list_of_owned_consumables(self, user_id: int) -> list:
+        query = f"""
+                    SELECT consum_id, count FROM consumable_owned WHERE user_id = '{user_id}';
+                """
+        return execute_read_query(self.database_conn, query)
+
+    def use_consumable_for_user(self, user_id: int, consum_id: int) -> None:
+        query = f"""
+                    UPDATE consumable_owned 
+                    SET count = (SELECT count FROM consumable_owned 
+                                WHERE user_id = '{user_id}' AND consum_id = '{consum_id}') - 1
+                    WHERE user_id = '{user_id}' AND consum_id = '{consum_id}';
+                """
+        execute_query(self.database_conn, query)
 
 
 # Global Database variable

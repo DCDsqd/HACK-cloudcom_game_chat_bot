@@ -16,10 +16,14 @@ class Consumable:
         self.id = consumable_id
         cons_info_list = db.get_consumable_main_info(consumable_id)
         self.name = cons_info_list[0]
-        self.armor_regen = cons_info_list[1]
-        self.damage = cons_info_list[2]
-        self.area = cons_info_list[3]
-        self.target = cons_info_list[4]
+        self.buff_id = cons_info_list[1]
+        self.area = cons_info_list[2]
+        self.target = cons_info_list[3]
+        buff_info = db.get_buff_info(self.buff_id)
+        self.buff_name = buff_info[0]
+        self.is_stun = buff_info[1]
+        self.damage = buff_info[2]
+        self.armor_regen = buff_info[4]
 
 
 class Ability:
@@ -288,33 +292,43 @@ class PlayerInGame:
             self.health += abs(consumable.damage)
         else:
             self.apply_damage(consumable.damage)
+        self.is_stuned = consumable.is_stun
+
+    def consumable_log_affect(self, consumable: Consumable, full_log: list, cur_turn: int):
+        full_log.append(('c', f"⭐ Расходник {consumable.name} применен к {self.user_nick}!", cur_turn))
+        if consumable.armor_regen != 0:
+            full_log.append(('c',
+                             f"🛡️ {self.user_nick} получает повышение брони на {consumable.armor_regen} единиц! Броня: {self.armor_state}",
+                             cur_turn))
+        if consumable.damage != 0:
+            if consumable.damage < 0:
+                full_log.append(('c',
+                                 f"💖 {self.user_nick} получает восстановление здоровья на {abs(consumable.damage)} единиц! Здоровье: {self.health}",
+                                 cur_turn))
+            else:
+                full_log.append(('c',
+                                 f"💔 {self.user_nick} получает урон в {consumable.damage} единиц! Здоровье: {self.health}",
+                                 cur_turn))
+        if consumable.is_stun:
+            full_log.append(('c',
+                             f"Игрок {self.user_nick} попадает в стан!",
+                             cur_turn))
 
     def apply_consumable_as_to_self(self, consumable: Consumable, full_log: list, cur_turn: int) -> None:
         if consumable.target == "friend" or consumable.target == "all":
             self.apply_consumable_straight_forward(consumable)
-            full_log.append(('c', f"⭐ Расходник {consumable.name} применен к {self.user_nick}!", cur_turn))
-            if consumable.armor_regen != 0:
-                full_log.append(('c',
-                                 f"🛡️ {self.user_nick} получает повышение брони на {consumable.armor_regen} единиц! Броня: {self.armor_state}",
-                                 cur_turn))
-            if consumable.damage != 0:
-                if consumable.damage < 0:
-                    full_log.append(('c',
-                                     f"💖 {self.user_nick} получает восстановление здоровья на {abs(consumable.damage)} единиц! Здоровье: {self.health}",
-                                     cur_turn))
-                else:
-                    full_log.append(('c',
-                                     f"💔 {self.user_nick} получает урон в {consumable.damage} единиц! Здоровье: {self.health}",
-                                     cur_turn))
+            self.consumable_log_affect(consumable, full_log, cur_turn)
 
     def apply_consumable_as_to_teammate(self, consumable: Consumable, full_log: list, cur_turn: int) -> None:
         if (consumable.target == "friend" or consumable.target == "all") and int(consumable.area) == 1:
             self.apply_consumable_straight_forward(consumable)
+            self.consumable_log_affect(consumable, full_log, cur_turn)
 
     # NOTE: This does not check 'area' field of consumable object!
     def apply_consumable_as_to_enemy(self, consumable: Consumable, full_log: list, cur_turn: int) -> None:
         if consumable.target == "enemy":
             self.apply_consumable_straight_forward(consumable)
+            self.consumable_log_affect(consumable, full_log, cur_turn)
 
 
 class Turn:
