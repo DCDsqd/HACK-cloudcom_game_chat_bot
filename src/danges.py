@@ -157,6 +157,10 @@ class SoloDange:
             if log_type == 'c':
                 ans_logs += log
                 ans_logs += "\n"
+        ans_logs = re.sub(' {2,}', ' ', ans_logs)
+        ans_logs = re.sub('\t ', '\n\n', ans_logs)
+        ans_logs = re.sub('\t', '\n\n', ans_logs)
+        ans_logs = re.sub('\n\n', '\n', ans_logs)
         return ans_logs
 
     def get_visible_logs_as_str_last_turn(self) -> str:
@@ -165,6 +169,10 @@ class SoloDange:
             if log_type == 'c' and log_turn == self.turn_counter - 1:
                 ans_logs += log
                 ans_logs += "\n"
+        ans_logs = re.sub(' {2,}', ' ', ans_logs)
+        ans_logs = re.sub('\t ', '\n\n', ans_logs)
+        ans_logs = re.sub('\t', '\n\n', ans_logs)
+        ans_logs = re.sub('\n\n', '\n', ans_logs)
         return ans_logs
 
 
