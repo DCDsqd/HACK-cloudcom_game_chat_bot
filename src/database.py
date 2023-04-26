@@ -4,6 +4,7 @@ from sqlite3 import Error
 import logging
 from time_control import cur_time, cur_date, cur_time_for_logger
 import sys
+import random
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -913,6 +914,19 @@ class Database:
         execute_query(self.database_conn, query)
         return "Вы успешно отправили ресурсы!"
 
+    def get_eng_class(self, user_id: int) -> str:
+        rus = ['Маг', 'Лучник', 'Рыцарь', 'Охотник']
+        eng = ['mage', 'archer', 'sword', 'hunter']
+        classes = dict(zip(rus, eng))
+        query = f"SELECT game_class FROM users WHERE id = {user_id}"
+        rus_class = execute_read_query(self.database_conn, query)[0][0]
+        return classes[rus_class]
+
+    def get_rus_class(self, user_id: int) -> str:
+        query = f"SELECT game_class FROM users WHERE id = {user_id}"
+        rus_class = execute_read_query(self.database_conn, query)[0][0]
+        return rus_class
+
     def show_possible_item_crafts(self, item_type: str, game_class: str):
         query = f"SELECT id, item_tier, res1_id, res1_count, res2_id, res2_count, gold_count " \
                 f"FROM craft_items WHERE item_type = '{item_type}' AND class = '{game_class}'"
@@ -923,9 +937,45 @@ class Database:
                     f"Редкость: {item[1]}\n" \
                     f"Создаётся из:\n" \
                     f"Ресурс №1: {db.get_res_name_by_id(item[2])} - {item[3]} шт.\n" \
-                    f"Ресурс №1: {db.get_res_name_by_id(item[4])} - {item[5]} шт.\n" \
+                    f"Ресурс №2: {db.get_res_name_by_id(item[4])} - {item[5]} шт.\n" \
                     f"Золото: {item[6]} монет\n\n"
         return text
+
+    def create_new_item(self, user_id: int, item_id: int):
+        query = f"SELECT res1_id, res1_count, res2_id, res2_count, gold_count, item_tier, item_type FROM craft_items WHERE id = '{item_id}'"
+        item = execute_read_query(self.gamedata_conn, query)[0]
+        query = f"SELECT 1 FROM res_owned WHERE user_id = {user_id} AND res_id = {item[0]} AND count >= {item[1]}"
+        if_res1_enough = execute_read_query(self.database_conn, query)
+        if len(if_res1_enough) == 0:
+            return "У Вас не хватает 1-го ресурса!"
+        query = f"SELECT 1 FROM res_owned WHERE user_id = {user_id} AND res_id = {item[2]} AND count >= {item[3]}"
+        if_res2_enough = execute_read_query(self.database_conn, query)
+        if len(if_res2_enough) == 0:
+            return "У Вас не хватает 2-го ресурса!"
+        query = f"SELECT money FROM users WHERE id = {user_id}"
+        gold = execute_read_query(self.database_conn, query)[0][0]
+        if item[4] > gold:
+            return "У Вас недостаточно золота!"
+        query = f"""
+            UPDATE res_owned
+            SET count = CASE
+                WHEN res_id = {item[0]} THEN count - {item[1]}
+                WHEN res_id = {item[2]} THEN count - {item[3]}
+                ELSE count
+                END
+            WHERE res_id IN ({item[0]}, {item[2]})
+        """
+        execute_query(self.database_conn, query)
+        query = f"UPDATE users SET money = money - {item[4]} WHERE id = {user_id}"
+        execute_query(self.database_conn, query)
+        query = f"SELECT id, name FROM base_items WHERE rarity = {item[5]} AND " \
+                f"class = '{db.get_rus_class(user_id)}' AND type = '{item[6]}'"
+        items_to_rand = execute_read_query(self.gamedata_conn, query)
+        created_item = random.choice(items_to_rand)
+        query = f"INSERT INTO items_owned (owner_id, base_item_id, date) VALUES " \
+                f"('{user_id}', '{created_item[0]}', '{cur_date()}')"
+        execute_query(self.database_conn, query)
+        return f'Вы создали предмет "{created_item[1]}"!'
 
     def get_ability_main_info(self, ability_id) -> list:
         query = f"""
@@ -1020,13 +1070,9 @@ class Database:
 
     def get_list_of_owned_consumables(self, user_id: int) -> list:
         query = f"""
-                    SELECT consum_id FROM consumable_owned WHERE user_id = '{user_id}' AND count > 0;
+                    SELECT consum_id, count FROM consumable_owned WHERE user_id = '{user_id}';
                 """
-        res = execute_read_query(self.database_conn, query)
-        ans = []
-        for i in range(len(res)):
-            ans.append(res[i][0])
-        return ans
+        return execute_read_query(self.database_conn, query)
 
     def use_consumable_for_user(self, user_id: int, consum_id: int) -> None:
         query = f"""
@@ -1039,7 +1085,7 @@ class Database:
 
     def get_consumable_id_from_name(self, consumable_name: str) -> int:
         query = f"""
-                    SELECT id FROM consumable WHERE name = '{consumable_name}';
+                    SELECT id FROM consumables WHERE name = '{consumable_name}';
                 """
         return execute_read_query(self.gamedata_conn, query)[0][0]
 
