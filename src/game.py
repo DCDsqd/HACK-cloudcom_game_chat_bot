@@ -20,7 +20,7 @@ import random
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
     MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_SPECIAL_MULTIPLAYER_ID, \
     GET_USER_FOR_RANDOM_MULTIPLAYER_ID, INVENTORY_CHOOSING, LAB_CHOOSING, GETTING_ITEM_ID, GUILD_CHOOSING, \
-    GUILD_REQUEST, GUILD_ID_GETTING, FORGE_CHOOSING = range(20)
+    GUILD_REQUEST, GUILD_ID_GETTING, FORGE_CHOOSING, ITEM_INPUT = range(21)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -471,16 +471,32 @@ async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def weapon_creating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    pass
+    message = db.show_possible_item_crafts('weapon', db.get_eng_class(update.message.from_user.id))
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=message + '\nВведите ID оружия, которое хотите создать',
+                                   reply_markup=back_markup)
+    return ITEM_INPUT
 
 
 async def armor_creating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    pass
+    message = db.show_possible_item_crafts('armor', db.get_eng_class(update.message.from_user.id))
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=message + '\nВведите ID брони, которое хотите создать',
+                                   reply_markup=back_markup)
+    return ITEM_INPUT
 
 
 arena_keyboard = [['Вызвать на дуэль', 'Создать открытую дуэль'], ['Назад']]
 back_keyboard = [['Назад']]
 back_markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
+
+
+async def get_item_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    item_id = update.message.text
+    message = db.create_new_item(update.message.from_user.id, item_id)
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=message,
+                                   reply_markup=back_markup)
 
 
 async def arena(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -698,6 +714,10 @@ game_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Оружие$"), weapon_creating),
             MessageHandler(filters.Regex("^Броня$"), armor_creating),
             MessageHandler(filters.Regex("^Назад$"), game),
+        ],
+        ITEM_INPUT: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_item_id),
+            MessageHandler(filters.Regex("^Назад$"), forge),
         ],
     },
     fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
