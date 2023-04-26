@@ -487,8 +487,10 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
+    # Prevent fast double click abuse
+    if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
+        pass
     opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
-    # print(f"opponent_id = {opponent_id}")
     duels_ongoing_dict[duel_id].process_turn(Turn(update.message.from_user.id, TurnType.PHYSICAL_ATTACK, opponent_id))
     await context.bot.send_message(chat_id=update.message.from_user.id,
                                    text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),

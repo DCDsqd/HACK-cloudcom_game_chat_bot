@@ -2,7 +2,7 @@ from equipment import *
 
 from enum import Enum
 import random
-
+import re
 
 class TurnType(Enum):
     PHYSICAL_ATTACK = 1
@@ -266,7 +266,7 @@ class PlayerInGame:
     def apply_bleeding_damage(self, full_log: list, cur_turn: int) -> bool:
         if self.is_bleeding:
             self.health -= 5
-            full_log.append(('c', f"Игрок {self.user_nick} получает урон от активного кровотечения! Здоровье: {self.health}", cur_turn))
+            full_log.append(('c', f"💔 Игрок {self.user_nick} получает урон от активного кровотечения! Здоровье: {self.health}", cur_turn))
             return True
         return False
 
@@ -369,48 +369,57 @@ class Duel:
 
             defender.apply_damage(defence.combined_damage)
             self.full_log.append(('c', f"""
-                                            Игрок {defender.user_nick} получает {defence.combined_damage} урона! 
-                                            Здоровье: {defender.health}. 
-                                            Броня: {defender.armor_state}.
+                                            ⚔️ Игрок {defender.user_nick} получает {defence.combined_damage} урона! 
+                                            ❤️ Здоровье: {defender.health}. 
+                                            🛡️ Броня: {defender.armor_state}.
                                         """, self.turn_counter))
 
             defender.apply_bleeding_damage(self.full_log, self.turn_counter)
 
             attacker.health = min(attacker.health + defence.vampirism_cashback, 100)
             self.full_log.append(('c', f"""
-                                            Игрок {attacker.user_nick} получает {defence.vampirism_cashback} здоровья 
+                                            💖 Игрок {attacker.user_nick} получает {defence.vampirism_cashback} здоровья 
                                             от нанесенного урона за счёт своих способностей!
-                                            Здоровье: {attacker.health}. 
-                                            Броня: {attacker.armor_state}.
+                                            ❤️ Здоровье: {attacker.health}. 
+                                            🛡️ Броня: {attacker.armor_state}.
                                         """, self.turn_counter))
+
+            if defence.vampirism_cashback == 0:
+                tmp_list = list(self.full_log[-1])
+                tmp_list[0] = 'd'
+                self.full_log[-1] = tuple(tmp_list)
 
             attacker.apply_damage(defence.mirror_dmg)
             self.full_log.append(('c', f"""
-                                            Игрок {attacker.user_nick} получает {defence.mirror_dmg} обратного урона 
+                                            ⚔️ Игрок {attacker.user_nick} получает {defence.mirror_dmg} обратного урона 
                                             за счёт способностей оппонента!
-                                            Здоровье: {attacker.health}. 
-                                            Броня: {attacker.armor_state}.
+                                            ❤️ Здоровье: {attacker.health}. 
+                                            🛡️ Броня: {attacker.armor_state}.
                                         """, self.turn_counter))
+            if defence.mirror_dmg == 0:
+                tmp_list = list(self.full_log[-1])
+                tmp_list[0] = 'd'
+                self.full_log[-1] = tuple(tmp_list)
 
         elif turn.turn_type == TurnType.MAGIC_ATTACK:
             ability_attack = AbilityAttack(attacker.weapon.strength, turn.ability_obj, self.full_log, self.turn)
             self.full_log.append(('c', f"""
-                                            Игрок {attacker.user_nick} применяет способность 
+                                            🔮 Игрок {attacker.user_nick} применяет способность 
                                             {ability_attack.ability_used_name}!
                                         """, self.turn_counter))
             
             if int(ability_attack.target) == int(attacker.user_id):
                 attacker.health = min(100, attacker.health + (attacker.health * ability_attack.heal_perc / 100))
                 self.full_log.append(('c', f"""
-                                                Игрок {attacker.user_nick} увеличивает свое здоровье на {ability_attack.heal_perc}%!
-                                                Новый показатель здоровья: {attacker.health}
+                                                💖 Игрок {attacker.user_nick} увеличивает свое здоровье на {ability_attack.heal_perc}%!
+                                                ❤️ Новый показатель здоровья: {attacker.health}
                                             """, self.turn_counter))
             else:
                 defender.apply_damage(ability_attack.total_damage)
                 self.full_log.append(('c', f"""
-                                                Игрок {defender.user_nick} получает {ability_attack.total_damage} урона! 
-                                                Здоровье: {defender.health}. 
-                                                Броня: {defender.armor_state}.
+                                                ⚔️ Игрок {defender.user_nick} получает {ability_attack.total_damage} урона! 
+                                                ❤️ Здоровье: {defender.health}. 
+                                                🛡️ Броня: {defender.armor_state}.
                                             """, self.turn_counter))
 
             if ability_attack.is_stun == 1:
@@ -431,8 +440,7 @@ class Duel:
             self.force_switch_turn()
         else:
             self.full_log.append(('c', f"""
-                                            Игрок {defender.user_nick} пропускает свой ход, из-за того, 
-                                            что находится в стане!
+                                            Игрок {defender.user_nick} пропускает свой ход, из-за того, что находится в стане!
                                         """, self.turn_counter))
             # Turn switch (renew)
             self.force_renew_turn()
@@ -458,6 +466,10 @@ class Duel:
             if log_type == 'c':
                 ans_logs += log
                 ans_logs += "\n"
+        ans_logs = re.sub(' {2,}', ' ', ans_logs)
+        ans_logs = re.sub('\t ', '\n\n', ans_logs)
+        ans_logs = re.sub('\t', '\n\n', ans_logs)
+        ans_logs = re.sub('\n\n', '\n', ans_logs)
         return ans_logs
 
     def get_visible_logs_as_str_last_turn(self) -> str:
@@ -466,6 +478,10 @@ class Duel:
             if log_type == 'c' and log_turn == self.turn_counter - 1:
                 ans_logs += log
                 ans_logs += "\n"
+        ans_logs = re.sub(' {2,}', ' ', ans_logs)
+        ans_logs = re.sub('\t ', '\n\n', ans_logs)
+        ans_logs = re.sub('\t', '\n\n', ans_logs)
+        ans_logs = re.sub('\n\n', '\n', ans_logs)
         return ans_logs
 
     def get_player_in_game(self, player_id):
