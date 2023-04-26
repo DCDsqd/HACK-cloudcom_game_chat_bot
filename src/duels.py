@@ -20,11 +20,16 @@ class Consumable:
         self.buff_id = cons_info_list[1]
         self.area = cons_info_list[2]
         self.target_type = cons_info_list[3]
-        buff_info = db.get_buff_info(self.buff_id)
-        self.buff_name = buff_info[0]
-        self.is_stun = buff_info[1]
-        self.damage = buff_info[2]
-        self.armor_regen = buff_info[4]
+        self.buff_name = 0
+        self.is_stun = 0
+        self.damage = 0
+        self.armor_regen = 0
+        if self.buff_id != 0:
+            buff_info = db.get_buff_info(self.buff_id)
+            self.buff_name = buff_info[0]
+            self.is_stun = buff_info[1]
+            self.damage = buff_info[2]
+            self.armor_regen = buff_info[4]
 
 
 class Ability:
@@ -371,9 +376,9 @@ class Duel:
         self.possible_abilities_sender = db.get_all_abilities_ids_for_class(db.get_player_class_by_id(self.sender_player.user_id))
         self.possible_abilities_receiver = db.get_all_abilities_ids_for_class(db.get_player_class_by_id(self.receiver_player.user_id))
 
-        self.possible_consumales_sender = []
+        self.possible_consumales_sender = db.get_list_of_owned_consumables(self.sender_player.user_id)
         self.used_consumales_sender = []
-        self.possible_consumales_receiver = []
+        self.possible_consumales_receiver = db.get_list_of_owned_consumables(self.receiver_player.user_id)
         self.used_consumales_receiver = []
 
         logging.info(f"Started duel between (from duel constructor) {self.sender_player.user_id} and {self.receiver_player.user_id}, duel id = {self.id}")
@@ -467,7 +472,7 @@ class Duel:
                 tmp_list[0] = 'd'
                 self.full_log[-1] = tuple(tmp_list)
 
-            defender.is_stuned = defence.is_stun
+            defender.is_stuned = bool(defence.is_stun)
 
         elif turn.turn_type == TurnType.MAGIC_ATTACK:
             ability_attack = AbilityAttack(attacker.weapon.strength, turn.ability_obj, self.full_log, self.turn)
@@ -520,6 +525,8 @@ class Duel:
         self.full_log.append(('d', f"""
                                         Смена хода. self.turn = {self.turn}
                                     """, self.turn_counter))
+
+        # print(self.full_log)
 
     # Returns current status of the duel:
     # 0 - if duel is still going on
