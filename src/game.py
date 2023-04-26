@@ -20,7 +20,7 @@ import random
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
     MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_SPECIAL_MULTIPLAYER_ID, \
     GET_USER_FOR_RANDOM_MULTIPLAYER_ID, INVENTORY_CHOOSING, LAB_CHOOSING, GETTING_ITEM_ID, GUILD_CHOOSING, \
-    GUILD_REQUEST = range(18)
+    GUILD_REQUEST, GUILD_ID_GETTING = range(19)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -406,10 +406,10 @@ async def guild_house(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
                   'предлогом, что Вы недостаточно опытны.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
-        guild_keyboard = [['Запросить ресурсы', 'Поделиться ресурсами'], ['Назад']]
-        guild_markup = ReplyKeyboardMarkup(guild_keyboard, one_time_keyboard=True)
         message = "Вы приходите в дом гильдий. Здесь можно запросить или поделиться ресурсами с другими " \
                   "игроками.\n\nЧто вы хотите сделать?"
+        guild_keyboard = [['Запросить ресурсы', 'Поделиться ресурсами'], ['Назад']]
+        guild_markup = ReplyKeyboardMarkup(guild_keyboard, one_time_keyboard=False)
         await context.bot.send_photo(chat_id=update.effective_chat.id,
                                      photo=merge_photos('GuildHouse', update.effective_chat.id), caption=message,
                                      reply_markup=guild_markup)
@@ -428,7 +428,8 @@ async def res_request(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
               "8 - Подорожник\n" \
               "9 - Святая вода\n" \
               "10 - Золото\n\n" \
-              "Введите номер ресурса и количество (через пробел, не больше 10 ресурсов)"
+              "Введите номер ресурса и количество (через пробел, не больше 10 ресурсов)\n" \
+              "Помните: чем меньше Вы запрашиваете, тем приоритетнее Ваш запрос!"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=back_markup)
     return GUILD_REQUEST
 
@@ -440,8 +441,18 @@ async def create_res_request(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def res_share(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    message = "Вот запросы от людей:\n\n"
-    db.get_guild_requests()
+    message = db.get_guild_requests(update.message.from_user.id)
+    if message[0]:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message[1], reply_markup=back_markup)
+        return GUILD_ID_GETTING
+    else:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message[1])
+
+
+async def request_id_getting(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    request_id = update.message.text
+    ans = db.send_res(update.message.from_user.id, request_id)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=ans, reply_markup=back_markup)
 
 
 async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -666,6 +677,10 @@ game_handler = ConversationHandler(
         ],
         GUILD_REQUEST: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), create_res_request),
+            MessageHandler(filters.Regex("^Назад$"), guild_house),
+        ],
+        GUILD_ID_GETTING: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), request_id_getting),
             MessageHandler(filters.Regex("^Назад$"), guild_house),
         ],
     },

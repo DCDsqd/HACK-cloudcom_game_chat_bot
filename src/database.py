@@ -862,10 +862,57 @@ class Database:
         execute_query(self.database_conn, query)
         return "Вы успешно создали запрос!"
 
-    def get_guild_requests(self):
-        query = "SELECT sender_id, res_id, count FROM guild_house WHERE is_got = 0 ORDER BY count LIMIT 20"
+    def get_res_name_by_id(self, res_id) -> str:
+        query = f"SELECT Name FROM res WHERE id = {res_id}"
+        return execute_read_query(self.gamedata_conn, query)[0][0]
+
+    def get_guild_requests(self, user_id) -> tuple[bool, str]:
+        query = f"SELECT id, sender_id, res_id, count FROM guild_house " \
+                f"WHERE is_got = 0 AND sender_id <> {user_id} ORDER BY count LIMIT 20"
         requests = execute_read_query(self.database_conn, query)
-        print(requests)
+        if len(requests) == 0:
+            return False, "Сейчас нет доступных запросов!"
+        message = "Вот запросы людей:\n\n"
+        for request in requests:
+            message += f"ID: {request[0]}\n" \
+                       f"Запрашивает: {db.get_user_nick(request[1])}\n" \
+                       f"Ресурс: {db.get_res_name_by_id(request[2])}\n" \
+                       f"Количество: {request[3]}\n\n"
+        message += "Введите ID запроса, которому хотите помочь!"
+        return True, message
+
+    def send_res(self, user_id, request_id: str):
+        if not request_id.isdigit():
+            return "Вы ввели не число!"
+        query = f"SELECT sender_id, res_id, count FROM guild_house WHERE id = {request_id}"
+        request = execute_read_query(self.database_conn, query)[0]
+        if int(user_id) == int(request[0]):
+            return "Зачем Вам отправлять ресурсы самому себе? Хотя, если очень хочется... Всё же нет."
+        query = f"SELECT EXISTS(SELECT 1 FROM res_owned WHERE user_id = {user_id} AND count >= {request[2]} AND " \
+                f"res_id = {request[1]})"
+        is_enough = int(execute_read_query(self.database_conn, query)[0][0])
+        if not is_enough:
+            return "У вас недостаточно ресурсов этого типа!"
+        # Забираем ресурсы у user_id
+        query = f"""
+               UPDATE res_owned
+               SET count = count - {request[2]}
+               WHERE user_id = {user_id} and res_id = {request[1]}
+               """
+        execute_query(self.database_conn, query)
+        # Отдаём их sender_id
+        query = f"SELECT EXISTS(SELECT 1 FROM res_owned WHERE user_id = {request[0]} AND res_id = {request[1]})"
+        is_exists = int(execute_read_query(self.database_conn, query)[0][0])
+        if is_exists:
+            query = f"UPDATE res_owned SET count = count + {request[2]} WHERE user_id = {request[0]}"
+        else:
+            query = f"INSERT INTO res_owned (user_id, res_id, count)" \
+                    f"VALUES ({request[0]}, {request[1]}, {request[2]})"
+        execute_query(self.database_conn, query)
+        query = f"UPDATE guild_house SET 'is_got' = 1 WHERE sender_id = {request[0]} AND res_id = {request[1]}"
+        execute_query(self.database_conn, query)
+        return "Вы успешно отправили ресурсы!"
+
 
     def get_ability_main_info(self, ability_id) -> list:
         query = f"""
