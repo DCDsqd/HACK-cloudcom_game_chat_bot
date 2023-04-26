@@ -1020,9 +1020,13 @@ class Database:
 
     def get_list_of_owned_consumables(self, user_id: int) -> list:
         query = f"""
-                    SELECT consum_id, count FROM consumable_owned WHERE user_id = '{user_id}';
+                    SELECT consum_id FROM consumable_owned WHERE user_id = '{user_id}' AND count > 0;
                 """
-        return execute_read_query(self.database_conn, query)
+        res = execute_read_query(self.database_conn, query)
+        ans = []
+        for i in range(len(res)):
+            ans.append(res[i][0])
+        return ans
 
     def use_consumable_for_user(self, user_id: int, consum_id: int) -> None:
         query = f"""
@@ -1035,7 +1039,7 @@ class Database:
 
     def get_consumable_id_from_name(self, consumable_name: str) -> int:
         query = f"""
-                    SELECT id FROM consumables WHERE name = '{consumable_name}';
+                    SELECT id FROM consumable WHERE name = '{consumable_name}';
                 """
         return execute_read_query(self.gamedata_conn, query)[0][0]
 

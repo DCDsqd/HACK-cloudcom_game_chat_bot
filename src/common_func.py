@@ -492,15 +492,28 @@ async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         pass
     opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
     duels_ongoing_dict[duel_id].process_turn(Turn(update.message.from_user.id, TurnType.PHYSICAL_ATTACK, opponent_id))
-    await context.bot.send_message(chat_id=update.message.from_user.id,
-                                   text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                   reply_markup=ReplyKeyboardRemove())
-    await context.bot.send_message(chat_id=opponent_id,
-                                   text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                   reply_markup=attacks_markup)
 
     opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
     me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
+
+    if opponent.is_stuned:
+        opponent.is_stuned = False
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
+    else:
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
 
     if opponent.is_dead() and me.is_dead():
         await context.bot.send_message(chat_id=update.message.from_user.id,
@@ -639,10 +652,11 @@ async def choose_consumable_to_use(update: Update, context: ContextTypes.DEFAULT
             keyboard.append([])
         keyboard[len(keyboard) - 1].append(consumables_id_and_name[i][1])
         i += 1
-    magic_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False)
+    consumable_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False)
+    print(len(consumables_id_and_name))
     await context.bot.send_message(chat_id=update.message.from_user.id,
                                    text=f"Выберите предмет из доступных: ",
-                                   reply_markup=magic_markup)
+                                   reply_markup=consumable_markup)
     return CONSUMABLE_CHOOSING
 
 
@@ -656,7 +670,7 @@ async def apply_consumable_effect(update: Update, context: ContextTypes.DEFAULT_
     me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
 
     duels_ongoing_dict[duel_id].process_turn(
-        Turn(update.message.from_user.id, TurnType.MAGIC_ATTACK, opponent_id,
+        Turn(update.message.from_user.id, TurnType.CONSUME, opponent_id,
              None, Consumable(consumable_id, opponent_id)))
 
     if opponent.is_stuned:
