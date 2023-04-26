@@ -978,13 +978,13 @@ class Database:
                 """
         return execute_read_query(self.gamedata_conn, query)[0][0]
 
-    def get_dange_main_info(self, dange_id):
+    def get_dange_main_info(self, dange_id) -> list:
         query = f"""
                     SELECT name, fights, filename FROM danges WHERE id = '{dange_id}';
                 """
-        return execute_read_query(self.gamedata_conn, query)[0][0]
+        return execute_read_query(self.gamedata_conn, query)[0]
 
-    def get_all_mobs_ids_on_dange(self, dange_id):
+    def get_all_mobs_ids_on_dange(self, dange_id) -> list:
         query = f"""
                     SELECT enemy_id FROM danges_enemies WHERE dange_id = '{dange_id}';
                 """
@@ -993,11 +993,17 @@ class Database:
             res.append(i[0])
         return res
 
-    def get_mob_main_info(self, mob_id):
+    def get_mob_main_info(self, mob_id: int) -> list:
         query = f"""
                     SELECT name, health, attack, defence FROM enemies WHERE id = '{mob_id}';
                 """
-        return execute_read_query(self.gamedata_conn, query)[0][0]
+        return execute_read_query(self.gamedata_conn, query)[0]
+
+    def get_consumable_main_info(self, consumable_id: int) -> list:
+        query = f"""
+                    SELECT name, buff, dmg, area, target FROM consumable WHERE id = '{consumable_id}';
+                """
+        return execute_read_query(self.gamedata_conn, query)[0]
 
 
 # Global Database variable

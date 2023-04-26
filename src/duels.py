@@ -4,10 +4,22 @@ from enum import Enum
 import random
 import re
 
+
 class TurnType(Enum):
     PHYSICAL_ATTACK = 1
     MAGIC_ATTACK = 2
     CONSUME = 3
+
+
+class Consumable:
+    def __init__(self, consumable_id: int):
+        self.id = consumable_id
+        cons_info_list = db.get_consumable_main_info(consumable_id)
+        self.name = cons_info_list[0]
+        self.armor_regen = cons_info_list[1]
+        self.damage = cons_info_list[2]
+        self.area = cons_info_list[3]
+        self.target = cons_info_list[4]
 
 
 class Ability:
@@ -270,6 +282,40 @@ class PlayerInGame:
             return True
         return False
 
+    def apply_consumable_straight_forward(self, consumable: Consumable):
+        self.armor_state += consumable.armor_regen
+        if consumable.damage < 0:
+            self.health += abs(consumable.damage)
+        else:
+            self.apply_damage(consumable.damage)
+
+    def apply_consumable_as_to_self(self, consumable: Consumable, full_log: list, cur_turn: int) -> None:
+        if consumable.target == "friend" or consumable.target == "all":
+            self.apply_consumable_straight_forward(consumable)
+            full_log.append(('c', f"⭐ Расходник {consumable.name} применен к {self.user_nick}!", cur_turn))
+            if consumable.armor_regen != 0:
+                full_log.append(('c',
+                                 f"🛡️ {self.user_nick} получает повышение брони на {consumable.armor_regen} единиц! Броня: {self.armor_state}",
+                                 cur_turn))
+            if consumable.damage != 0:
+                if consumable.damage < 0:
+                    full_log.append(('c',
+                                     f"💖 {self.user_nick} получает восстановление здоровья на {abs(consumable.damage)} единиц! Здоровье: {self.health}",
+                                     cur_turn))
+                else:
+                    full_log.append(('c',
+                                     f"💔 {self.user_nick} получает урон в {consumable.damage} единиц! Здоровье: {self.health}",
+                                     cur_turn))
+
+    def apply_consumable_as_to_teammate(self, consumable: Consumable, full_log: list, cur_turn: int) -> None:
+        if (consumable.target == "friend" or consumable.target == "all") and int(consumable.area) == 1:
+            self.apply_consumable_straight_forward(consumable)
+
+    # NOTE: This does not check 'area' field of consumable object!
+    def apply_consumable_as_to_enemy(self, consumable: Consumable, full_log: list, cur_turn: int) -> None:
+        if consumable.target == "enemy":
+            self.apply_consumable_straight_forward(consumable)
+
 
 class Turn:
     def __init__(self, turn_maker_, turn_type_: TurnType, target_, ability_obj: Ability = None, consumable_obj=None):
@@ -277,7 +323,7 @@ class Turn:
         self.turn_type = turn_type_
         self.target = target_
         self.ability_obj = ability_obj
-        self.consumable_ibj = consumable_obj
+        self.consumable_obj = consumable_obj
 
 
 class Duel:
@@ -433,7 +479,9 @@ class Duel:
                 self.possible_abilities_receiver.remove(int(ability_attack.ability_id))
 
         elif turn.turn_type == TurnType.CONSUME:
-            pass
+            attacker.apply_consumable_as_to_self(turn.consumable_obj, self.full_log, self.turn_counter)
+            defender.apply_consumable_as_to_enemy(turn.consumable_obj, self.full_log, self.turn_counter)
+
         else:
             logging.warning("turn.turn_type which is of TurnType(Enum) type is not equal to any member of enum")
 
