@@ -19,7 +19,8 @@ import random
 
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
     MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_SPECIAL_MULTIPLAYER_ID, \
-    GET_USER_FOR_RANDOM_MULTIPLAYER_ID, INVENTORY_CHOOSING, LAB_CHOOSING, GETTING_ITEM_ID = range(16)
+    GET_USER_FOR_RANDOM_MULTIPLAYER_ID, INVENTORY_CHOOSING, LAB_CHOOSING, GETTING_ITEM_ID, GUILD_CHOOSING, \
+    GUILD_REQUEST = range(18)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -372,14 +373,12 @@ async def craft_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
               "10. Жидкость ослепительного проклятия: перья + яркосвет\n\n" \
               "Вы вошли в решим создания. Чтобы выйти из него, нажмите 'Назад'\n" \
               "Введите номер расходного предмета, чтобы создать его"
-    markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=back_markup)
     return GETTING_ITEM_ID
 
 
 async def craft(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     item_number = update.message.text
-    back_markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
     if not item_number.isdigit():
         message = "Введённый Вами текст не является числом!"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=back_markup)
@@ -407,9 +406,42 @@ async def guild_house(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
                   'предлогом, что Вы недостаточно опытны.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
+        guild_keyboard = [['Запросить ресурсы', 'Поделиться ресурсами'], ['Назад']]
+        guild_markup = ReplyKeyboardMarkup(guild_keyboard, one_time_keyboard=True)
+        message = "Вы приходите в дом гильдий. Здесь можно запросить или поделиться ресурсами с другими " \
+                  "игроками.\n\nЧто вы хотите сделать?"
         await context.bot.send_photo(chat_id=update.effective_chat.id,
-                                     photo=merge_photos('GuildHouse', update.effective_chat.id))
-        pass  # Здесь можно будет запрашивать ресурсы
+                                     photo=merge_photos('GuildHouse', update.effective_chat.id), caption=message,
+                                     reply_markup=guild_markup)
+        return GUILD_CHOOSING
+
+
+async def res_request(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    message = "Вот что Вы можете запросить:\n" \
+              "1 - Метал\n" \
+              "2 - Грибы\n" \
+              "3 - Камни\n" \
+              "4 - Древесина\n" \
+              "5 - Хладовик\n" \
+              "6 - Перья\n" \
+              "7 - Яркосвет\n" \
+              "8 - Подорожник\n" \
+              "9 - Святая вода\n" \
+              "10 - Золото\n\n" \
+              "Введите номер ресурса и количество (через пробел, не больше 10 ресурсов)"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=back_markup)
+    return GUILD_REQUEST
+
+
+async def create_res_request(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    res_string = update.message.text
+    ans = db.add_guild_request(update.message.from_user.id, res_string)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=ans, reply_markup=back_markup)
+
+
+async def res_share(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    message = "Вот запросы от людей:\n\n"
+    db.get_guild_requests()
 
 
 async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -426,6 +458,7 @@ async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 arena_keyboard = [['Вызвать на дуэль', 'Создать открытую дуэль'], ['Назад']]
 back_keyboard = [['Назад']]
+back_markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
 
 
 async def arena(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -446,8 +479,7 @@ async def arena(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def challenge_to_duel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = "Введите ID игрока, которого хотите вызвать на дуэль"
-    markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=back_markup)
     return GET_USER_TO_DUEL_ID
 
 
@@ -485,13 +517,12 @@ async def get_user_duel_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 
 async def create_open_duel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
     message = "Доступные чаты для открытой дуэли: \n\n"
     chats = db.get_chat_ids()
     for chat in chats:
         message += f"{str(chat[2])}: {str(chat[1])}\n"
     message += "\nВведите ID чата, в который хотите отправить приглашение!"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=back_markup)
     return GET_CHAT_ID
 
 
@@ -627,6 +658,15 @@ game_handler = ConversationHandler(
         GETTING_ITEM_ID: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), craft),
             MessageHandler(filters.Regex("^Назад$"), lab),
+        ],
+        GUILD_CHOOSING: [
+            MessageHandler(filters.Regex("^Запросить ресурсы$"), res_request),
+            MessageHandler(filters.Regex("^Поделиться ресурсами$"), res_share),
+            MessageHandler(filters.Regex("^Назад$"), game),
+        ],
+        GUILD_REQUEST: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), create_res_request),
+            MessageHandler(filters.Regex("^Назад$"), guild_house),
         ],
     },
     fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
