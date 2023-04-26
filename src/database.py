@@ -941,8 +941,13 @@ class Database:
                     f"Золото: {item[6]} монет\n\n"
         return text
 
-    def create_new_item(self, user_id: int, item_id: int):
-        query = f"SELECT res1_id, res1_count, res2_id, res2_count, gold_count, item_tier, item_type FROM craft_items WHERE id = '{item_id}'"
+    def create_new_item(self, user_id: int, item_id: str):
+        if not item_id.isdigit():
+            return "Неправильный ввод! Попробуйте ещё раз!"
+        if int(item_id) > 32 or int(item_id) < 1:
+            return "Такого оружия не существует!"
+        query = f"SELECT res1_id, res1_count, res2_id, res2_count, gold_count, " \
+                f"item_tier, item_type FROM craft_items WHERE id = '{item_id}'"
         item = execute_read_query(self.gamedata_conn, query)[0]
         query = f"SELECT 1 FROM res_owned WHERE user_id = {user_id} AND res_id = {item[0]} AND count >= {item[1]}"
         if_res1_enough = execute_read_query(self.database_conn, query)
