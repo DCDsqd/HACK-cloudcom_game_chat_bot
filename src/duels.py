@@ -333,7 +333,7 @@ class PlayerInGame:
 
 
 class Turn:
-    def __init__(self, turn_maker_, turn_type_: TurnType, target_, ability_obj: Ability = None, consumable_obj=None):
+    def __init__(self, turn_maker_, turn_type_: TurnType, target_, ability_obj: Ability = None, consumable_obj: Consumable = None):
         self.turn_maker = turn_maker_
         self.turn_type = turn_type_
         self.target = target_
@@ -501,6 +501,8 @@ class Duel:
         elif turn.turn_type == TurnType.CONSUME:
             attacker.apply_consumable_as_to_self(turn.consumable_obj, self.full_log, self.turn_counter)
             defender.apply_consumable_as_to_enemy(turn.consumable_obj, self.full_log, self.turn_counter)
+            self.get_possible_consumables(attacker.user_id).remove(turn.consumable_obj.id)
+            self.get_used_consumables(attacker.user_id).append(turn.consumable_obj.id)
 
         else:
             logging.warning("turn.turn_type which is of TurnType(Enum) type is not equal to any member of enum")
@@ -568,6 +570,11 @@ class Duel:
         if int(player_id) == int(self.sender_player.user_id):
             return self.possible_consumales_sender
         return self.possible_consumales_receiver
+
+    def get_used_consumables(self, player_id):
+        if int(player_id) == int(self.sender_player.user_id):
+            return self.used_consumales_sender
+        return self.used_consumales_receiver
 
     def force_switch_turn(self):
         self.turn = 3 - self.turn
