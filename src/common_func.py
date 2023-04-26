@@ -535,7 +535,7 @@ async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     return ConversationHandler.END
 
 
-ABILITY_CHOOSING, AHFWU = range(2)
+ABILITY_CHOOSING, AHFWU, CONSUMABLE_CHOOSING = range(3)
 
 
 async def magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -624,12 +624,110 @@ async def receive_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYP
     return ConversationHandler.END
 
 
+async def choose_consumable_to_use(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
+    if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
+        pass
+    consumables_list_ids = duels_ongoing_dict[duel_id].get_possible_consumables(update.message.from_user.id)
+    consumables_id_and_name = []
+    for c in consumables_list_ids:
+        consumables_id_and_name.append((c, db.get_consumable_main_info(c)[0]))
+    keyboard = []
+    i = 0
+    while i < len(consumables_id_and_name):
+        if i % 3 == 0:
+            keyboard.append([])
+        keyboard[len(keyboard) - 1].append(consumables_id_and_name[i][1])
+        i += 1
+    magic_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False)
+    await context.bot.send_message(chat_id=update.message.from_user.id,
+                                   text=f"Выберите предмет из доступных: ",
+                                   reply_markup=magic_markup)
+    return CONSUMABLE_CHOOSING
+
+
+async def apply_consumable_effect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    consumable_name = update.message.text
+    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
+    consumable_id = db.get_consumable_id_from_name(consumable_name)
+    opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
+
+    opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
+    me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
+
+    duels_ongoing_dict[duel_id].process_turn(
+        Turn(update.message.from_user.id, TurnType.MAGIC_ATTACK, opponent_id,
+             None, Consumable(consumable_id, opponent_id)))
+
+    if opponent.is_stuned:
+        opponent.is_stuned = False
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
+    else:
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
+
+    if opponent.is_dead() and me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    elif opponent.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Оппонент пал! Вы победили!",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    elif me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Оппонент пал! Вы победили!",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    return ConversationHandler.END
+
+
 magic_handler = ConversationHandler(
     entry_points=[MessageHandler(filters.Regex("^Использовать способность$"), magic_attack)],
     states={
         ABILITY_CHOOSING: [
             MessageHandler(
                 filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), receive_magic_attack, )
+        ]
+    },
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
+)
+
+consumable_handler = ConversationHandler(
+    entry_points=[MessageHandler(filters.Regex("^Использовать предмет$"), choose_consumable_to_use)],
+    states={
+        CONSUMABLE_CHOOSING: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), apply_consumable_effect, )
         ]
     },
     fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],

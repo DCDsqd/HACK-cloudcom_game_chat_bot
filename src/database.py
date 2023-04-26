@@ -1033,6 +1033,12 @@ class Database:
                 """
         execute_query(self.database_conn, query)
 
+    def get_consumable_id_from_name(self, consumable_name: str) -> int:
+        query = f"""
+                    SELECT id FROM consumables WHERE name = '{consumable_name}';
+                """
+        return execute_read_query(self.gamedata_conn, query)[0][0]
+
 
 # Global Database variable
 db = Database()

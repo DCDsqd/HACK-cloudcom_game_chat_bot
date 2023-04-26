@@ -12,13 +12,14 @@ class TurnType(Enum):
 
 
 class Consumable:
-    def __init__(self, consumable_id: int):
+    def __init__(self, consumable_id: int, target: int):
         self.id = consumable_id
+        self.target = target
         cons_info_list = db.get_consumable_main_info(consumable_id)
         self.name = cons_info_list[0]
         self.buff_id = cons_info_list[1]
         self.area = cons_info_list[2]
-        self.target = cons_info_list[3]
+        self.target_type = cons_info_list[3]
         buff_info = db.get_buff_info(self.buff_id)
         self.buff_name = buff_info[0]
         self.is_stun = buff_info[1]
@@ -315,18 +316,18 @@ class PlayerInGame:
                              cur_turn))
 
     def apply_consumable_as_to_self(self, consumable: Consumable, full_log: list, cur_turn: int) -> None:
-        if consumable.target == "friend" or consumable.target == "all":
+        if consumable.target_type == "friend" or consumable.target_type == "all":
             self.apply_consumable_straight_forward(consumable)
             self.consumable_log_affect(consumable, full_log, cur_turn)
 
     def apply_consumable_as_to_teammate(self, consumable: Consumable, full_log: list, cur_turn: int) -> None:
-        if (consumable.target == "friend" or consumable.target == "all") and int(consumable.area) == 1:
+        if (consumable.target_type == "friend" or consumable.target_type == "all") and int(consumable.area) == 1:
             self.apply_consumable_straight_forward(consumable)
             self.consumable_log_affect(consumable, full_log, cur_turn)
 
     # NOTE: This does not check 'area' field of consumable object!
     def apply_consumable_as_to_enemy(self, consumable: Consumable, full_log: list, cur_turn: int) -> None:
-        if consumable.target == "enemy":
+        if consumable.target_type == "enemy":
             self.apply_consumable_straight_forward(consumable)
             self.consumable_log_affect(consumable, full_log, cur_turn)
 
@@ -369,6 +370,11 @@ class Duel:
 
         self.possible_abilities_sender = db.get_all_abilities_ids_for_class(db.get_player_class_by_id(self.sender_player.user_id))
         self.possible_abilities_receiver = db.get_all_abilities_ids_for_class(db.get_player_class_by_id(self.receiver_player.user_id))
+
+        self.possible_consumales_sender = []
+        self.used_consumales_sender = []
+        self.possible_consumales_receiver = []
+        self.used_consumales_receiver = []
 
         logging.info(f"Started duel between (from duel constructor) {self.sender_player.user_id} and {self.receiver_player.user_id}, duel id = {self.id}")
 
@@ -558,6 +564,11 @@ class Duel:
             return self.possible_abilities_sender
         return self.possible_abilities_receiver
 
+    def get_possible_consumables(self, player_id):
+        if int(player_id) == int(self.sender_player.user_id):
+            return self.possible_consumales_sender
+        return self.possible_consumales_receiver
+
     def force_switch_turn(self):
         self.turn = 3 - self.turn
         self.turn_counter += 1
@@ -588,10 +599,14 @@ def init_duel(duel: Duel) -> None:
 
 
 def kill_duel(duel_id: int) -> None:
-    killed_duel = duels_ongoing_dict.pop(duel_id)
+    killed_duel: Duel = duels_ongoing_dict.pop(duel_id)
     if killed_duel.status() == 0:
         logging.warning("kill_duel() call on ongoing duel with Duel::status() == 0!")
     db.finish_duel(duel_id, killed_duel.status())
+    for cons_id in killed_duel.used_consumales_sender:
+        db.use_consumable_for_user(killed_duel.sender_player.user_id, cons_id)
+    for cons_id in killed_duel.used_consumales_receiver:
+        db.use_consumable_for_user(killed_duel.receiver_player.user_id, cons_id)
 
 
 # Returns list of Duel objects in which time to make current turn was in fact exceeded
