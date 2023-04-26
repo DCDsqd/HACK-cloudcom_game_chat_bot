@@ -20,7 +20,7 @@ import random
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
     MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_SPECIAL_MULTIPLAYER_ID, \
     GET_USER_FOR_RANDOM_MULTIPLAYER_ID, INVENTORY_CHOOSING, LAB_CHOOSING, GETTING_ITEM_ID, GUILD_CHOOSING, \
-    GUILD_REQUEST, GUILD_ID_GETTING = range(19)
+    GUILD_REQUEST, GUILD_ID_GETTING, FORGE_CHOOSING = range(20)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -229,7 +229,7 @@ async def get_ids_for_special_multiplayer_task(update: Update, context: ContextT
                                                 f"совместное задание.\n\n"
                                                 f"Подтверждаете ли Вы своё участие?",
                                            reply_markup=reply_markup)
-        except telegram.error.BadRequest as e:
+        except telegram.error.BadRequest:
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text="Один или несколько пользователей не существует!")
             db.delete_multiplayer_task_participants(update.effective_chat.id)
@@ -262,7 +262,7 @@ async def get_ids_for_random_multiplayer_task(update: Update, context: ContextTy
                                                 f"совместное задание.\n\n"
                                                 f"Подтверждаете ли Вы своё участие?",
                                            reply_markup=reply_markup)
-        except telegram.error.BadRequest as e:
+        except telegram.error.BadRequest:
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text="Один или несколько пользователей не существует!")
             db.delete_multiplayer_task_participants(update.effective_chat.id)
@@ -462,9 +462,20 @@ async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                   ' испортить изделие.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
+        forge_keyboard = [['Оружие', 'Броня'], ['Назад']]
+        forge_markup = ReplyKeyboardMarkup(forge_keyboard, one_time_keyboard=True)
         await context.bot.send_photo(chat_id=update.effective_chat.id,
-                                     photo=merge_photos('AnvilHouse', update.effective_chat.id))
-        pass  # Здесь можно будет крафтить броню и оружие
+                                     photo=merge_photos('AnvilHouse', update.effective_chat.id),
+                                     caption="Что бы Вы хотели создать?", reply_markup=forge_markup)
+        return FORGE_CHOOSING
+
+
+async def weapon_creating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    pass
+
+
+async def armor_creating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    pass
 
 
 arena_keyboard = [['Вызвать на дуэль', 'Создать открытую дуэль'], ['Назад']]
@@ -682,6 +693,11 @@ game_handler = ConversationHandler(
         GUILD_ID_GETTING: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), request_id_getting),
             MessageHandler(filters.Regex("^Назад$"), guild_house),
+        ],
+        FORGE_CHOOSING: [
+            MessageHandler(filters.Regex("^Оружие$"), weapon_creating),
+            MessageHandler(filters.Regex("^Броня$"), armor_creating),
+            MessageHandler(filters.Regex("^Назад$"), game),
         ],
     },
     fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],

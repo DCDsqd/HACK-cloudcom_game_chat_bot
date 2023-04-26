@@ -913,6 +913,20 @@ class Database:
         execute_query(self.database_conn, query)
         return "Вы успешно отправили ресурсы!"
 
+    def show_possible_item_crafts(self, item_type: str, game_class: str):
+        query = f"SELECT id, item_tier, res1_id, res1_count, res2_id, res2_count, gold_count " \
+                f"FROM craft_items WHERE item_type = '{item_type}' AND class = '{game_class}'"
+        items = execute_read_query(self.gamedata_conn, query)
+        text = "Доступные предметы для создания:\n\n"
+        for item in items:
+            text += f"ID: {item[0]}\n" \
+                    f"Редкость: {item[1]}\n" \
+                    f"Создаётся из:\n" \
+                    f"Ресурс №1: {db.get_res_name_by_id(item[2])} - {item[3]} шт.\n" \
+                    f"Ресурс №1: {db.get_res_name_by_id(item[4])} - {item[5]} шт.\n" \
+                    f"Золото: {item[6]} монет\n\n"
+        return text
+
     def get_ability_main_info(self, ability_id) -> list:
         query = f"""
                     SELECT name, buff, dmg_perc, area, target
