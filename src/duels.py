@@ -473,7 +473,6 @@ class Duel:
                 self.full_log[-1] = tuple(tmp_list)
 
             defender.is_stuned = bool(defence.is_stun)
-            print("stun:" + str(defender.is_stuned))
 
         elif turn.turn_type == TurnType.MAGIC_ATTACK:
             ability_attack = AbilityAttack(attacker.weapon.strength, turn.ability_obj, self.full_log, self.turn)
@@ -527,7 +526,7 @@ class Duel:
                                         Смена хода. self.turn = {self.turn}
                                     """, self.turn_counter))
 
-        print(self.full_log)
+        # print(self.full_log)
 
     # Returns current status of the duel:
     # 0 - if duel is still going on
