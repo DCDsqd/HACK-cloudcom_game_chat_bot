@@ -540,6 +540,8 @@ ABILITY_CHOOSING, AHFWU = range(2)
 
 async def magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
+    if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
+        pass
     abilities = duels_ongoing_dict[duel_id].get_possible_abilities(update.message.from_user.id)
     abilities_id_and_name = []
     for a in abilities:
