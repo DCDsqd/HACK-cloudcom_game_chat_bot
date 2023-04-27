@@ -548,7 +548,7 @@ async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     return ConversationHandler.END
 
 
-ABILITY_CHOOSING, AHFWU, CONSUMABLE_CHOOSING = range(3)
+ABILITY_CHOOSING, CONSUMABLE_CHOOSING = range(2)
 
 
 async def magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
