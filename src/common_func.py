@@ -269,16 +269,16 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = message.from_user.id
     username = message.from_user.username
     db_data = db.get_user_info(user_id)
-    message = "Ваш профиль:\n\n" \
-              f"Игровое имя: {db_data[0][0]}\n" \
-              f"ID: {user_id}\n" \
-              f"Имя Telegram: {username}\n" \
-              f"Подкласс: {db_data[0][3]}\n" \
-              f"Ранг: {get_rank(user_id)}\n" \
-              f"Ваш класс: {db_data[0][1]}\n" \
-              f"Опыт: {db_data[0][2]}\n" \
-              f"Счёт в дуэлях: {db.get_duels_record_for_user(user_id)}\n" \
-              f"Баланс средств: {db.get_user_money(user_id)}\n"
+    message = "🗣️ Ваш профиль:\n\n" \
+              f"📋 Игровое имя: {db_data[0][0]}\n" \
+              f"🆔 ID: {user_id}\n" \
+              f"👨‍✈️ Имя Telegram: {username}\n" \
+              f"🛠️ Класс: {db_data[0][1]}\n" \
+              f"🗡️ Подкласс: {db_data[0][3]}\n" \
+              f"🏆 Ранг: {get_rank(user_id)}\n" \
+              f"🌡️ Опыт: {db_data[0][2]}\n" \
+              f"🧤 Счёт в дуэлях: {db.get_duels_record_for_user(user_id)}\n" \
+              f"💰 Баланс средств: {db.get_user_money(user_id)}\n"
     await context.bot.send_photo(chat_id=user_id, caption=message,
                                  photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'),
                                             'rb'))
