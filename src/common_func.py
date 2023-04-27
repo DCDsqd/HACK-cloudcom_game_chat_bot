@@ -90,6 +90,58 @@ def merge_photos(background: str, user_id: int) -> BytesIO:
     return result_image
 
 
+def merge_arena(user1_id: int, user2_id: int) -> BytesIO:
+    files1 = db.get_item_file_name(user1_id)
+    files2 = db.get_item_file_name(user2_id)
+    back = Image.open(os.path.abspath(f'../res/locations/Arena.png')).convert("RGBA")
+
+    character1 = Image.open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user1_id}.png')).convert("RGBA")
+    item1 = Image.open(os.path.abspath(f'../res/armor/{files1[0]}.png')).convert("RGBA")
+    nsize = (item1.size[0] * 5, item1.size[1] * 5)
+    item1 = item1.resize(nsize, Image.NEAREST)
+    item2 = Image.open(os.path.abspath(f'../res/armor/{files1[1]}.png')).convert("RGBA")
+    nsize = (item2.size[0] * 5, item2.size[1] * 5)
+    item2 = item2.resize(nsize, Image.NEAREST)
+
+    # увеличение размеров изображения character1 до размеров, достаточных для размещения item1 и item2
+    new_width = max(character1.width, item1.width, item2.width)
+    new_height = max(character1.height, item1.height, item2.height)
+    background = Image.new('RGBA', (new_width, new_height), (0, 0, 0, 0))
+    x_offset = (new_width - character1.width) // 2
+    y_offset = (new_height - character1.height) // 2
+    background.paste(character1, (x_offset, y_offset))
+    character1 = background
+    character1.paste(item1, (0, -20), item1)
+    character1.paste(item2, (0, -20), item2)
+
+    character2 = Image.open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user2_id}.png')).convert("RGBA")
+    item1 = Image.open(os.path.abspath(f'../res/armor/{files2[0]}.png')).convert("RGBA")
+    nsize = (item1.size[0] * 5, item1.size[1] * 5)
+    item1 = item1.resize(nsize, Image.NEAREST)
+    item2 = Image.open(os.path.abspath(f'../res/armor/{files2[1]}.png')).convert("RGBA")
+    nsize = (item2.size[0] * 5, item2.size[1] * 5)
+    item2 = item2.resize(nsize, Image.NEAREST)
+
+    background = Image.new('RGBA', (new_width, new_height), (0, 0, 0, 0))
+    x_offset = (new_width - character2.width) // 2
+    y_offset = (new_height - character2.height) // 2
+    background.paste(character2, (x_offset, y_offset))
+    character2 = background
+    character2.paste(item1, (0, -20), item1)
+    character2.paste(item2, (0, -20), item2)
+    new_size = (character1.size[0] // 2, character1.size[1] // 2)
+    character1 = character1.resize(new_size, Image.NEAREST)
+    new_size = (character2.size[0] // 2, character2.size[1] // 2)
+    character2 = character2.resize(new_size, Image.NEAREST)
+    back.paste(character1, (70, 250), character1)
+    back.paste(character2, (370, 250), character2)
+    result_image = BytesIO()
+    result_image.name = 'image.jpeg'
+    back.save(result_image, 'PNG')
+    result_image.seek(0)
+    return result_image
+
+
 # This function retrieves the top 10 players based on their experience and sends a message to the chat with their
 # username, level and experience. The message is formatted in HTML.
 async def rating_by_exp(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -456,13 +508,18 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         duel_id = db.get_pending_duel(sender_id, receiver_id)
         if duel_id == -1:  # Duel was not found or other error occurred during db query execution, check logs
             db.add_participant_to_open_duel(sender_id, receiver_id)
-            await query.edit_message_text(text=f"Игрок с ID {receiver_id} принял приглашение на дуэль!")
             duel_id = db.get_pending_duel(sender_id, receiver_id)
             new_duel_obj = Duel(duel_id, sender_id, receiver_id)
             init_duel(new_duel_obj)
             logging.info(f"Started duel between {sender_id} and {receiver_id}, duel id = {duel_id}")
             context.bot_data['duel_id' + str(sender_id)] = duel_id
             context.bot_data['duel_id' + str(receiver_id)] = duel_id
+            await context.bot.send_photo(chat_id=sender_id,
+                                         photo=merge_arena(sender_id, receiver_id),
+                                         caption=f"Игрок с ID {receiver_id} принял приглашение на дуэль!")
+            await context.bot.send_photo(chat_id=receiver_id,
+                                         photo=merge_arena(sender_id, receiver_id),
+                                         caption=f"Игрок с ID {receiver_id} принял приглашение на дуэль!")
             await context.bot.send_message(chat_id=sender_id,
                                            text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас Ваш ход! Не забывайте, что на каждый ход отведено не более 30 секунд!",
                                            reply_markup=attacks_markup)
@@ -477,6 +534,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logging.info(f"Started duel between {sender_id} and {receiver_id}, duel id = {duel_id}")
             context.bot_data['duel_id' + str(sender_id)] = duel_id
             context.bot_data['duel_id' + str(receiver_id)] = duel_id
+            await context.bot.send_photo(chat_id=sender_id,
+                                         photo=merge_arena(sender_id, receiver_id),
+                                         caption=f"Игрок с ID {receiver_id} принял приглашение на дуэль!")
+            await context.bot.send_photo(chat_id=receiver_id,
+                                         photo=merge_arena(sender_id, receiver_id),
+                                         caption=f"Игрок с ID {receiver_id} принял приглашение на дуэль!")
             await context.bot.send_message(chat_id=sender_id,
                                            text=f"Дуэль между {sender_id} and {receiver_id}:\nСейчас Ваш ход!",
                                            reply_markup=attacks_markup)

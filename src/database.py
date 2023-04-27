@@ -792,6 +792,16 @@ class Database:
         query = f"UPDATE users SET active_weapon_meta_id = {weapon_id} WHERE id = {user_id}"
         execute_query(self.database_conn, query)
 
+    def get_item_file_name(self, user_id) -> tuple[str, str]:
+        query = f"SELECT active_armor_meta_id, active_weapon_meta_id FROM users WHERE id = {user_id}"
+        active_items = execute_read_query(self.database_conn, query)[0]
+        query = f"SELECT base_item_id FROM items_owned WHERE meta_item_id = {active_items[0]} " \
+                f"OR meta_item_id = {active_items[1]}"
+        items_ids = execute_read_query(self.database_conn, query)
+        query = f"SELECT filename FROM base_items WHERE id = {items_ids[0][0]} OR id = {items_ids[1][0]}"
+        file_names = execute_read_query(self.gamedata_conn, query)
+        return file_names[0][0], file_names[1][0]
+
     def set_armor(self, user_id, armor_id):
         query = f"UPDATE users SET active_armor_meta_id = {armor_id} WHERE id = {user_id}"
         execute_query(self.database_conn, query)
