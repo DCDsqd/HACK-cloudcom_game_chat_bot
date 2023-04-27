@@ -27,7 +27,7 @@ TOTAL_VOTER_COUNT = 3
 POLL_INPUT = range(1)
 
 
-async def game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def game_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.message.from_user.id
     user_class = db.get_player_class_by_id(user_id)
     if user_class is None or user_class == '':
@@ -888,8 +888,8 @@ inventory_handler = ConversationHandler(
 )
 
 game_handler = ConversationHandler(
-    entry_points=[CommandHandler("game", game),
-                  MessageHandler(filters.Regex("^Игра$"), game)],
+    entry_points=[CommandHandler("game", game_menu),
+                  MessageHandler(filters.Regex("^Игра$"), game_menu)],
     states={
         CLASS_CHOOSING: [
             MessageHandler(filters.Regex("^Рыцарь$|^Маг$|^Лучник$|^Охотник$"), class_choosing),
@@ -905,7 +905,7 @@ game_handler = ConversationHandler(
         CHRONOS_CHOOSING: [
             MessageHandler(filters.Regex("^Улучшить персонажа$"), upgrade_champ),
             MessageHandler(filters.Regex("^Изменить подкласс$"), change_subclass),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         SUBCLASS_CHOOSING: [
             MessageHandler(filters.Regex(
@@ -917,7 +917,7 @@ game_handler = ConversationHandler(
         TASKS: [
             MessageHandler(filters.Regex("^В одиночку$"), alone_tasks),
             MessageHandler(filters.Regex("^С друзьями$"), multiplayer_tasks),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         ALONE_TASK_CHOOSING: [
             # ADD MORE FUNCTIONS
@@ -931,7 +931,7 @@ game_handler = ConversationHandler(
         ARENA_CHOOSING: [
             MessageHandler(filters.Regex("^Вызвать на дуэль$"), challenge_to_duel),
             MessageHandler(filters.Regex("^Создать открытую дуэль$"), create_open_duel),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         GET_USER_TO_DUEL_ID: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_user_duel_id),
@@ -954,7 +954,7 @@ game_handler = ConversationHandler(
         LAB_CHOOSING: [
             MessageHandler(filters.Regex("^Создать расходники$"), craft_choosing),
             MessageHandler(filters.Regex("^Посмотреть ресурсы$"), show_items),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         GETTING_ITEM_ID: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), craft),
@@ -963,7 +963,7 @@ game_handler = ConversationHandler(
         GUILD_CHOOSING: [
             MessageHandler(filters.Regex("^Запросить ресурсы$"), res_request),
             MessageHandler(filters.Regex("^Поделиться ресурсами$"), res_share),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         GUILD_REQUEST: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), create_res_request),
@@ -976,7 +976,7 @@ game_handler = ConversationHandler(
         FORGE_CHOOSING: [
             MessageHandler(filters.Regex("^Оружие$"), weapon_creating),
             MessageHandler(filters.Regex("^Броня$"), armor_creating),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         ITEM_INPUT: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_item_id),
