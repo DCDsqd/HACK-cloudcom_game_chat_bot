@@ -950,6 +950,10 @@ class Database:
                     f"Золото: {item[6]} монет\n\n"
         return text
 
+    def get_user_money(self, user_id: int) -> int:
+        query = f"SELECT money FROM users WHERE id = {user_id}"
+        return execute_read_query(self.database_conn, query)[0][0]
+
     def create_new_item(self, user_id: int, item_id: str):
         if not item_id.isdigit():
             return "Неправильный ввод! Попробуйте ещё раз!"
@@ -966,8 +970,7 @@ class Database:
         if_res2_enough = execute_read_query(self.database_conn, query)
         if len(if_res2_enough) == 0:
             return "У Вас не хватает 2-го ресурса!"
-        query = f"SELECT money FROM users WHERE id = {user_id}"
-        gold = execute_read_query(self.database_conn, query)[0][0]
+        gold = self.get_user_money(user_id)
         if item[4] > gold:
             return "У Вас недостаточно золота!"
         query = f"""
@@ -1024,6 +1027,25 @@ class Database:
         for num, (player_id, score) in enumerate(top, start=1):
             res += f'{num}. Игрок с id: {player_id} со счётом {score}\n'
         return res
+
+    def get_duels_record_for_user(self, user_id: int) -> str:
+        query_wins = f"""
+                            SELECT id
+                            FROM duels
+                            WHERE (sender_id = {user_id} AND outcome = 1) OR
+                                  (receiver_id = {user_id} AND outcome = 2);
+                      """
+        wins = len(execute_read_query(self.database_conn, query_wins))
+
+        query_losses = f"""
+                            SELECT id
+                            FROM duels
+                            WHERE (sender_id = {user_id} AND outcome = 2) OR
+                                  (receiver_id = {user_id} AND outcome = 1);
+                       """
+        losses = len(execute_read_query(self.database_conn, query_losses))
+
+        return str(wins) + "-" + str(losses)
 
     def get_all_abilities_ids_for_class(self, class_id: str):
         if class_id != "Маг" and class_id != "Лучник" and class_id != "Рыцарь" and class_id != "Охотник":
