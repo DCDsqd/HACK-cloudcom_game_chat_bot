@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import random
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     CommandHandler,
@@ -11,17 +12,17 @@ from telegram.ext import (
 )
 import telegram.error
 
-from common_func import check_if_user_exp_is_enough, merge_photos, attacks_markup
+from common_func import check_if_user_exp_is_enough, merge_photos, attacks_markup, solo_danges_attacks_markup
 from menu_chain import main_menu
 from duels import *  # this also imports database
 from equipment import switch_equip_type_to_russian
-import random
+from danges import *
 
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
     MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_SPECIAL_MULTIPLAYER_ID, \
     GET_USER_FOR_RANDOM_MULTIPLAYER_ID, INVENTORY_CHOOSING, LAB_CHOOSING, GETTING_ITEM_ID, GUILD_CHOOSING, \
     GUILD_REQUEST, GUILD_ID_GETTING, FORGE_CHOOSING, ITEM_INPUT, WEAPON_ID_FOR_ENCHANT, ARMOR_ID_FOR_ENCHANT, \
-    WEAPON_CHOOSING, ARMOR_CHOOSING = range(25)
+    WEAPON_CHOOSING, ARMOR_CHOOSING, SOLO_DANGE_ATTACKS = range(26)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -836,7 +837,7 @@ async def duels_physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE
     return ConversationHandler.END
 
 
-ABILITY_CHOOSING, CONSUMABLE_CHOOSING = range(2)
+ABILITY_CHOOSING, CONSUMABLE_CHOOSING, ENEMY_CHOOSING = range(3)
 
 
 async def duels_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1012,6 +1013,114 @@ async def duels_apply_consumable_effect(update: Update, context: ContextTypes.DE
 
     return ConversationHandler.END
 
+
+async def alone_tasks_receive_small_assignment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_id = update.message.from_user.id
+    task_info = db.small_task_info_for_user(user_id)
+    task_id = task_info[0]
+    exp_reward = task_info[1]
+    item_reward_id = task_info[2]
+    dange_id = task_info[3]
+    dange_obj: SoloDange = SoloDange(dange_id, user_id)
+    init_solo_dange(dange_obj)
+    await context.bot.send_message(chat_id=user_id,
+                                   text=f"Прохождение одиночного данжа игроком {db.get_user_nick(user_id)} началось! Ваш ход!",
+                                   reply_markup=solo_danges_attacks_markup)
+    return SOLO_DANGE_ATTACKS
+
+
+async def alone_tasks_receive_medium_assignment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_id = update.message.from_user.id
+    task_info = db.medium_task_info_for_user(user_id)
+    task_id = task_info[0]
+    exp_reward = task_info[1]
+    item_reward_id = task_info[2]
+    dange_id = task_info[3]
+    dange_obj: SoloDange = SoloDange(dange_id, user_id)
+    init_solo_dange(dange_obj)
+    await context.bot.send_message(chat_id=user_id,
+                                   text=f"Прохождение одиночного данжа игроком {db.get_user_nick(user_id)} началось! Ваш ход!",
+                                   reply_markup=solo_danges_attacks_markup)
+    return SOLO_DANGE_ATTACKS
+
+
+async def alone_tasks_receive_class_license(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_id = update.message.from_user.id
+    task_info = db.class_license_task_info_for_user(user_id)
+    task_id = task_info[0]
+    exp_reward = task_info[1]
+    item_reward_id = task_info[2]
+    dange_id = task_info[3]
+    dange_obj: SoloDange = SoloDange(dange_id, user_id)
+    init_solo_dange(dange_obj)
+    await context.bot.send_message(chat_id=user_id,
+                                   text=f"Прохождение одиночного данжа игроком {db.get_user_nick(user_id)} началось! Ваш ход!",
+                                   reply_markup=solo_danges_attacks_markup)
+    return SOLO_DANGE_ATTACKS
+
+
+async def solo_dange_physical_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_id = update.message.from_user.id
+    dange: SoloDange = get_dange_by_user_id(user_id)
+    if dange == None:
+        logging.error("No active dange!!!")
+    # TODO:
+
+
+async def solo_dange_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    pass
+
+
+async def solo_dange_consume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    pass
+
+
+async def solo_dange_receive_physical_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    pass
+
+
+async def solo_dange_receive_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    pass
+
+
+async def solo_dange_receive_consume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    pass
+
+
+solo_dange_physical_attack_handler = ConversationHandler(
+    entry_points=[MessageHandler(filters.Regex("^Физическая атака!$"), solo_dange_physical_attack)],
+    states={
+        ENEMY_CHOOSING: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), solo_dange_receive_physical_attack, )
+        ]
+    },
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
+)
+
+solo_dange_magic_attack_handler = ConversationHandler(
+    entry_points=[MessageHandler(filters.Regex("^Использовать способность!$"), solo_dange_magic_attack)],
+    states={
+        ENEMY_CHOOSING: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), solo_dange_receive_magic_attack, )
+        ]
+    },
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
+)
+
+solo_dange_consume_handler = ConversationHandler(
+    entry_points=[MessageHandler(filters.Regex("^Физическая атака!$"), solo_dange_consume)],
+    states={
+        ENEMY_CHOOSING: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), solo_dange_receive_consume, )
+        ]
+    },
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
+)
+
+
 magic_handler = ConversationHandler(
     entry_points=[MessageHandler(filters.Regex("^Использовать способность$"), duels_magic_attack)],
     states={
@@ -1024,7 +1133,7 @@ magic_handler = ConversationHandler(
 )
 
 consumable_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex("^Использовать предмет$"), duels_choose_consumable_to_use)],
+    entry_points=[MessageHandler(filters.Regex("^Использовать предмет!$"), solo_dange_physical_attack)],
     states={
         CONSUMABLE_CHOOSING: [
             MessageHandler(
@@ -1067,7 +1176,9 @@ game_handler = ConversationHandler(
             MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         ALONE_TASK_CHOOSING: [
-            # ADD MORE FUNCTIONS
+            MessageHandler(filters.Regex("^Мелкое поручение$"), alone_tasks_receive_small_assignment),
+            MessageHandler(filters.Regex("^Среднее поручение$"), alone_tasks_receive_medium_assignment),
+            MessageHandler(filters.Regex("^Классовая лицензия$"), alone_tasks_receive_class_license),
             MessageHandler(filters.Regex("^Назад$"), assignments),
         ],
         MULTIPLAYER_TASK_CHOOSING: [

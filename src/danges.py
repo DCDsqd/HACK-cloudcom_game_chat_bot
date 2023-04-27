@@ -46,6 +46,7 @@ class SoloDange:
         self.dange_amount_of_fights = dange_info[1]
         self.dange_filename = dange_info[2]
         enemy_list_ids = db.get_all_mobs_ids_on_dange(self.dange_id)
+        random.shuffle(enemy_list_ids)
         self.mobs_list = []  # Actual list of Mob objects (only alive ones)
         mobs_info_log_text = "Твои соперники (Здоровье, Броня): "
         for enemy_id in enemy_list_ids:
@@ -54,6 +55,8 @@ class SoloDange:
             mobs_info_log_text += f" ({str(self.mobs_list[-1].health)}, {str(self.mobs_list[-1].armor_state)})"
             if len(self.mobs_list) != self.dange_amount_of_fights:
                 mobs_info_log_text += ", "
+            else:
+                break
         self.full_log.append(('c', mobs_info_log_text, self.turn_counter))
         self.turn = -1  # -1 is for player move, all the following numbers for mobs where self.turn is idx in mobs_list
         self.player_in_game = PlayerInGame(self.player_id, False, self.full_log, self.turn_counter)
@@ -192,3 +195,9 @@ def kill_solo_dange(dange_id: int) -> None:
     if killed_dange.status() == 0:
         logging.warning("kill_solo_dange() call on ongoing solo dange with SoloDange::status() == 0!")
     # db.finish_duel(duel_id, killed_duel.status())  # TODO: Make similar method here!!
+
+
+def get_dange_by_user_id(user_id: int) -> SoloDange:
+    if user_id in solo_danges_ongoing_dict:
+        return solo_danges_ongoing_dict[user_id]
+    return None
