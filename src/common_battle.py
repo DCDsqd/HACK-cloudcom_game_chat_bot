@@ -2,7 +2,6 @@ from equipment import *
 
 from enum import Enum
 import random
-import re
 
 
 class TurnType(Enum):
