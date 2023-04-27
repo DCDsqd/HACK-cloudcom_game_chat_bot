@@ -20,7 +20,8 @@ import random
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
     MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_SPECIAL_MULTIPLAYER_ID, \
     GET_USER_FOR_RANDOM_MULTIPLAYER_ID, INVENTORY_CHOOSING, LAB_CHOOSING, GETTING_ITEM_ID, GUILD_CHOOSING, \
-    GUILD_REQUEST, GUILD_ID_GETTING, FORGE_CHOOSING, ITEM_INPUT, WEAPON_ID_FOR_ENCHANT, ARMOR_ID_FOR_ENCHANT = range(23)
+    GUILD_REQUEST, GUILD_ID_GETTING, FORGE_CHOOSING, ITEM_INPUT, WEAPON_ID_FOR_ENCHANT, ARMOR_ID_FOR_ENCHANT, \
+    WEAPON_CHOOSING, ARMOR_CHOOSING = range(25)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -659,7 +660,7 @@ async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 
 async def inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    keyboard = [['Посмотреть инвентарь'], ['Назад']]
+    keyboard = [['Посмотреть инвентарь'], ['Выбрать оружие', 'Выбрать броню'], ['Назад']]
     markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     message = "Выберите действие:"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=markup)
@@ -686,6 +687,90 @@ async def show_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
     else:
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Ваш инвентарь пуст!")
+
+
+async def weapon_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    items = db.get_users_items(update.message.from_user.id)
+    message = "Ваше оружие:\n\n"
+    for item in items:
+        if item[2] == 'weapon':
+            message += f"ID: {item[5]}\n" \
+                       f"Название: {item[0]}\n" \
+                       f"Сила: {item[3]}\n"
+            if item[1] == "" or item[1] is None:
+                message += "Зачарований нет.\n\n"
+            else:
+                message += "Зачарования: "
+                ench_names = []
+                for ench in item[1].split(','):
+                    ench_name = db.get_ench_name_by_id(ench, item[2])
+                    ench_names.append(ench_name)
+                ench_str = ", ".join(ench_names)
+                message += ench_str
+                message += "\n\n"
+    message += "Введите ID оружия, которое хотите использовать."
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=back_markup)
+    return WEAPON_CHOOSING
+
+
+async def armor_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    items = db.get_users_items(update.message.from_user.id)
+    message = "Ваша броня:\n\n"
+    for item in items:
+        if item[2] == 'armor':
+            message += f"ID: {item[5]}\n" \
+                       f"Название: {item[0]}\n" \
+                       f"Сила: {item[3]}\n"
+            if item[1] == "" or item[1] is None:
+                message += "Зачарований нет.\n\n"
+            else:
+                message += "Зачарования: "
+                ench_names = []
+                for ench in item[1].split(','):
+                    ench_name = db.get_ench_name_by_id(ench, item[2])
+                    ench_names.append(ench_name)
+                ench_str = ", ".join(ench_names)
+                message += ench_str
+                message += "\n\n"
+    message += "Введите ID брони, которую хотите использовать."
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=back_markup)
+    return ARMOR_CHOOSING
+
+
+async def get_weapon_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    weapon_id = update.message.text
+    db.set_weapon(update.message.from_user.id, weapon_id)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Вы взяли оружие с ID {weapon_id}",
+                                   reply_markup=back_markup)
+
+
+async def get_armor_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    armor_id = update.message.text
+    db.set_armor(update.message.from_user.id, armor_id)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Вы взяли броню с ID {armor_id}",
+                                   reply_markup=back_markup)
+
+
+inventory_handler = ConversationHandler(
+    entry_points=[CommandHandler("inventory", inventory),
+                  MessageHandler(filters.Regex("^Инвентарь$"), inventory)],
+    states={
+        INVENTORY_CHOOSING: [
+            MessageHandler(filters.Regex("^Посмотреть инвентарь$"), show_inventory),
+            MessageHandler(filters.Regex("^Выбрать оружие$"), weapon_choosing),
+            MessageHandler(filters.Regex("^Выбрать броню$"), armor_choosing),
+        ],
+        WEAPON_CHOOSING: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_weapon_id),
+            MessageHandler(filters.Regex("^Назад$"), inventory),
+        ],
+        ARMOR_CHOOSING: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_armor_id),
+            MessageHandler(filters.Regex("^Назад$"), inventory),
+        ],
+    },
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
+)
 
 
 async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -946,17 +1031,6 @@ consumable_handler = ConversationHandler(
             MessageHandler(
                 filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), apply_consumable_effect, )
         ]
-    },
-    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
-)
-
-inventory_handler = ConversationHandler(
-    entry_points=[CommandHandler("inventory", inventory),
-                  MessageHandler(filters.Regex("^Инвентарь$"), inventory)],
-    states={
-        INVENTORY_CHOOSING: [
-            MessageHandler(filters.Regex("^Посмотреть инвентарь$"), show_inventory),
-        ],
     },
     fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
 )

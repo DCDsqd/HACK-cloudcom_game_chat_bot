@@ -788,6 +788,14 @@ class Database:
 
         return str(execute_read_query(self.gamedata_conn, query)[0][0])
 
+    def set_weapon(self, user_id, weapon_id):
+        query = f"UPDATE users SET active_weapon_meta_id = {weapon_id} WHERE id = {user_id}"
+        execute_query(self.database_conn, query)
+
+    def set_armor(self, user_id, armor_id):
+        query = f"UPDATE users SET active_armor_meta_id = {armor_id} WHERE id = {user_id}"
+        execute_query(self.database_conn, query)
+
     def get_users_items(self, user_id):
         query = f"""
                     SELECT base_item_id, enchantments, meta_item_id FROM items_owned WHERE owner_id = {user_id};
