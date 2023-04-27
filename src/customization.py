@@ -21,7 +21,7 @@ CHOOSING_AVATAR, TYPING_HAIR, TYPING_FACE, TYPING_BODY, CUSTOM_AVATAR_CHOICE = r
 # This is a function that sends a message with a keyboard to let users choose what they want to modify in their
 # account. The available options are "Изменить имя" (change name), "Изменить аватар" (change avatar), and "Отмена" (
 # cancel). After sending the message, the function returns the next state of the conversation (CHOOSING).
-async def custom(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def customization_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Назад"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     await update.message.reply_text(
@@ -46,12 +46,15 @@ async def custom_name_choice(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def received_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_keyboard = [["Изменить имя", "Изменить аватара"], ["Назад"]]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-    text = update.message.text
-    context.user_data["name"] = text
-    user_id = update.message.from_user.id
-    db.update_users('personal_username', text, user_id)
-    await update.message.reply_text(f"Имя изменено на {text}.", reply_markup=markup)
-    logging.info(f"User with ID {user_id} changed personal name on {text}")
+    new_nick = update.message.text
+    if not db.check_if_user_exists_by_nick(new_nick):
+        context.user_data["name"] = new_nick
+        user_id = update.message.from_user.id
+        db.update_users('personal_username', new_nick, user_id)
+        await update.message.reply_text(f"Имя изменено на {new_nick}.", reply_markup=markup)
+        logging.info(f"User with ID {user_id} changed personal name on {new_nick}")
+    else:
+        await update.message.reply_text(f"Данный ник уже занят! Попробуйте другой.", reply_markup=markup)
     return CHOOSING
 
 
@@ -240,8 +243,8 @@ async def enter_change(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
 
 custom_name_handler = ConversationHandler(
-    entry_points=[CommandHandler("custom", custom),
-                  MessageHandler(filters.Regex("^Кастомизация$"), custom)],
+    entry_points=[CommandHandler("custom", customization_menu),
+                  MessageHandler(filters.Regex("^Кастомизация$"), customization_menu)],
     states={
         CHOOSING: [
             MessageHandler(filters.Regex("^Изменить имя$"), custom_name_choice),

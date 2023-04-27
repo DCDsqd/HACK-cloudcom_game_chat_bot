@@ -113,7 +113,16 @@ class Database:
     # database or not.
     def check_if_user_exists(self, user_id: int) -> bool:
         query = f"""
-                SELECT username FROM users WHERE id='{user_id}';
+                    SELECT username FROM users WHERE id='{user_id}';
+                """
+        res = execute_read_query(self.database_conn, query)
+        if len(res) == 0:
+            return False
+        return True
+
+    def check_if_user_exists_by_nick(self, user_nick: str) -> bool:
+        query = f"""
+                    SELECT id FROM users WHERE personal_username='{user_nick}';
                 """
         res = execute_read_query(self.database_conn, query)
         if len(res) == 0:
