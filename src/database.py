@@ -1130,18 +1130,18 @@ class Database:
                          """
         meta_armor_id = execute_read_query(self.database_conn, meta_armor_id_query)[0][0]
 
+        create_weapon_query = f"""
+                                INSERT INTO items_owned (owner_id, base_item_id, enchantments, date)
+                                VALUES ({user_id}, {base_weapon_id}, "", '{cur_date()}');
+                              """
+        execute_query(self.database_conn, create_weapon_query)
+
         meta_weapon_id_query = f"""
                                     SELECT meta_item_id FROM items_owned
                                     WHERE base_item_id = {base_weapon_id}
                                     AND owner_id = {user_id};
                                  """
         meta_weapon_id = execute_read_query(self.database_conn, meta_weapon_id_query)[0][0]
-
-        create_weapon_query = f"""
-                                INSERT INTO items_owned (owner_id, base_item_id, enchantments, date)
-                                VALUES ({user_id}, {base_weapon_id}, "", '{cur_date()}');
-                              """
-        execute_query(self.database_conn, create_weapon_query)
 
         update_query = f"""
                             UPDATE users 
