@@ -81,7 +81,7 @@ class Weapon:
         self.enchantments_list = weapon_enchants_id_to_objects_list(str(info_list[1]).split(','))
         self.name = info_list[2]
         self.strength = info_list[3]
-        self.element_strength = 0  # TODO: Fill this
+        # self.element_strength = 0  # TODO: Fill this
 
 
 def switch_equip_type_to_russian(eq_type: str) -> str:
