@@ -14,7 +14,7 @@ from common_func import start, profile, help_me, \
 from friends import friends_handler
 from customization import custom_name_handler, avatar_handler
 from admin import admin_handler
-from game import game_handler, inventory_handler, magic_handler, consumable_handler, physic_attack
+from game import game_handler, inventory_handler, magic_handler, consumable_handler, duels_physic_attack
 from equipment import init_all_enchantments
 from menu_chain import main_menu
 
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     application.add_handler(CommandHandler('profile', profile))
     application.add_handler(MessageHandler(filters.Regex("^Профиль$"), profile))
     application.add_handler(ChatMemberHandler(track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
-    application.add_handler(MessageHandler(filters.Regex("^Физическая атака$"), physic_attack))
+    application.add_handler(MessageHandler(filters.Regex("^Физическая атака$"), duels_physic_attack))
     application.add_handler(CallbackQueryHandler(buttons))
     application.add_handler(admin_handler)
     application.add_handler(avatar_handler)

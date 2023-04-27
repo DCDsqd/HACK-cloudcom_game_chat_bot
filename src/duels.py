@@ -245,11 +245,19 @@ class Duel:
         self.turn = 3 - self.turn
         self.turn_counter += 1
         self.time_left_to_make_turn = 30
+        if self.sender_player.armor_state > 10000:
+            self.sender_player.armor_state = self.sender_player.armor.strength
+        if self.receiver_player.armor_state > 10000:
+            self.receiver_player.armor_state = self.receiver_player.armor.strength
 
     def force_renew_turn(self, add_to_turn_counter: bool = True):
         if add_to_turn_counter:
             self.turn_counter += 1
         self.time_left_to_make_turn = 30
+        if self.sender_player.armor_state > 10000:
+            self.sender_player.armor_state = self.sender_player.armor.strength
+        if self.receiver_player.armor_state > 10000:
+            self.receiver_player.armor_state = self.receiver_player.armor.strength
 
     def get_attacker_player_in_game(self) -> PlayerInGame:
         return self.sender_player if self.turn == 1 else self.receiver_player

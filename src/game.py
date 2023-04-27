@@ -773,7 +773,7 @@ inventory_handler = ConversationHandler(
 )
 
 
-async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def duels_physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
     # Prevent fast double click abuse
     if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
@@ -839,7 +839,7 @@ async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 ABILITY_CHOOSING, CONSUMABLE_CHOOSING = range(2)
 
 
-async def magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def duels_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
     if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
         pass
@@ -861,7 +861,7 @@ async def magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return ABILITY_CHOOSING
 
 
-async def receive_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def duels_receive_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     ability_name = update.message.text
     duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
     ability_id = db.get_ability_id_from_name(ability_name)
@@ -925,7 +925,7 @@ async def receive_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYP
     return ConversationHandler.END
 
 
-async def choose_consumable_to_use(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def duels_choose_consumable_to_use(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
     if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
         pass
@@ -948,7 +948,7 @@ async def choose_consumable_to_use(update: Update, context: ContextTypes.DEFAULT
     return CONSUMABLE_CHOOSING
 
 
-async def apply_consumable_effect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def duels_apply_consumable_effect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     consumable_name = update.message.text
     duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
     consumable_id = db.get_consumable_id_from_name(consumable_name)
@@ -1012,24 +1012,23 @@ async def apply_consumable_effect(update: Update, context: ContextTypes.DEFAULT_
 
     return ConversationHandler.END
 
-
 magic_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex("^Использовать способность$"), magic_attack)],
+    entry_points=[MessageHandler(filters.Regex("^Использовать способность$"), duels_magic_attack)],
     states={
         ABILITY_CHOOSING: [
             MessageHandler(
-                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), receive_magic_attack, )
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), duels_receive_magic_attack, )
         ]
     },
     fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
 )
 
 consumable_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex("^Использовать предмет$"), choose_consumable_to_use)],
+    entry_points=[MessageHandler(filters.Regex("^Использовать предмет$"), duels_choose_consumable_to_use)],
     states={
         CONSUMABLE_CHOOSING: [
             MessageHandler(
-                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), apply_consumable_effect, )
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), duels_apply_consumable_effect, )
         ]
     },
     fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],

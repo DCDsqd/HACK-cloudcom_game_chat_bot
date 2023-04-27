@@ -409,6 +409,9 @@ async def send_event_approval_request(update: Update, context: ContextTypes.DEFA
 attacks_keyboard = [['Физическая атака', 'Использовать способность', 'Использовать предмет']]
 attacks_markup = ReplyKeyboardMarkup(attacks_keyboard, one_time_keyboard=False)
 
+solo_danges_attacks_keyboard = [['Физическая атака!', 'Использовать способность!', 'Использовать предмет!']]
+solo_danges_attacks_markup = ReplyKeyboardMarkup(attacks_keyboard, one_time_keyboard=False)
+
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
