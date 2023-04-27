@@ -790,13 +790,14 @@ class Database:
 
     def get_users_items(self, user_id):
         query = f"""
-                    SELECT base_item_id, enchantments FROM items_owned WHERE owner_id = {user_id};
+                    SELECT base_item_id, enchantments, meta_item_id FROM items_owned WHERE owner_id = {user_id};
                 """
         items = execute_read_query(self.database_conn, query)
         result = []
         for i in range(len(items)):
             base_item_id = items[i][0]
             meta_item_enchs = items[i][1]
+            meta_item_id = items[i][2]
             query = f"""
                         SELECT name, type, strength, rarity FROM base_items WHERE id = {base_item_id}
                     """
@@ -805,8 +806,34 @@ class Database:
             base_item_type = base_query_res[1]
             base_item_strength = base_query_res[2]
             base_item_rarity = base_query_res[3]
-            result.append([base_item_name, meta_item_enchs, base_item_type, base_item_strength, base_item_rarity])
+            result.append([base_item_name, meta_item_enchs, base_item_type, base_item_strength, base_item_rarity, meta_item_id])
         return result
+
+    def add_enchant(self, meta_item_id: str, item_type: str, user_id: int):
+        if not meta_item_id.isdigit():
+            return "Введите ID!"
+        query = f"SELECT money FROM users WHERE id = {user_id}"
+        money = int(execute_read_query(self.database_conn, query)[0][0])
+        if money < 200:
+            return "У Вас недостаточно средств для зачарования!"
+        query = f"SELECT id, name FROM enchantments_{item_type} ORDER BY RANDOM() LIMIT 1"
+        enchant = execute_read_query(self.gamedata_conn, query)
+        query = f"SELECT enchantments FROM items_owned WHERE meta_item_id = {meta_item_id}"
+        cur_enchants = execute_read_query(self.database_conn, query)
+        if len(cur_enchants) == 0:
+            return "Предмета с таким ID не существует!"
+        query = f"UPDATE users SET money = money - 200 WHERE id = {user_id}"
+        execute_query(self.database_conn, query)
+        if cur_enchants[0][0] is None:
+            query = f"UPDATE items_owned SET enchantments = {enchant[0][0]} WHERE meta_item_id = {meta_item_id}"
+        else:
+            if str(enchant[0][0]) in str(cur_enchants[0][0]):
+                return f"Вы зачаровали предмет на чару '{enchant[0][1]}', " \
+                       f"но эта чара уже была на Вашем оружие. Ничего не изменилось."
+            query = f"UPDATE items_owned SET enchantments = '{str(cur_enchants[0][0]) + ',' + str(enchant[0][0])}' " \
+                    f"WHERE meta_item_id = {meta_item_id}"
+        execute_query(self.database_conn, query)
+        return f"Вы успешно зачаровали предмет на чару '{enchant[0][1]}'"
 
     def craft_item(self, user_id, item_id):
         query = f"SELECT res1_id, res2_id FROM craft_consumable WHERE cons_id = {item_id}"

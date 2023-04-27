@@ -20,7 +20,7 @@ import random
 CLASS_CHOOSING, SUBMIT_CLASS, WHERE_CHOOSING, CHRONOS_CHOOSING, SUBCLASS_CHOOSING, TASKS, ALONE_TASK_CHOOSING, \
     MULTIPLAYER_TASK_CHOOSING, ARENA_CHOOSING, GET_USER_TO_DUEL_ID, GET_CHAT_ID, GET_USER_FOR_SPECIAL_MULTIPLAYER_ID, \
     GET_USER_FOR_RANDOM_MULTIPLAYER_ID, INVENTORY_CHOOSING, LAB_CHOOSING, GETTING_ITEM_ID, GUILD_CHOOSING, \
-    GUILD_REQUEST, GUILD_ID_GETTING, FORGE_CHOOSING, ITEM_INPUT = range(21)
+    GUILD_REQUEST, GUILD_ID_GETTING, FORGE_CHOOSING, ITEM_INPUT, WEAPON_ID_FOR_ENCHANT, ARMOR_ID_FOR_ENCHANT = range(23)
 
 TOTAL_VOTER_COUNT = 3
 
@@ -282,7 +282,8 @@ async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     else:
         message = 'Добро пожаловать в Храм Хроноса. Здесь вы сможете получить новые навыки для своего персонажа, ' \
                   'а также, по достижении определённого ранга, изменить подкласс.'
-        if not check_if_user_exp_is_enough(update.message.from_user.id, 2000):  # Если опыт больше 2000, даём доступ к смене подкласса
+        if not check_if_user_exp_is_enough(update.message.from_user.id,
+                                           2000):  # Если опыт больше 2000, даём доступ к смене подкласса
             chronos_keyboard = [["Улучшить персонажа"], ["Назад"]]
         else:
             chronos_keyboard = [["Улучшить персонажа", "Изменить подкласс"], ["Назад"]]
@@ -463,11 +464,11 @@ async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                   ' испортить изделие.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
-        forge_keyboard = [['Оружие', 'Броня'], ['Назад']]
+        forge_keyboard = [['Оружие', 'Броня'], ['Чары на оружие', 'Чары на броню'], ['Назад']]
         forge_markup = ReplyKeyboardMarkup(forge_keyboard, one_time_keyboard=True)
         await context.bot.send_photo(chat_id=update.effective_chat.id,
                                      photo=merge_photos('AnvilHouse', update.effective_chat.id),
-                                     caption="Что бы Вы хотели создать?", reply_markup=forge_markup)
+                                     caption="Что бы Вы хотели сделать?", reply_markup=forge_markup)
         return FORGE_CHOOSING
 
 
@@ -487,17 +488,87 @@ async def armor_creating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     return ITEM_INPUT
 
 
-arena_keyboard = [['Вызвать на дуэль', 'Создать открытую дуэль'], ['Назад']]
-back_keyboard = [['Назад']]
-back_markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
-
-
-async def get_item_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_item_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     item_id = update.message.text
     message = db.create_new_item(update.message.from_user.id, item_id)
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text=message,
                                    reply_markup=back_markup)
+
+
+async def weapon_enchant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    items = db.get_users_items(update.message.from_user.id)
+    message = "Ваше оружие:\n\n"
+    for item in items:
+        if item[2] == 'weapon':
+            message += f"ID: {item[5]}\n" \
+                       f"Название: {item[0]}\n" \
+                       f"Сила: {item[3]}\n"
+            if item[1] == "" or item[1] is None:
+                message += "Зачарований нет.\n\n"
+            else:
+                message += "Зачарования: "
+                ench_names = []
+                for ench in item[1].split(','):
+                    ench_name = db.get_ench_name_by_id(ench, item[2])
+                    ench_names.append(ench_name)
+                ench_str = ", ".join(ench_names)
+                message += ench_str
+                message += "\n\n"
+    message += "Введите ID оружия, которое хотите зачаровать\n" \
+               "Вы получите случайную чару за 200 монет."
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=message,
+                                   reply_markup=back_markup)
+    return WEAPON_ID_FOR_ENCHANT
+
+
+async def get_weapon_id_to_enchant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    weapon_id = update.message.text
+    message = db.add_enchant(weapon_id, 'weapon', update.message.from_user.id)
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=message,
+                                   reply_markup=back_markup)
+
+
+async def armor_enchant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    items = db.get_users_items(update.message.from_user.id)
+    message = "Ваша броня:\n\n"
+    for item in items:
+        if item[2] == 'armor':
+            message += f"ID: {item[5]}\n" \
+                       f"Название: {item[0]}\n" \
+                       f"Сила: {item[3]}\n"
+            if item[1] == "" or item[1] is None:
+                message += "Зачарований нет.\n\n"
+            else:
+                message += "Зачарования: "
+                ench_names = []
+                for ench in item[1].split(','):
+                    ench_name = db.get_ench_name_by_id(ench, item[2])
+                    ench_names.append(ench_name)
+                ench_str = ", ".join(ench_names)
+                message += ench_str
+                message += "\n\n"
+    message += "Введите ID брони, которую хотите зачаровать.\n" \
+               "Вы получите случайную чару за 200 монет."
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=message,
+                                   reply_markup=back_markup)
+    return ARMOR_ID_FOR_ENCHANT
+
+
+async def get_armor_id_to_enchant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    weapon_id = update.message.text
+    message = db.add_enchant(weapon_id, 'armor', update.message.from_user.id)
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=message,
+                                   reply_markup=back_markup)
+
+
+arena_keyboard = [['Вызвать на дуэль', 'Создать открытую дуэль'], ['Назад']]
+back_keyboard = [['Назад']]
+back_markup = ReplyKeyboardMarkup(back_keyboard, one_time_keyboard=True)
 
 
 async def arena(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -597,21 +668,25 @@ async def inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def show_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     items = db.get_users_items(update.effective_chat.id)
-    text = "В вашем инвенторе имеются:\n\n\n"
-    for item in items:
-        text += item[0] + f" ({switch_equip_type_to_russian(str(item[2]))}). Сила: {item[3]}.\n"
-        if item[1] == "":
-            text += "Зачарований нет.\n"
-        else:
-            text += "Зачарования: "
-            ench_names = []
-            for ench in item[1].split(','):
-                ench_name = db.get_ench_name_by_id(ench, item[2])
-                ench_names.append(ench_name)
-            ench_str = ", ".join(ench_names)
-            text += ench_str
-            text += "\n\n"
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    if len(items) != 0:
+        text = "В вашем инвенторе имеются:\n\n"
+        for item in items:
+            text += item[0] + f" ({switch_equip_type_to_russian(str(item[2]))}). Сила: {item[3]}.\n"
+            if item[1] == "" or item[1] is None:
+                text += "Зачарований нет.\n\n"
+            else:
+                text += "Зачарования: "
+                ench_names = []
+                for ench in item[1].split(','):
+                    ench_name = db.get_ench_name_by_id(ench, item[2])
+                    ench_names.append(ench_name)
+                ench_str = ", ".join(ench_names)
+                text += ench_str
+                text += "\n\n"
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    else:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Ваш инвентарь пуст!")
+
 
 async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
@@ -875,7 +950,6 @@ consumable_handler = ConversationHandler(
     fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
 )
 
-
 inventory_handler = ConversationHandler(
     entry_points=[CommandHandler("inventory", inventory),
                   MessageHandler(filters.Regex("^Инвентарь$"), inventory)],
@@ -976,10 +1050,20 @@ game_handler = ConversationHandler(
         FORGE_CHOOSING: [
             MessageHandler(filters.Regex("^Оружие$"), weapon_creating),
             MessageHandler(filters.Regex("^Броня$"), armor_creating),
+            MessageHandler(filters.Regex("^Чары на оружие"), weapon_enchant),
+            MessageHandler(filters.Regex("^Чары на броню"), armor_enchant),
             MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         ITEM_INPUT: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_item_id),
+            MessageHandler(filters.Regex("^Назад$"), forge),
+        ],
+        WEAPON_ID_FOR_ENCHANT: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_weapon_id_to_enchant),
+            MessageHandler(filters.Regex("^Назад$"), forge),
+        ],
+        ARMOR_ID_FOR_ENCHANT: [
+            MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_armor_id_to_enchant),
             MessageHandler(filters.Regex("^Назад$"), forge),
         ],
     },
