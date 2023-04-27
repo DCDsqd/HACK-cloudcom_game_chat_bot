@@ -1217,6 +1217,72 @@ class Database:
                         """
         execute_query(self.database_conn, update_query)
 
+    def small_task_info_for_user(self, user_id: int) -> list:
+        query = f"""
+                    SELECT task_id 
+                    FROM user_daily_tasks
+                    WHERE user_id = {user_id};
+                 """
+        res = execute_read_query(self.database_conn, query)
+        all_tasks = []
+        for i in range(len(res)):
+            all_tasks.append(res[i][0])
+
+        query = f"""
+                    SELECT id, exp_reward, item_reward, dange_id
+                    FROM tasks
+                    WHERE (id = {all_tasks[0]} OR
+                          id = {all_tasks[1]} OR
+                          id = {all_tasks[2]}) AND
+                          type = 'small';
+                 """
+        task = execute_read_query(self.gamedata_conn, query)[0]
+        return task
+
+    def medium_task_info_for_user(self, user_id: int) -> list:
+        query = f"""
+                    SELECT task_id 
+                    FROM user_daily_tasks
+                    WHERE user_id = {user_id};
+                 """
+        res = execute_read_query(self.database_conn, query)
+        all_tasks = []
+        for i in range(len(res)):
+            all_tasks.append(res[i][0])
+
+        query = f"""
+                    SELECT id, exp_reward, item_reward, dange_id
+                    FROM tasks
+                    WHERE (id = {all_tasks[0]} OR
+                          id = {all_tasks[1]} OR
+                          id = {all_tasks[2]}) AND
+                          type = 'medium';
+                 """
+        task = execute_read_query(self.gamedata_conn, query)[0]
+        return task
+
+    def class_license_task_info_for_user(self, user_id: int) -> list:
+        query = f"""
+                    SELECT task_id 
+                    FROM user_daily_tasks
+                    WHERE user_id = {user_id};
+                 """
+        res = execute_read_query(self.database_conn, query)
+        all_tasks = []
+        for i in range(len(res)):
+            all_tasks.append(res[i][0])
+
+        query = f"""
+                    SELECT id, exp_reward, item_reward, dange_id
+                    FROM tasks
+                    WHERE (id = {all_tasks[0]} OR
+                          id = {all_tasks[1]} OR
+                          id = {all_tasks[2]}) AND
+                          type = 'class_license';
+                 """
+        task = execute_read_query(self.gamedata_conn, query)[0]
+        return task
+
 
 # Global Database variable
 db = Database()
