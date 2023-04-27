@@ -265,7 +265,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 # information (including personal username, Telegram username, subclass, rank, class, and experience points),
 # sends the message along with the user's avatar, and then deletes the message that triggered the function.
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    con = create_connection('../db/database.db')
     message = update.message
     user_id = message.from_user.id
     username = message.from_user.username
@@ -282,7 +281,6 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                                  photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'),
                                             'rb'))
     await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
-    con.close()
 
 
 EVENT_CHOOSING, GET_EVENT_ID, EVENT_ID_TO_APPROVE = range(3)
