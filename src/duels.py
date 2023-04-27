@@ -1,7 +1,5 @@
 from common_battle import *
 
-import re
-
 
 # This is a class that holds all the needed information about ongoing duel
 # in memory in order for it to be more easily accessible.
