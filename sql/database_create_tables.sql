@@ -92,10 +92,29 @@ CREATE TABLE IF NOT EXISTS "multiplayer_task_participants" (
 	"is_user4_accepted"	INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
+CREATE TABLE IF NOT EXISTS "res_owned" (
+	"user_id"	INTEGER NOT NULL,
+	"res_id"	INTEGER NOT NULL,
+	"count"	INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS "consumable_owned" (
+	"user_id"	INTEGER NOT NULL,
+	"consum_id"	INTEGER NOT NULL,
+	"count"	INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY("user_id","consum_id")
+);
+CREATE TABLE IF NOT EXISTS "guild_house" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"sender_id"	INTEGER,
+	"res_id"	INTEGER,
+	"count"	INTEGER,
+	"is_got"	INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
 CREATE TABLE IF NOT EXISTS "users" (
 	"id"	INTEGER UNIQUE,
-	"username"	TEXT NOT NULL UNIQUE,
-	"personal_username"	TEXT UNIQUE,
+	"username"	TEXT NOT NULL,
+	"personal_username"	TEXT,
 	"game_class"	TEXT,
 	"game_subclass"	TEXT NOT NULL DEFAULT 'None',
 	"exp"	INTEGER NOT NULL DEFAULT 0,
@@ -105,6 +124,8 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"admin"	INTEGER NOT NULL DEFAULT 0,
 	"active_armor_meta_id"	INTEGER DEFAULT 1,
 	"active_weapon_meta_id"	INTEGER DEFAULT 2,
+	"money"	INTEGER NOT NULL DEFAULT 0,
+	"fatum"	INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 COMMIT;

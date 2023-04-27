@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS "consumable" (
 	"target"	TEXT NOT NULL,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
-CREATE TABLE IF NOT EXISTS "craft" (
+CREATE TABLE IF NOT EXISTS "craft_consumable" (
 	"cons_id"	INTEGER NOT NULL,
 	"res1_id"	INTEGER NOT NULL,
 	"res2_id"	INTEGER NOT NULL
@@ -136,202 +136,234 @@ CREATE TABLE IF NOT EXISTS "abilities" (
 	"tier"	INTEGER NOT NULL,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
-INSERT INTO "hair" ("id","name") VALUES (1,'Вариант 1');
-INSERT INTO "hair" ("id","name") VALUES (2,'Вариант 2');
-INSERT INTO "hair" ("id","name") VALUES (3,'Вариант 3');
-INSERT INTO "hair" ("id","name") VALUES (4,'Вариант 4');
-INSERT INTO "hair" ("id","name") VALUES (5,'Вариант 5');
-INSERT INTO "shoulders" ("id","name") VALUES (1,'Вариант 1');
-INSERT INTO "shoulders" ("id","name") VALUES (2,'Вариант 2');
-INSERT INTO "shoulders" ("id","name") VALUES (3,'Вариант 3');
-INSERT INTO "shoulders" ("id","name") VALUES (4,'Вариант 4');
-INSERT INTO "shoulders" ("id","name") VALUES (5,'Вариант 5');
-INSERT INTO "face" ("id","name") VALUES (1,'Вариант 1');
-INSERT INTO "face" ("id","name") VALUES (2,'Вариант 2');
-INSERT INTO "face" ("id","name") VALUES (3,'Вариант 3');
-INSERT INTO "face" ("id","name") VALUES (4,'Вариант 4');
-INSERT INTO "face" ("id","name") VALUES (5,'Вариант 5');
-INSERT INTO "ranks" ("id","name","exp_to_earn") VALUES (1,'Новичок',0);
-INSERT INTO "ranks" ("id","name","exp_to_earn") VALUES (2,'Стажёр',500);
-INSERT INTO "ranks" ("id","name","exp_to_earn") VALUES (3,'Слабый воин',1000);
-INSERT INTO "ranks" ("id","name","exp_to_earn") VALUES (4,'Посредственный войн',2000);
-INSERT INTO "ranks" ("id","name","exp_to_earn") VALUES (5,'Узнаваемый солдат',4000);
-INSERT INTO "ranks" ("id","name","exp_to_earn") VALUES (6,'Кандидат в легионеры',8000);
-INSERT INTO "ranks" ("id","name","exp_to_earn") VALUES (7,'Джуниор-легионер',16000);
-INSERT INTO "ranks" ("id","name","exp_to_earn") VALUES (8,'Миддл-легионер',32000);
-INSERT INTO "ranks" ("id","name","exp_to_earn") VALUES (9,'Сеньор-легионер',64000);
-INSERT INTO "ranks" ("id","name","exp_to_earn") VALUES (10,'Гвардеец императора',128000);
-INSERT INTO "buildings" ("id","name") VALUES (1,'Дом поручений');
-INSERT INTO "buildings" ("id","name") VALUES (2,'Храм Хроноса');
-INSERT INTO "buildings" ("id","name") VALUES (3,'Лаборатория');
-INSERT INTO "buildings" ("id","name") VALUES (4,'Дом гильдий');
-INSERT INTO "buildings" ("id","name") VALUES (5,'Кузница');
-INSERT INTO "buildings" ("id","name") VALUES (6,'Арена');
-INSERT INTO "tasks" ("id","name","description","difficulty","exp_reward","item_reward","type","is_multiplayer") VALUES (1,'Собрать дикорастущие травы','Соберите редкую траву из леса на юге, которая растет только утром и только на определенной поляне. Трава необходима для приготовления зелья лечения.',1,50,'Нет','small',0);
-INSERT INTO "tasks" ("id","name","description","difficulty","exp_reward","item_reward","type","is_multiplayer") VALUES (2,'Отыскать пропавшего купца','Найдите пропавшего купца в лесу на севере. Он заблудился и не может вернуться в город. Купец несет с собой драгоценные камни, которые нужно вернуть его заказчику в городе.',2,100,'Нет','medium',0);
-INSERT INTO "tasks" ("id","name","description","difficulty","exp_reward","item_reward","type","is_multiplayer") VALUES (3,'Покорить древнего дракона','Один из игроков должен покорить древнего дракона и забрать его чешую. Эта чешуя необходима для создания легендарного оружия для драконоборцев.',3,200,'armor','class_license',0);
-INSERT INTO "tasks" ("id","name","description","difficulty","exp_reward","item_reward","type","is_multiplayer") VALUES (4,'Обезвредить культистов','Группа игроков должна обезвредить культистов, которые пытаются открыть портал в мир демонов. Они находятся в тайной пещере на горе, их лагерь охраняется монстрами.',4,400,'Нет','special',1);
-INSERT INTO "tasks" ("id","name","description","difficulty","exp_reward","item_reward","type","is_multiplayer") VALUES (5,'Купить определенный вид цветка','Поговорить с торговцем на рынке и купить определенный вид редкого цветка для алхимического зелья.',1,50,'Нет','small',0);
-INSERT INTO "tasks" ("id","name","description","difficulty","exp_reward","item_reward","type","is_multiplayer") VALUES (6,'Найти спрятанный сундук','Найти спрятанный сундук в заброшенной шахте и вернуть его владельцу, получив небольшую денежную награду.',2,100,'Нет','small',0);
-INSERT INTO "tasks" ("id","name","description","difficulty","exp_reward","item_reward","type","is_multiplayer") VALUES (7,'Уничтожить гнездо гигантских пауков','Уничтожить гнездо гигантских пауков в лесу, пользуясь своими знаниями в боевых искусствах или заклинаниях.',3,150,'Нет','medium',0);
-INSERT INTO "tasks" ("id","name","description","difficulty","exp_reward","item_reward","type","is_multiplayer") VALUES (8,'Собрать ресурсы для кузнеца','Собрать определенное количество ресурсов для местного кузнеца, чтобы тот смог создать новый меч или доспех для героя.',1,50,'Нет','small',0);
-INSERT INTO "tasks" ("id","name","description","difficulty","exp_reward","item_reward","type","is_multiplayer") VALUES (9,'Сбор ресурсов','В этом задании игроки должны собирать ресурсы на протяжении определенного времени (например, 24 часа). Задание доступно для группы игроков и не может быть выполнено в одиночку.',0,100,'Нет','random',1);
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (1,'1');
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (1,'2');
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (1,'3');
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (2,'4');
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (2,'5');
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (2,'6');
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (3,'7');
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (3,'8');
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (3,'9');
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (4,'10');
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (4,'1');
-INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (4,'7');
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (1,1);
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (1,2);
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (1,6);
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (2,7);
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (2,8);
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (2,11);
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (3,3);
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (3,5);
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (3,11);
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (4,3);
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (4,6);
-INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (4,10);
-INSERT INTO "enchantments_armor" ("id","mirror_dmg","physical_damage_decr","magic_damage_decr","element_damage_decr","no_damage_chance","health_buff","name") VALUES (1,15,0,0,0,0,0,'Зеркало');
-INSERT INTO "enchantments_armor" ("id","mirror_dmg","physical_damage_decr","magic_damage_decr","element_damage_decr","no_damage_chance","health_buff","name") VALUES (2,0,25,0,0,0,0,'Дворфийская сталь');
-INSERT INTO "enchantments_armor" ("id","mirror_dmg","physical_damage_decr","magic_damage_decr","element_damage_decr","no_damage_chance","health_buff","name") VALUES (3,0,0,25,0,0,0,'Эльфийская вышивка');
-INSERT INTO "enchantments_armor" ("id","mirror_dmg","physical_damage_decr","magic_damage_decr","element_damage_decr","no_damage_chance","health_buff","name") VALUES (4,0,0,0,25,0,0,'Отвод ');
-INSERT INTO "enchantments_armor" ("id","mirror_dmg","physical_damage_decr","magic_damage_decr","element_damage_decr","no_damage_chance","health_buff","name") VALUES (5,0,0,0,0,10,0,'Двоичность ');
-INSERT INTO "enchantments_armor" ("id","mirror_dmg","physical_damage_decr","magic_damage_decr","element_damage_decr","no_damage_chance","health_buff","name") VALUES (6,0,0,0,0,0,30,'Кровавый набор');
-INSERT INTO "enchantments_weapon" ("id","name","physical_dmg_incr","stun_chance","crit_chance","bleeding_chance","armor_ignore_chance","vampirism","element_dmg_incr") VALUES (1,'Звездная заточка',25,0,0,0,0,0,0);
-INSERT INTO "enchantments_weapon" ("id","name","physical_dmg_incr","stun_chance","crit_chance","bleeding_chance","armor_ignore_chance","vampirism","element_dmg_incr") VALUES (2,'Элемент ',0,0,0,0,0,0,30);
-INSERT INTO "enchantments_weapon" ("id","name","physical_dmg_incr","stun_chance","crit_chance","bleeding_chance","armor_ignore_chance","vampirism","element_dmg_incr") VALUES (3,'Тяжелая рука',0,35,0,0,0,0,0);
-INSERT INTO "enchantments_weapon" ("id","name","physical_dmg_incr","stun_chance","crit_chance","bleeding_chance","armor_ignore_chance","vampirism","element_dmg_incr") VALUES (4,'Легкая рука',0,0,15,0,0,0,0);
-INSERT INTO "enchantments_weapon" ("id","name","physical_dmg_incr","stun_chance","crit_chance","bleeding_chance","armor_ignore_chance","vampirism","element_dmg_incr") VALUES (5,'Зубчатые лезвия',0,0,0,15,0,0,0);
-INSERT INTO "enchantments_weapon" ("id","name","physical_dmg_incr","stun_chance","crit_chance","bleeding_chance","armor_ignore_chance","vampirism","element_dmg_incr") VALUES (6,'Пустотный удар',0,0,0,0,10,0,0);
-INSERT INTO "enchantments_weapon" ("id","name","physical_dmg_incr","stun_chance","crit_chance","bleeding_chance","armor_ignore_chance","vampirism","element_dmg_incr") VALUES (7,'Графское проклятье',0,0,0,0,0,50,0);
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (1,'Легкая броня','armor',50,1,1200,'ArcherRare1','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (2,'Круглый Щит и меч','weapon',20,1,1200,'RareSwordWeapon1','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (3,'Ассиметричная легкая броня','armor',55,1,1350,'ArcherRare2','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (4,'Легкая броня с укрепленным жилетом','armor',65,1,1650,'ArcherRare3','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (5,'Легкая броня с накидкой','armor',60,1,1500,'ArcherRare4','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (7,'Легкая повязка','hat',20,1,800,'ArcherRareHat1','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (8,'Легкая бандана','hat',25,1,900,'ArcherRareHat2','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (9,'Забавная шляпа меткости','hat',30,1,1000,'ArcherRareHat3','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (10,'Обод меткости','hat',35,1,1100,'ArcherRareHat4','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (11,'Одежда охотника','armor',55,1,1200,'HunterRare1','Охотник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (12,'Охотничая жилетка','armor',65,1,1350,'HunterRare2','Охотник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (13,'Ассимитричная охотнячая одежда','armor',75,1,1500,'HunterRare3','Охотник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (14,'Крутая броня охотника','armor',85,1,1650,'HunterRare4','Охотник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (15,'Бандана охотника','hat',25,1,800,'HunterRareHat1','Охотник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (16,'Капюшон охотника','hat',32,1,900,'HunterRareHat3','Охотник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (17,'Крутая охотничая бандана','hat',39,1,1000,'HunterRareHat2','Охотник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (18,'Маска охотника','hat',46,1,1100,'HunterRareHat4','Охотник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (19,'Балахон мага','armor',45,1,1200,'MageRare1','Маг');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (20,'Балахон с жилеткой','armor',50,1,1350,'MageRare3','Маг');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (21,'Балахон с накидкой','armor',55,1,1500,'MageRare2','Маг');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (22,'Плащ мага','armor',60,1,1650,'MageRare4','Маг');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (23,'Шляпа колдуна','hat',18,1,800,'MageRareHat1','Маг');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (24,'Шапка мага','hat',22,1,900,'MageRareHat2','Маг');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (25,'Капюшон мага','hat',26,1,1000,'MageRareHat3','Маг');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (26,'Цилиндр мага','hat',30,1,1100,'MageRareHat4','Маг');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (27,'Кольчужная броня','armor',60,1,1200,'SwordRare1','Рыцарь');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (28,'Укрепленная кольчуга','armor',67,1,1350,'SwordRare2','Рыцарь');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (29,'Железные латы','armor',74,1,1500,'SwordRare3','Рыцарь');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (30,'Железный Панцирь','armor',81,1,1650,'SwordRare4','Рыцарь');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (31,'Железная шапка','hat',25,1,800,'SwordRareHat1','Рыцарь');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (32,'Железный цилиндр','hat',35,1,900,'SwordRareHat2','Рыцарь');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (33,'Железная широкая шляпа','hat',45,1,1000,'SwordRareHat4','Рыцарь');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (34,'Железный шлем','hat',55,1,1100,'SwordRareHat3','Рыцарь');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (35,'Крупный деревянный щит и меч','weapon',25,1,1300,'RareSwordWeapon2','Рыцарь');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (36,'Крутой деревянный щит и меч','weapon',30,1,1400,'RareSwordWeapon3','Рыцарь');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (37,'Простой лук','weapon',25,1,1200,'RareArcherWeapon1','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (38,'Деревянный рекурсивный лук','weapon',39,1,1400,'RareArcherWeapon2','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (39,'Деревянный длинный лук','weapon',32,1,1300,'RareArcherWeapon2','Лучник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (40,'Простые ножи','weapon',30,1,1200,'RareHunterWeapon3','Охотник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (41,'Простой длинный клинок','weapon',37,1,1300,'RareHunterWeapon2','Охотник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (42,'Простой изогнутый клинок','weapon',44,1,1400,'RareHunterWeapon1','Охотник');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (43,'Простая волшебная палочка','weapon',20,1,1200,'RareMageWeapon1','Маг');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (44,'Простой прямой жезл','weapon',25,1,1300,'RareMageWeapon2','Маг');
-INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (45,'Простой жезл','weapon',30,1,1400,'RareMageWeapon3','Маг');
-INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (1,'Слизень',250,60,5,'Slime');
-INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (2,'Нежить',350,75,10,'Zombie');
-INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (3,'Гоблин',400,100,30,'Goblin');
-INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (4,'Призрак',300,120,32,'Ghost');
-INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (5,'Варг',450,150,10,'Warg');
-INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (6,'Вампир',500,176,35,'Vampir');
-INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (7,'Тэнгу',450,210,30,'Tengu');
-INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (8,'Горгона',500,260,45,'Duza');
-INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (9,'Оборотень',550,220,40,'Wolf');
-INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (10,'Бандит',375,70,20,'Bandit');
-INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (11,'Троль',600,300,50,'Troll');
-INSERT INTO "danges" ("id","name","fights","filename") VALUES (1,'Пещеры',2,'Caves');
-INSERT INTO "danges" ("id","name","fights","filename") VALUES (2,'Горный Хребет',2,'Peak');
-INSERT INTO "danges" ("id","name","fights","filename") VALUES (3,'Цветочные поля',3,'FlowerPlains');
-INSERT INTO "danges" ("id","name","fights","filename") VALUES (4,'Лагерь',1,'Camp');
-INSERT INTO "res" ("id","Name") VALUES (1,'Метал');
-INSERT INTO "res" ("id","Name") VALUES (2,'Грибы');
-INSERT INTO "res" ("id","Name") VALUES (3,'Камни');
-INSERT INTO "res" ("id","Name") VALUES (4,'Древесина');
-INSERT INTO "res" ("id","Name") VALUES (5,'Хладовик');
-INSERT INTO "res" ("id","Name") VALUES (6,'Перья');
-INSERT INTO "res" ("id","Name") VALUES (7,'Яркосвет');
-INSERT INTO "res" ("id","Name") VALUES (8,'Подорожник');
-INSERT INTO "res" ("id","Name") VALUES (9,'Святая вода');
-INSERT INTO "res" ("id","Name") VALUES (10,'Золото');
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (1,'Каменная броня',0,0,'0',2,20,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (2,'Первородная благодетель',0,-15,'0',2,0,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (3,'Шок',1,0,'electric',1,0,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (4,'Проницатель',0,0,'0',0,0,75);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (5,'Обращен в мрамор',1,0,'0',2,1000000,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (6,'Святой холод',1,-20,'water',1,1000000,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (7,'Поднятые щиты',0,0,'0',3,15,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (8,'Оглушен',1,0,'0',1,0,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (9,'Защита',0,0,'0',3,7,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (10,'Кровотечение',0,-30,'0',2,0,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (11,'Восстановление',0,-10,'0',2,0,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (12,'Божья помощь',0,0,'0',3,10,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (13,'Южные ветра',0,0,'0',2,0,95);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (14,'Металлическая кожа',0,0,'0',1,25,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (15,'Грибное смещение',0,-5,'0',0,5,0);
-INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (16,'Ослепительное проклятие',0,-15,'0',3,0,0);
-INSERT INTO "consumable" ("id","name","buff","dmg","area","target") VALUES (1,'Граната',0,15,1,'enemy');
-INSERT INTO "consumable" ("id","name","buff","dmg","area","target") VALUES (2,'Микстура Ивлева',0,-20,0,'friend');
-INSERT INTO "consumable" ("id","name","buff","dmg","area","target") VALUES (3,'Регенеративный эликсир',11,0,0,'friend');
-INSERT INTO "consumable" ("id","name","buff","dmg","area","target") VALUES (4,'Божественный эликсир',12,0,0,'friend');
-INSERT INTO "consumable" ("id","name","buff","dmg","area","target") VALUES (5,'Ветряное зелье',13,0,0,'friend');
-INSERT INTO "consumable" ("id","name","buff","dmg","area","target") VALUES (6,'Огненная банка',0,25,0,'enemy');
-INSERT INTO "consumable" ("id","name","buff","dmg","area","target") VALUES (7,'Зелье металлической кожи',14,0,0,'friend');
-INSERT INTO "consumable" ("id","name","buff","dmg","area","target") VALUES (8,'Склянка ледяной души',15,0,1,'enemy');
-INSERT INTO "consumable" ("id","name","buff","dmg","area","target") VALUES (9,'Микстура грибного смещения',16,0,1,'friend');
-INSERT INTO "consumable" ("id","name","buff","dmg","area","target") VALUES (10,'Жидкость ослепительного проклятия',17,10,0,'all');
-INSERT INTO "craft" ("cons_id","res1_id","res2_id") VALUES (1,3,3);
-INSERT INTO "craft" ("cons_id","res1_id","res2_id") VALUES (2,8,7);
-INSERT INTO "craft" ("cons_id","res1_id","res2_id") VALUES (3,8,9);
-INSERT INTO "craft" ("cons_id","res1_id","res2_id") VALUES (4,9,7);
-INSERT INTO "craft" ("cons_id","res1_id","res2_id") VALUES (5,6,2);
-INSERT INTO "craft" ("cons_id","res1_id","res2_id") VALUES (6,10,1);
-INSERT INTO "craft" ("cons_id","res1_id","res2_id") VALUES (7,1,8);
-INSERT INTO "craft" ("cons_id","res1_id","res2_id") VALUES (8,5,4);
-INSERT INTO "craft" ("cons_id","res1_id","res2_id") VALUES (9,2,9);
-INSERT INTO "craft" ("cons_id","res1_id","res2_id") VALUES (10,6,7);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (1,'Каменная броня','Маг',1,0,'0',0,'friend',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (2,'Первородная благодетель','Маг',2,0,'0',0,'friend',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (3,'Плотная кожа','Маг',0,-33,'0',1,'friend',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (4,'Проводник','Маг',3,10,'electric',0,'enemy',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (5,'Проницатель','Маг',4,0,'0',1,'friend',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (6,'Мраморное касание','Маг',5,0,'0',0,'all',2);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (7,'Морозная свежесть','Маг',6,-50,'water',0,'friend',2);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (8,'Поднять Щиты','Рыцарь',7,0,'0',0,'self',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (9,'Головная боль','Рыцарь',8,150,'0',0,'enemy',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (10,'Взов защиты','Рыцарь',9,0,'0',1,'friend',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (11,'Оглушающая стрела','Лучник',8,70,'0',0,'enemy',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (12,'Обстрел','Лучник',0,75,'0',1,'enemy',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (13,'Ахилесова пята','Лучник',10,200,'0',0,'enemy',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (14,'Пронзающий удар','Охотник',10,250,'0',0,'enemy',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (15,'Бросок клинка','Охотник',10,200,'0',0,'enemy',1);
-INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (16,'Омнислэш','Охотник',0,120,'0',1,'enemy',1);
+CREATE TABLE IF NOT EXISTS "craft_items" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"item_tier"	INTEGER NOT NULL,
+	"item_type"	INTEGER NOT NULL,
+	"class"	INTEGER NOT NULL,
+	"res1_id"	INTEGER NOT NULL,
+	"res1_count"	INTEGER NOT NULL,
+	"res2_id"	INTEGER NOT NULL,
+	"res2_count"	INTEGER NOT NULL,
+	"gold_count"	INTEGER NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+INSERT INTO "hair" ("id","name") VALUES (1,'Вариант 1'),
+ (2,'Вариант 2'),
+ (3,'Вариант 3'),
+ (4,'Вариант 4'),
+ (5,'Вариант 5');
+INSERT INTO "shoulders" ("id","name") VALUES (1,'Вариант 1'),
+ (2,'Вариант 2'),
+ (3,'Вариант 3'),
+ (4,'Вариант 4'),
+ (5,'Вариант 5');
+INSERT INTO "face" ("id","name") VALUES (1,'Вариант 1'),
+ (2,'Вариант 2'),
+ (3,'Вариант 3'),
+ (4,'Вариант 4'),
+ (5,'Вариант 5');
+INSERT INTO "ranks" ("id","name","exp_to_earn") VALUES (1,'Новичок',0),
+ (2,'Стажёр',500),
+ (3,'Слабый воин',1000),
+ (4,'Посредственный войн',2000),
+ (5,'Узнаваемый солдат',4000),
+ (6,'Кандидат в легионеры',8000),
+ (7,'Джуниор-легионер',16000),
+ (8,'Миддл-легионер',32000),
+ (9,'Сеньор-легионер',64000),
+ (10,'Гвардеец императора',128000);
+INSERT INTO "buildings" ("id","name") VALUES (1,'Дом поручений'),
+ (2,'Храм Хроноса'),
+ (3,'Лаборатория'),
+ (4,'Дом гильдий'),
+ (5,'Кузница'),
+ (6,'Арена');
+INSERT INTO "tasks" ("id","name","description","difficulty","exp_reward","item_reward","type","is_multiplayer") VALUES (1,'Собрать дикорастущие травы','Соберите редкую траву из леса на юге, которая растет только утром и только на определенной поляне. Трава необходима для приготовления зелья лечения.',1,50,'Нет','small',0),
+ (2,'Отыскать пропавшего купца','Найдите пропавшего купца в лесу на севере. Он заблудился и не может вернуться в город. Купец несет с собой драгоценные камни, которые нужно вернуть его заказчику в городе.',2,100,'Нет','medium',0),
+ (3,'Покорить древнего дракона','Один из игроков должен покорить древнего дракона и забрать его чешую. Эта чешуя необходима для создания легендарного оружия для драконоборцев.',3,200,'armor','class_license',0),
+ (4,'Обезвредить культистов','Группа игроков должна обезвредить культистов, которые пытаются открыть портал в мир демонов. Они находятся в тайной пещере на горе, их лагерь охраняется монстрами.',4,400,'Нет','special',1),
+ (5,'Купить определенный вид цветка','Поговорить с торговцем на рынке и купить определенный вид редкого цветка для алхимического зелья.',1,50,'Нет','small',0),
+ (6,'Найти спрятанный сундук','Найти спрятанный сундук в заброшенной шахте и вернуть его владельцу, получив небольшую денежную награду.',2,100,'Нет','small',0),
+ (7,'Уничтожить гнездо гигантских пауков','Уничтожить гнездо гигантских пауков в лесу, пользуясь своими знаниями в боевых искусствах или заклинаниях.',3,150,'Нет','medium',0),
+ (8,'Собрать ресурсы для кузнеца','Собрать определенное количество ресурсов для местного кузнеца, чтобы тот смог создать новый меч или доспех для героя.',1,50,'Нет','small',0),
+ (9,'Сбор ресурсов','В этом задании игроки должны собирать ресурсы на протяжении определенного времени (например, 24 часа). Задание доступно для группы игроков и не может быть выполнено в одиночку.',0,100,'Нет','random',1);
+INSERT INTO "danges_res_drop" ("dange_id","res_name") VALUES (1,'1'),
+ (1,'2'),
+ (1,'3'),
+ (2,'4'),
+ (2,'5'),
+ (2,'6'),
+ (3,'7'),
+ (3,'8'),
+ (3,'9'),
+ (4,'10'),
+ (4,'1'),
+ (4,'7');
+INSERT INTO "danges_enemies" ("dange_id","enemy_id") VALUES (1,1),
+ (1,2),
+ (1,6),
+ (2,7),
+ (2,8),
+ (2,11),
+ (3,3),
+ (3,5),
+ (3,11),
+ (4,3),
+ (4,6),
+ (4,10);
+INSERT INTO "enchantments_armor" ("id","mirror_dmg","physical_damage_decr","magic_damage_decr","element_damage_decr","no_damage_chance","health_buff","name") VALUES (1,15,0,0,0,0,0,'Зеркало'),
+ (2,0,25,0,0,0,0,'Дворфийская сталь'),
+ (3,0,0,25,0,0,0,'Эльфийская вышивка'),
+ (4,0,0,0,25,0,0,'Отвод '),
+ (5,0,0,0,0,10,0,'Двоичность '),
+ (6,0,0,0,0,0,30,'Кровавый набор');
+INSERT INTO "enchantments_weapon" ("id","name","physical_dmg_incr","stun_chance","crit_chance","bleeding_chance","armor_ignore_chance","vampirism","element_dmg_incr") VALUES (1,'Звездная заточка',25,0,0,0,0,0,0),
+ (2,'Элемент ',0,0,0,0,0,0,30),
+ (3,'Тяжелая рука',0,35,0,0,0,0,0),
+ (4,'Легкая рука',0,0,15,0,0,0,0),
+ (5,'Зубчатые лезвия',0,0,0,15,0,0,0),
+ (6,'Пустотный удар',0,0,0,0,10,0,0),
+ (7,'Графское проклятье',0,0,0,0,0,50,0);
+INSERT INTO "base_items" ("id","name","type","strength","rarity","cost","filename","class") VALUES (1,'Легкая броня','armor',100,1,1200,'ArcherRare1','Лучник'),
+ (2,'Круглый Щит и меч','weapon',50,1,1200,'RareSwordWeapon1','Рыцарь'),
+ (3,'Ассиметричная легкая броня','armor',105,1,1350,'ArcherRare2','Лучник'),
+ (4,'Легкая броня с укрепленным жилетом','armor',110,1,1650,'ArcherRare3','Лучник'),
+ (5,'Легкая броня с накидкой','armor',115,1,1500,'ArcherRare4','Лучник'),
+ (6,'Одежда охотника','armor',110,1,1200,'HunterRare1','Охотник'),
+ (7,'Охотничая жилетка','armor',117,1,1350,'HunterRare2','Охотник'),
+ (8,'Ассимитричная охотнячая одежда','armor',124,1,1500,'HunterRare3','Охотник'),
+ (9,'Крутая броня охотника','armor',131,1,1650,'HunterRare4','Охотник'),
+ (10,'Балахон мага','armor',90,1,1200,'MageRare1','Маг'),
+ (11,'Балахон с жилеткой','armor',95,1,1350,'MageRare3','Маг'),
+ (12,'Балахон с накидкой','armor',100,1,1500,'MageRare2','Маг'),
+ (13,'Плащ мага','armor',110,1,1650,'MageRare4','Маг'),
+ (14,'Кольчужная броня','armor',120,1,1200,'SwordRare1','Рыцарь'),
+ (15,'Укрепленная кольчуга','armor',130,1,1350,'SwordRare2','Рыцарь'),
+ (16,'Железные латы','armor',140,1,1500,'SwordRare3','Рыцарь'),
+ (17,'Железный Панцирь','armor',150,1,1650,'SwordRare4','Рыцарь'),
+ (19,'Крупный деревянный щит и меч','weapon',55,1,1300,'RareSwordWeapon2','Рыцарь'),
+ (20,'Крутой деревянный щит и меч','weapon',60,1,1400,'RareSwordWeapon3','Рыцарь'),
+ (21,'Простой лук','weapon',60,1,1200,'RareArcherWeapon1','Лучник'),
+ (22,'Деревянный рекурсивный лук','weapon',67,1,1400,'RareArcherWeapon2','Лучник'),
+ (23,'Деревянный длинный лук','weapon',74,1,1300,'RareArcherWeapon2','Лучник'),
+ (24,'Простые ножи','weapon',70,1,1200,'RareHunterWeapon3','Охотник'),
+ (25,'Простой длинный клинок','weapon',80,1,1300,'RareHunterWeapon2','Охотник'),
+ (26,'Простой изогнутый клинок','weapon',90,1,1400,'RareHunterWeapon1','Охотник'),
+ (27,'Простая волшебная палочка','weapon',45,1,1200,'RareMageWeapon1','Маг'),
+ (28,'Простой прямой жезл','weapon',50,1,1300,'RareMageWeapon2','Маг'),
+ (29,'Простой жезл','weapon',55,1,1400,'RareMageWeapon3','Маг'),
+ (30,'Накидка и пончо','armor',190,2,2000,'T2Archer2','Лучник'),
+ (31,'Легкая броня с кольчугой','armor',195,2,2150,'T2Archer1','Лучник'),
+ (32,'Броня лучника','armor',200,2,2300,'T2Archer3','Лучник');
+INSERT INTO "enemies" ("id","name","health","attack","defence","filename") VALUES (1,'Слизень',250,60,5,'Slime'),
+ (2,'Нежить',350,75,10,'Zombie'),
+ (3,'Гоблин',400,100,30,'Goblin'),
+ (4,'Призрак',300,120,32,'Ghost'),
+ (5,'Варг',450,150,10,'Warg'),
+ (6,'Вампир',500,176,35,'Vampir'),
+ (7,'Тэнгу',450,210,30,'Tengu'),
+ (8,'Горгона',500,260,45,'Duza'),
+ (9,'Оборотень',550,220,40,'Wolf'),
+ (10,'Бандит',375,70,20,'Bandit'),
+ (11,'Троль',600,300,50,'Troll');
+INSERT INTO "danges" ("id","name","fights","filename") VALUES (1,'Пещеры',2,'Caves'),
+ (2,'Горный Хребет',2,'Peak'),
+ (3,'Цветочные поля',3,'FlowerPlains'),
+ (4,'Лагерь',1,'Camp');
+INSERT INTO "res" ("id","Name") VALUES (1,'Метал'),
+ (2,'Грибы'),
+ (3,'Камни'),
+ (4,'Древесина'),
+ (5,'Хладовик'),
+ (6,'Перья'),
+ (7,'Яркосвет'),
+ (8,'Подорожник'),
+ (9,'Святая вода'),
+ (10,'Золото');
+INSERT INTO "buffs" ("id","name","stun","dmg","element","time","defence","miss") VALUES (1,'Каменная броня',0,0,'0',2,20,0),
+ (2,'Первородная благодетель',0,-15,'0',2,0,0),
+ (3,'Шок',1,0,'electric',1,0,0),
+ (4,'Проницатель',0,0,'0',2,0,75),
+ (5,'Обращен в мрамор',1,0,'0',2,1000000,0),
+ (6,'Святой холод',1,-20,'water',1,1000000,0),
+ (7,'Поднятые щиты',0,0,'0',3,15,0),
+ (8,'Оглушен',1,0,'0',1,0,0),
+ (9,'Защита',0,0,'0',3,7,0),
+ (10,'Кровотечение',0,-30,'0',2,0,0),
+ (11,'Восстановление',0,-10,'0',2,0,0),
+ (12,'Божья помощь',0,0,'0',3,10,0),
+ (13,'Южные ветра',0,0,'0',2,0,95),
+ (14,'Металлическая кожа',0,0,'0',1,25,0),
+ (15,'Ледянная душа',0,0,'0',2,-5,0),
+ (16,'Грибное смещение',0,-5,'0',2,5,0),
+ (17,'Ослепительное проклятие',0,-15,'0',3,0,0);
+INSERT INTO "consumable" ("id","name","buff","dmg","area","target") VALUES (1,'Граната',0,15,1,'enemy'),
+ (2,'Микстура Ивлева',0,-20,0,'friend'),
+ (3,'Регенеративный эликсир',11,0,0,'friend'),
+ (4,'Божественный эликсир',12,0,0,'friend'),
+ (5,'Ветряное зелье',13,0,0,'friend'),
+ (6,'Огненная банка',0,25,0,'enemy'),
+ (7,'Зелье металлической кожи',14,0,0,'friend'),
+ (8,'Склянка ледяной души',15,0,1,'enemy'),
+ (9,'Микстура грибного смещения',16,0,1,'friend'),
+ (10,'Жидкость ослепительного проклятия',17,10,1,'all');
+INSERT INTO "craft_consumable" ("cons_id","res1_id","res2_id") VALUES (1,3,3),
+ (2,8,7),
+ (3,8,9),
+ (4,9,7),
+ (5,6,2),
+ (6,10,1),
+ (7,1,8),
+ (8,5,4),
+ (9,2,9),
+ (10,6,7);
+INSERT INTO "abilities" ("id","name","class","buff","dmg_perc","element","area","target","tier") VALUES (1,'Каменная броня','Маг',1,0,'0',0,'friend',1),
+ (2,'Первородная благодетель','Маг',2,0,'0',0,'friend',1),
+ (3,'Плотная кожа','Маг',0,-33,'0',1,'friend',1),
+ (4,'Проводник','Маг',3,10,'electric',0,'enemy',1),
+ (5,'Проницатель','Маг',4,0,'0',1,'friend',1),
+ (6,'Мраморное касание','Маг',5,0,'0',0,'all',2),
+ (7,'Морозная свежесть','Маг',6,-50,'water',0,'friend',2),
+ (8,'Поднять Щиты','Рыцарь',7,0,'0',0,'self',1),
+ (9,'Головная боль','Рыцарь',8,150,'0',0,'enemy',1),
+ (10,'Взов защиты','Рыцарь',9,0,'0',1,'friend',1),
+ (11,'Оглушающая стрела','Лучник',8,70,'0',0,'enemy',1),
+ (12,'Обстрел','Лучник',0,75,'0',1,'enemy',1),
+ (13,'Ахилесова пята','Лучник',10,200,'0',0,'enemy',1),
+ (14,'Пронзающий удар','Охотник',10,250,'0',0,'enemy',1),
+ (15,'Бросок клинка','Охотник',10,200,'0',0,'enemy',1),
+ (16,'Омнислэш','Охотник',0,120,'0',1,'enemy',1);
+INSERT INTO "craft_items" ("id","item_tier","item_type","class","res1_id","res1_count","res2_id","res2_count","gold_count") VALUES (1,1,'armor','sword',4,3,1,5,100),
+ (2,1,'weapon','sword',1,5,7,4,120),
+ (3,1,'armor','mage',7,3,8,5,100),
+ (4,1,'weapon','mage',9,5,4,4,120),
+ (5,1,'armor','archer',6,3,2,5,100),
+ (6,1,'weapon','archer',2,5,3,4,120),
+ (7,1,'armor','hunter',1,3,5,5,100),
+ (8,1,'weapon','hunter',10,5,5,4,120),
+ (9,2,'armor','sword',1,7,5,10,250),
+ (10,2,'weapon','sword',10,11,5,9,280),
+ (11,2,'armor','mage',4,7,1,10,250),
+ (12,2,'weapon','mage',1,11,7,9,280),
+ (13,2,'armor','archer',7,7,8,10,250),
+ (14,2,'weapon','archer',9,11,4,9,280),
+ (15,2,'armor','hunter',6,7,2,10,250),
+ (16,2,'weapon','hunter',2,11,3,9,280),
+ (17,3,'armor','sword',6,20,2,25,400),
+ (18,3,'weapon','sword',2,30,3,24,450),
+ (19,3,'armor','mage',1,20,5,25,400),
+ (20,3,'weapon','mage',10,30,5,24,450),
+ (21,3,'armor','archer',4,20,1,25,400),
+ (22,3,'weapon','archer',1,30,7,24,450),
+ (23,3,'armor','hunter',7,20,8,25,400),
+ (24,3,'weapon','hunter',9,30,4,24,450),
+ (25,4,'armor','sword',7,25,8,32,600),
+ (26,4,'weapon','sword',9,37,4,31,650),
+ (27,4,'armor','mage',6,25,2,32,600),
+ (28,4,'weapon','mage',2,37,3,31,650),
+ (29,4,'armor','archer',1,25,5,32,600),
+ (30,4,'weapon','archer',10,37,5,31,650),
+ (31,4,'armor','hunter',4,25,1,32,600),
+ (32,4,'weapon','hunter',1,37,7,31,650);
 COMMIT;
