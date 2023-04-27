@@ -21,7 +21,7 @@ cancel_request_keyboard = [['Отменить запрос'], ['Назад']]
 
 # This function returns an integer value of FRIENDS_CHOOSING. Inside the function, it sends a message to the user
 # with a keyboard markup of the options available for the friends feature.
-async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def friends_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     response = "Выберите действие"
     markup = ReplyKeyboardMarkup(friends_keyboard, resize_keyboard=True)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response, reply_markup=markup)
@@ -185,8 +185,8 @@ async def get_denied_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 # the current state. The fallbacks parameter specifies the fallback MessageHandler for when the user input does not
 # match any of the defined states.
 friends_handler = ConversationHandler(
-    entry_points=[CommandHandler("friends", friends),
-                  MessageHandler(filters.Regex("^Друзья$"), friends)],
+    entry_points=[CommandHandler("friends", friends_menu),
+                  MessageHandler(filters.Regex("^Друзья$"), friends_menu)],
     states={
         FRIENDS_CHOOSING: [
             MessageHandler(filters.Regex("^Посмотреть список друзей$"), get_friends_list),
@@ -197,27 +197,27 @@ friends_handler = ConversationHandler(
         ],
         ADD_FRIEND_REQUEST: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), friend_request),
-            MessageHandler(filters.Regex("^Назад$"), friends),
+            MessageHandler(filters.Regex("^Назад$"), friends_menu),
         ],
         DELETE_FRIEND_REQUEST: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), delete_friend_request),
-            MessageHandler(filters.Regex("^Назад$"), friends),
+            MessageHandler(filters.Regex("^Назад$"), friends_menu),
         ],
         ACCEPT_AND_DENY: [
             MessageHandler(filters.Regex("^Принять запрос$"), accept_friend),
             MessageHandler(filters.Regex("^Отклонить запрос$"), deny_friend),
-            MessageHandler(filters.Regex("^Назад$"), friends),
+            MessageHandler(filters.Regex("^Назад$"), friends_menu),
         ],
         ACCEPT_FRIEND_REQUEST: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_accepted_id),
-            MessageHandler(filters.Regex("^Назад$"), friends),
+            MessageHandler(filters.Regex("^Назад$"), friends_menu),
         ],
         DENY_FRIEND_REQUEST: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_denied_id),
-            MessageHandler(filters.Regex("^Назад$"), friends),
+            MessageHandler(filters.Regex("^Назад$"), friends_menu),
         ],
         DENY: [
-            MessageHandler(filters.Regex("^Назад$"), friends),
+            MessageHandler(filters.Regex("^Назад$"), friends_menu),
             MessageHandler(filters.Regex("^Отменить запрос$"), deny_friend),
         ],
     },

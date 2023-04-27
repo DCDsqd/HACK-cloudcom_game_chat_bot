@@ -11,7 +11,7 @@ from telegram.ext import (
 )
 import telegram.error
 
-from common_func import is_available, merge_photos
+from common_func import check_if_user_exp_is_enough, merge_photos, attacks_markup
 from menu_chain import main_menu
 from duels import *  # this also imports database
 from equipment import switch_equip_type_to_russian
@@ -27,7 +27,7 @@ TOTAL_VOTER_COUNT = 3
 POLL_INPUT = range(1)
 
 
-async def game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def game_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.message.from_user.id
     user_class = db.get_player_class_by_id(user_id)
     if user_class is None or user_class == '':
@@ -275,14 +275,14 @@ async def get_ids_for_random_multiplayer_task(update: Update, context: ContextTy
 
 
 async def chronos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if not is_available(update.message.from_user.id, 500):
+    if not check_if_user_exp_is_enough(update.message.from_user.id, 500):
         message = 'Вы подходите к огромному храму, но какая-то неведомая сила не даёт Вам пройти внутрь.\nВозможно, ' \
                   'Вам пока что не хватает опыта.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
         message = 'Добро пожаловать в Храм Хроноса. Здесь вы сможете получить новые навыки для своего персонажа, ' \
                   'а также, по достижении определённого ранга, изменить подкласс.'
-        if not is_available(update.message.from_user.id, 2000):  # Если опыт больше 2000, даём доступ к смене подкласса
+        if not check_if_user_exp_is_enough(update.message.from_user.id, 2000):  # Если опыт больше 2000, даём доступ к смене подкласса
             chronos_keyboard = [["Улучшить персонажа"], ["Назад"]]
         else:
             chronos_keyboard = [["Улучшить персонажа", "Изменить подкласс"], ["Назад"]]
@@ -298,7 +298,7 @@ async def upgrade_champ(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def change_subclass(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if is_available(update.message.from_user.id, 1000):
+    if check_if_user_exp_is_enough(update.message.from_user.id, 1000):
         con = create_connection('../db/database.db')
         user_id = update.message.from_user.id
         request = f"SELECT game_class FROM users WHERE id={user_id}"
@@ -347,7 +347,7 @@ async def subclass_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 
 async def lab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if not is_available(update.message.from_user.id, 500):
+    if not check_if_user_exp_is_enough(update.message.from_user.id, 500):
         message = 'Вы приходите к лаборатории, но дверь оказывается закрытой.\nВозможно, Вам пока что не хватает опыта.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
@@ -402,7 +402,7 @@ async def show_items(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 
 async def guild_house(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if not is_available(update.message.from_user.id, 1000):
+    if not check_if_user_exp_is_enough(update.message.from_user.id, 1000):
         message = 'Вы приходите к дому гильдий. По крайней мере так сказал стражник...\nОн не пропускает Вас под ' \
                   'предлогом, что Вы недостаточно опытны.'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
@@ -457,7 +457,7 @@ async def request_id_getting(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def forge(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if not is_available(update.message.from_user.id, 4000):
+    if not check_if_user_exp_is_enough(update.message.from_user.id, 4000):
         message = 'Вы подходите к кузнице, но мастер-кузнец категорически отказывается принимать Ваш заказ. \n' \
                   'Он объясняет, что его работа требует большого опыта и мастерства, и он не хочет рисковать' \
                   ' испортить изделие.'
@@ -501,7 +501,7 @@ async def get_item_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 
 async def arena(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if not is_available(update.message.from_user.id, 8000):
+    if not check_if_user_exp_is_enough(update.message.from_user.id, 8000):
         message = 'Вы приходите на арену для сражений, но охранник не пускает Вас внутрь.\nОн объясняет, что на арене ' \
                   'сражаются только опытные и знающие свое дело бойцы, и он не хочет допустить риска для Вашей жизни.\n' \
                   'Возможно, Вам еще не хватает опыта и навыков в бою, и Вам стоит потренироваться и набраться опыта, ' \
@@ -613,6 +613,268 @@ async def show_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             text += "\n\n"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
+async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
+    # Prevent fast double click abuse
+    if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
+        pass
+    opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
+    duels_ongoing_dict[duel_id].process_turn(Turn(update.message.from_user.id, TurnType.PHYSICAL_ATTACK, opponent_id))
+
+    opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
+    me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
+
+    if opponent.is_stuned:
+        opponent.is_stuned = False
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
+    else:
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
+
+    if opponent.is_dead() and me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    elif opponent.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Оппонент пал! Вы победили!",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    elif me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Оппонент пал! Вы победили!",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    return ConversationHandler.END
+
+
+ABILITY_CHOOSING, CONSUMABLE_CHOOSING = range(2)
+
+
+async def magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
+    if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
+        pass
+    abilities = duels_ongoing_dict[duel_id].get_possible_abilities(update.message.from_user.id)
+    abilities_id_and_name = []
+    for a in abilities:
+        abilities_id_and_name.append((a, db.get_ability_name(a)))
+    keyboard = []
+    i = 0
+    while i < len(abilities_id_and_name):
+        if i % 3 == 0:
+            keyboard.append([])
+        keyboard[len(keyboard) - 1].append(abilities_id_and_name[i][1])
+        i += 1
+    magic_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False)
+    await context.bot.send_message(chat_id=update.message.from_user.id,
+                                   text=f"Выберите способность из доступных: ",
+                                   reply_markup=magic_markup)
+    return ABILITY_CHOOSING
+
+
+async def receive_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    ability_name = update.message.text
+    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
+    ability_id = db.get_ability_id_from_name(ability_name)
+    opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
+
+    opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
+    me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
+
+    duels_ongoing_dict[duel_id].process_turn(
+        Turn(update.message.from_user.id, TurnType.MAGIC_ATTACK, opponent_id, Ability(ability_id, opponent_id)))
+
+    if opponent.is_stuned:
+        opponent.is_stuned = False
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
+    else:
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
+
+    if opponent.is_dead() and me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    elif opponent.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Оппонент пал! Вы победили!",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    elif me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Оппонент пал! Вы победили!",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    return ConversationHandler.END
+
+
+async def choose_consumable_to_use(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
+    if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
+        pass
+    consumables_list_ids = duels_ongoing_dict[duel_id].get_possible_consumables(update.message.from_user.id)
+    consumables_id_and_name = []
+    for c in consumables_list_ids:
+        consumables_id_and_name.append((c, db.get_consumable_main_info(c)[0]))
+    keyboard = []
+    i = 0
+    while i < len(consumables_id_and_name):
+        if i % 3 == 0:
+            keyboard.append([])
+        keyboard[len(keyboard) - 1].append(consumables_id_and_name[i][1])
+        i += 1
+    consumable_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False)
+    print(len(consumables_id_and_name))
+    await context.bot.send_message(chat_id=update.message.from_user.id,
+                                   text=f"Выберите предмет из доступных: ",
+                                   reply_markup=consumable_markup)
+    return CONSUMABLE_CHOOSING
+
+
+async def apply_consumable_effect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    consumable_name = update.message.text
+    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
+    consumable_id = db.get_consumable_id_from_name(consumable_name)
+    opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
+
+    opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
+    me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
+
+    duels_ongoing_dict[duel_id].process_turn(
+        Turn(update.message.from_user.id, TurnType.CONSUME, opponent_id,
+             None, Consumable(consumable_id, opponent_id)))
+
+    if opponent.is_stuned:
+        opponent.is_stuned = False
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
+    else:
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
+                                       reply_markup=attacks_markup)
+
+    if opponent.is_dead() and me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Ничья! Вы убили друг друга...",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    elif opponent.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Оппонент пал! Вы победили!",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    elif me.is_dead():
+        await context.bot.send_message(chat_id=update.message.from_user.id,
+                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
+                                       reply_markup=back_markup)
+        await context.bot.send_message(chat_id=opponent_id,
+                                       text="Оппонент пал! Вы победили!",
+                                       reply_markup=back_markup)
+
+        kill_duel(duel_id)
+
+    return ConversationHandler.END
+
+
+magic_handler = ConversationHandler(
+    entry_points=[MessageHandler(filters.Regex("^Использовать способность$"), magic_attack)],
+    states={
+        ABILITY_CHOOSING: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), receive_magic_attack, )
+        ]
+    },
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
+)
+
+consumable_handler = ConversationHandler(
+    entry_points=[MessageHandler(filters.Regex("^Использовать предмет$"), choose_consumable_to_use)],
+    states={
+        CONSUMABLE_CHOOSING: [
+            MessageHandler(
+                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), apply_consumable_effect, )
+        ]
+    },
+    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
+)
+
 
 inventory_handler = ConversationHandler(
     entry_points=[CommandHandler("inventory", inventory),
@@ -626,8 +888,8 @@ inventory_handler = ConversationHandler(
 )
 
 game_handler = ConversationHandler(
-    entry_points=[CommandHandler("game", game),
-                  MessageHandler(filters.Regex("^Игра$"), game)],
+    entry_points=[CommandHandler("game", game_menu),
+                  MessageHandler(filters.Regex("^Игра$"), game_menu)],
     states={
         CLASS_CHOOSING: [
             MessageHandler(filters.Regex("^Рыцарь$|^Маг$|^Лучник$|^Охотник$"), class_choosing),
@@ -643,7 +905,7 @@ game_handler = ConversationHandler(
         CHRONOS_CHOOSING: [
             MessageHandler(filters.Regex("^Улучшить персонажа$"), upgrade_champ),
             MessageHandler(filters.Regex("^Изменить подкласс$"), change_subclass),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         SUBCLASS_CHOOSING: [
             MessageHandler(filters.Regex(
@@ -655,7 +917,7 @@ game_handler = ConversationHandler(
         TASKS: [
             MessageHandler(filters.Regex("^В одиночку$"), alone_tasks),
             MessageHandler(filters.Regex("^С друзьями$"), multiplayer_tasks),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         ALONE_TASK_CHOOSING: [
             # ADD MORE FUNCTIONS
@@ -669,7 +931,7 @@ game_handler = ConversationHandler(
         ARENA_CHOOSING: [
             MessageHandler(filters.Regex("^Вызвать на дуэль$"), challenge_to_duel),
             MessageHandler(filters.Regex("^Создать открытую дуэль$"), create_open_duel),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         GET_USER_TO_DUEL_ID: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_user_duel_id),
@@ -692,7 +954,7 @@ game_handler = ConversationHandler(
         LAB_CHOOSING: [
             MessageHandler(filters.Regex("^Создать расходники$"), craft_choosing),
             MessageHandler(filters.Regex("^Посмотреть ресурсы$"), show_items),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         GETTING_ITEM_ID: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), craft),
@@ -701,7 +963,7 @@ game_handler = ConversationHandler(
         GUILD_CHOOSING: [
             MessageHandler(filters.Regex("^Запросить ресурсы$"), res_request),
             MessageHandler(filters.Regex("^Поделиться ресурсами$"), res_share),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         GUILD_REQUEST: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), create_res_request),
@@ -714,7 +976,7 @@ game_handler = ConversationHandler(
         FORGE_CHOOSING: [
             MessageHandler(filters.Regex("^Оружие$"), weapon_creating),
             MessageHandler(filters.Regex("^Броня$"), armor_creating),
-            MessageHandler(filters.Regex("^Назад$"), game),
+            MessageHandler(filters.Regex("^Назад$"), game_menu),
         ],
         ITEM_INPUT: [
             MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), get_item_id),

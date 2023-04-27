@@ -92,7 +92,7 @@ def merge_photos(background: str, user_id: int) -> BytesIO:
 
 # This function retrieves the top 10 players based on their experience and sends a message to the chat with their
 # username, level and experience. The message is formatted in HTML.
-async def rating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def rating_by_exp(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     res = db.get_top_10_players()
     events = "Топ-10 игроков по опыту:\n"
     for row in res:
@@ -107,7 +107,7 @@ async def rating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 # from the text variable, updates the database table with the information, and updates the bot_data dictionary with
 # information about the poll. If parse_new_event_info_string() returns False, the function sends an error message to
 # the chat.
-async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def event_chat_poll(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
     is_ok, msg = parse_new_event_info_string(text)
     if is_ok:
@@ -212,7 +212,7 @@ poll_handler = ConversationHandler(
     states={
         EVENT_INPUT: [
             MessageHandler(
-                filters.TEXT & ~filters.COMMAND, poll),
+                filters.TEXT & ~filters.COMMAND, event_chat_poll),
         ]
     },
     fallbacks=[],
@@ -235,7 +235,7 @@ def get_rank(user_id):
 # This function takes a user ID and a required amount of experience points as input and returns a boolean indicating
 # whether the user has at least the required amount of experience points. It returns True if the user has at least
 # the required amount, and False otherwise.
-def is_available(user_id, required_exp) -> bool:
+def check_if_user_exp_is_enough(user_id, required_exp) -> bool:
     user_exp = db.get_user_exp(user_id)
     return int(user_exp) >= required_exp
 
@@ -269,14 +269,16 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = message.from_user.id
     username = message.from_user.username
     db_data = db.get_user_info(user_id)
-    message = "Ваш профиль:\n\n" \
-              f"Игровое имя: {db_data[0][0]}\n" \
-              f"ID: {user_id}\n" \
-              f"Имя Telegram: {username}\n" \
-              f"Подкласс: {db_data[0][3]}\n" \
-              f"Ранг: {get_rank(user_id)}\n" \
-              f"Ваш класс: {db_data[0][1]}\n" \
-              f"Опыт: {db_data[0][2]}"
+    message = "🗣️ Ваш профиль:\n\n" \
+              f"📋 Игровое имя: {db_data[0][0]}\n" \
+              f"🆔 ID: {user_id}\n" \
+              f"👨‍✈️ Имя Telegram: {username}\n" \
+              f"🛠️ Класс: {db_data[0][1]}\n" \
+              f"🗡️ Подкласс: {db_data[0][3]}\n" \
+              f"🏆 Ранг: {get_rank(user_id)}\n" \
+              f"🌡️ Опыт: {db_data[0][2]}\n" \
+              f"🧤 Счёт в дуэлях: {db.get_duels_record_for_user(user_id)}\n" \
+              f"💰 Баланс средств: {db.get_user_money(user_id)}\n"
     await context.bot.send_photo(chat_id=user_id, caption=message,
                                  photo=open(os.path.abspath(f'../res/avatars/metadata/user_avatars/{user_id}.png'),
                                             'rb'))
@@ -482,268 +484,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "reject_duel":
         await query.edit_message_text(text=f"Вы отклонили приглашение на дуэль!")
 
-
-async def physic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
-    # Prevent fast double click abuse
-    if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
-        pass
-    opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
-    duels_ongoing_dict[duel_id].process_turn(Turn(update.message.from_user.id, TurnType.PHYSICAL_ATTACK, opponent_id))
-
-    opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
-    me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
-
-    if opponent.is_stuned:
-        opponent.is_stuned = False
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=ReplyKeyboardRemove())
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=ReplyKeyboardRemove())
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=attacks_markup)
-    else:
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=ReplyKeyboardRemove())
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=attacks_markup)
-
-    if opponent.is_dead() and me.is_dead():
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text="Ничья! Вы убили друг друга...",
-                                       reply_markup=back_markup)
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text="Ничья! Вы убили друг друга...",
-                                       reply_markup=back_markup)
-
-        kill_duel(duel_id)
-
-    elif opponent.is_dead():
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text="Оппонент пал! Вы победили!",
-                                       reply_markup=back_markup)
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
-                                       reply_markup=back_markup)
-
-        kill_duel(duel_id)
-
-    elif me.is_dead():
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
-                                       reply_markup=back_markup)
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text="Оппонент пал! Вы победили!",
-                                       reply_markup=back_markup)
-
-        kill_duel(duel_id)
-
-    return ConversationHandler.END
-
-
-ABILITY_CHOOSING, CONSUMABLE_CHOOSING = range(2)
-
-
-async def magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
-    if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
-        pass
-    abilities = duels_ongoing_dict[duel_id].get_possible_abilities(update.message.from_user.id)
-    abilities_id_and_name = []
-    for a in abilities:
-        abilities_id_and_name.append((a, db.get_ability_name(a)))
-    keyboard = []
-    i = 0
-    while i < len(abilities_id_and_name):
-        if i % 3 == 0:
-            keyboard.append([])
-        keyboard[len(keyboard) - 1].append(abilities_id_and_name[i][1])
-        i += 1
-    magic_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False)
-    await context.bot.send_message(chat_id=update.message.from_user.id,
-                                   text=f"Выберите способность из доступных: ",
-                                   reply_markup=magic_markup)
-    return ABILITY_CHOOSING
-
-
-async def receive_magic_attack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    ability_name = update.message.text
-    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
-    ability_id = db.get_ability_id_from_name(ability_name)
-    opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
-
-    opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
-    me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
-
-    duels_ongoing_dict[duel_id].process_turn(
-        Turn(update.message.from_user.id, TurnType.MAGIC_ATTACK, opponent_id, Ability(ability_id, opponent_id)))
-
-    if opponent.is_stuned:
-        opponent.is_stuned = False
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=ReplyKeyboardRemove())
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=ReplyKeyboardRemove())
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=attacks_markup)
-    else:
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=ReplyKeyboardRemove())
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=attacks_markup)
-
-    if opponent.is_dead() and me.is_dead():
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text="Ничья! Вы убили друг друга...",
-                                       reply_markup=back_markup)
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text="Ничья! Вы убили друг друга...",
-                                       reply_markup=back_markup)
-
-        kill_duel(duel_id)
-
-    elif opponent.is_dead():
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text="Оппонент пал! Вы победили!",
-                                       reply_markup=back_markup)
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
-                                       reply_markup=back_markup)
-
-        kill_duel(duel_id)
-
-    elif me.is_dead():
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
-                                       reply_markup=back_markup)
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text="Оппонент пал! Вы победили!",
-                                       reply_markup=back_markup)
-
-        kill_duel(duel_id)
-
-    return ConversationHandler.END
-
-
-async def choose_consumable_to_use(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
-    if int(duels_ongoing_dict[duel_id].get_attacker_player_in_game().user_id) != int(update.message.from_user.id):
-        pass
-    consumables_list_ids = duels_ongoing_dict[duel_id].get_possible_consumables(update.message.from_user.id)
-    consumables_id_and_name = []
-    for c in consumables_list_ids:
-        consumables_id_and_name.append((c, db.get_consumable_main_info(c)[0]))
-    keyboard = []
-    i = 0
-    while i < len(consumables_id_and_name):
-        if i % 3 == 0:
-            keyboard.append([])
-        keyboard[len(keyboard) - 1].append(consumables_id_and_name[i][1])
-        i += 1
-    consumable_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False)
-    print(len(consumables_id_and_name))
-    await context.bot.send_message(chat_id=update.message.from_user.id,
-                                   text=f"Выберите предмет из доступных: ",
-                                   reply_markup=consumable_markup)
-    return CONSUMABLE_CHOOSING
-
-
-async def apply_consumable_effect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    consumable_name = update.message.text
-    duel_id = context.bot_data['duel_id' + str(update.message.from_user.id)]
-    consumable_id = db.get_consumable_id_from_name(consumable_name)
-    opponent_id = int(db.get_duel_opponent(duel_id, update.message.from_user.id))
-
-    opponent = duels_ongoing_dict[duel_id].get_player_in_game(opponent_id)
-    me = duels_ongoing_dict[duel_id].get_player_in_game(update.message.from_user.id)
-
-    duels_ongoing_dict[duel_id].process_turn(
-        Turn(update.message.from_user.id, TurnType.CONSUME, opponent_id,
-             None, Consumable(consumable_id, opponent_id)))
-
-    if opponent.is_stuned:
-        opponent.is_stuned = False
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=ReplyKeyboardRemove())
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=ReplyKeyboardRemove())
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=attacks_markup)
-    else:
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=ReplyKeyboardRemove())
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text=duels_ongoing_dict[duel_id].get_visible_logs_as_str_last_turn(),
-                                       reply_markup=attacks_markup)
-
-    if opponent.is_dead() and me.is_dead():
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text="Ничья! Вы убили друг друга...",
-                                       reply_markup=back_markup)
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text="Ничья! Вы убили друг друга...",
-                                       reply_markup=back_markup)
-
-        kill_duel(duel_id)
-
-    elif opponent.is_dead():
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text="Оппонент пал! Вы победили!",
-                                       reply_markup=back_markup)
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
-                                       reply_markup=back_markup)
-
-        kill_duel(duel_id)
-
-    elif me.is_dead():
-        await context.bot.send_message(chat_id=update.message.from_user.id,
-                                       text="Вы проиграли! В этот раз соперник оказался сильнее!",
-                                       reply_markup=back_markup)
-        await context.bot.send_message(chat_id=opponent_id,
-                                       text="Оппонент пал! Вы победили!",
-                                       reply_markup=back_markup)
-
-        kill_duel(duel_id)
-
-    return ConversationHandler.END
-
-
-magic_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex("^Использовать способность$"), magic_attack)],
-    states={
-        ABILITY_CHOOSING: [
-            MessageHandler(
-                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), receive_magic_attack, )
-        ]
-    },
-    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
-)
-
-consumable_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex("^Использовать предмет$"), choose_consumable_to_use)],
-    states={
-        CONSUMABLE_CHOOSING: [
-            MessageHandler(
-                filters.TEXT & ~(filters.COMMAND | filters.Regex("^Назад$")), apply_consumable_effect, )
-        ]
-    },
-    fallbacks=[MessageHandler(filters.Regex("^Назад$"), main_menu)],
-)
 
 events_handler = ConversationHandler(
     entry_points=[CommandHandler("events", irl_events_menu),
