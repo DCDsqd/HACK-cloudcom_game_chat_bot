@@ -65,11 +65,12 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def class_choosing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    text = update.message.text
+    class_name = update.message.text
     user_id = update.message.from_user.id
-    context.user_data["choice"] = text
-    db.update_users('game_class', text, user_id)
-    message = f'Вы успешно получили лицензию на роль "{text}".\n\n' \
+    context.user_data["choice"] = class_name
+    db.update_users('game_class', class_name, user_id)
+    db.give_default_items_to_user(user_id, class_name)
+    message = f'Вы успешно получили лицензию на роль "{class_name}".\n\n' \
               "На данный момент Вам недоступны все преимущества служителя империи, " \
               "однако не расстраивайтесь, Вам будут доступны новые возможности по мере получения следующих рангов. " \
               "Вам предстоит пройти много испытаний и битв, но мы уверены, что Вы сможете преодолеть все трудности" \

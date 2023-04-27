@@ -1094,6 +1094,63 @@ class Database:
                 """
         return execute_read_query(self.gamedata_conn, query)[0][0]
 
+    def give_default_items_to_user(self, user_id: int, user_class_in_russian: str) -> None:
+        query = f"""
+                    SELECT id 
+                    FROM base_items 
+                    WHERE rarity = 1
+                    AND type = 'armor'
+                    AND class = '{user_class_in_russian}'
+                    ORDER BY cost
+                    LIMIT 1;
+                 """
+        base_armor_id = execute_read_query(self.gamedata_conn, query)[0][0]
+
+        query = f"""
+                    SELECT id 
+                    FROM base_items 
+                    WHERE rarity = 1
+                    AND type = 'weapon'
+                    AND class = '{user_class_in_russian}'
+                    ORDER BY cost
+                    LIMIT 1;
+                 """
+        base_weapon_id = execute_read_query(self.gamedata_conn, query)[0][0]
+
+        create_armor_query = f"""
+                                INSERT INTO items_owned (owner_id, base_item_id, enchantments, date)
+                                VALUES ({user_id}, {base_armor_id}, "", '{cur_date()}');
+                              """
+        execute_query(self.database_conn, create_armor_query)
+
+        meta_armor_id_query = f"""
+                            SELECT meta_item_id FROM items_owned
+                            WHERE base_item_id = {base_armor_id}
+                            AND owner_id = {user_id};
+                         """
+        meta_armor_id = execute_read_query(self.database_conn, meta_armor_id_query)[0][0]
+
+        meta_weapon_id_query = f"""
+                                    SELECT meta_item_id FROM items_owned
+                                    WHERE base_item_id = {base_weapon_id}
+                                    AND owner_id = {user_id};
+                                 """
+        meta_weapon_id = execute_read_query(self.database_conn, meta_weapon_id_query)[0][0]
+
+        create_weapon_query = f"""
+                                INSERT INTO items_owned (owner_id, base_item_id, enchantments, date)
+                                VALUES ({user_id}, {base_weapon_id}, "", '{cur_date()}');
+                              """
+        execute_query(self.database_conn, create_weapon_query)
+
+        update_query = f"""
+                            UPDATE users 
+                            SET active_armor_meta_id = {meta_armor_id}, 
+                            active_weapon_meta_id = {meta_weapon_id}
+                            WHERE id = {user_id};
+                        """
+        execute_query(self.database_conn, update_query)
+
 
 # Global Database variable
 db = Database()
