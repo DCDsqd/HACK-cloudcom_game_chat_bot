@@ -1,4 +1,4 @@
-from duels import *
+from common_battle import *
 
 
 class Mob:
@@ -185,11 +185,10 @@ solo_danges_ongoing_dict = {}
 # Functions to operate with existing solo danges
 def init_solo_dange(dange: SoloDange) -> None:
     solo_danges_ongoing_dict[dange.dange_id] = dange
-    # db.start_duel(dange.dange_id)
 
 
 def kill_solo_dange(dange_id: int) -> None:
     killed_dange = solo_danges_ongoing_dict.pop(dange_id)
     if killed_dange.status() == 0:
         logging.warning("kill_solo_dange() call on ongoing solo dange with SoloDange::status() == 0!")
-    # db.finish_duel(duel_id, killed_duel.status())
+    # db.finish_duel(duel_id, killed_duel.status())  # TODO: Make similar method here!!
