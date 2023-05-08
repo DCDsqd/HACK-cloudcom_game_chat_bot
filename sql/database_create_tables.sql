@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS "local_events" (
 	"id"	INTEGER UNIQUE,
 	"type"	TEXT NOT NULL,
 	"start_time"	TEXT NOT NULL,
-	"result"	TEXT NOT NULL DEFAULT in progress,
+	"result"	TEXT NOT NULL DEFAULT "in progress",
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 CREATE TABLE IF NOT EXISTS "local_events_participants" (
